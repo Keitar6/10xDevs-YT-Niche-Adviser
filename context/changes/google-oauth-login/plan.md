@@ -211,10 +211,10 @@ No data model changes. There is a real existing-user edge case worth naming: a u
 
 #### Manual
 
-- [ ] 1.3 Google Cloud OAuth Client created, with its Authorized redirect URI set to Supabase's hosted callback
-- [ ] 1.4 Supabase Dashboard → Authentication → Providers → Google enabled with Client ID/Secret
-- [ ] 1.5 Supabase Dashboard → Authentication → URL Configuration → Redirect URLs includes dev and prod origins
-- [ ] 1.6 Requesting `/api/auth/google` directly returns a redirect toward Supabase's `/auth/v1/authorize` endpoint, which itself leads to `accounts.google.com`
+- [x] 1.3 Google Cloud OAuth Client created, with its Authorized redirect URI set to Supabase's hosted callback
+- [x] 1.4 Supabase Dashboard → Authentication → Providers → Google enabled with Client ID/Secret
+- [x] 1.5 Supabase Dashboard → Authentication → URL Configuration → Redirect URLs includes dev and prod origins
+- [x] 1.6 Requesting `/api/auth/google` directly returns a redirect toward Supabase's `/auth/v1/authorize` endpoint, which itself leads to `accounts.google.com`
 
 ### Phase 2: UI integration
 
