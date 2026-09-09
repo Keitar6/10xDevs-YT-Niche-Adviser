@@ -10,7 +10,7 @@ top_blocker: time
 milestone_id: mvp-core-loop
 milestone_seq: 1
 milestone_status: open
-updated: 2026-09-08
+updated: 2026-09-09
 ---
 
 # Roadmap: YT-Niche-Adviser
@@ -43,7 +43,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |----|-----------|----------------------|----------------|----------|--------|
 | F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | in-progress |
-| F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | ready |
+| F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | in-progress |
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | proposed |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | proposed |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
@@ -97,7 +97,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Poprawność polityk RLS to jedyny obszar, w który warto zainwestować mocniej mimo `main_goal: speed` — to twardy guardrail PRD (izolacja danych), a wszystko downstream na tym polega. Sekwencjonowany jako pierwszy w warstwie danych, bo S-01 nie da się zaplanować bez niego.
-- **Status:** ready
+- **Status:** in-progress
 
 ## Slices
 
