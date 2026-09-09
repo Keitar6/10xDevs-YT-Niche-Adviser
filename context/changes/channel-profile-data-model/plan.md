@@ -201,14 +201,14 @@ No existing data to migrate — this is the first custom table in the project. C
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase db reset`
-- [x] 1.2 Type generation succeeds: `npm run db:types`
-- [x] 1.3 Lint passes: `npm run lint`
-- [x] 1.4 Build passes: `npm run build`
+- [x] 1.1 Migration applies cleanly: `npx supabase db reset` — 822c33b
+- [x] 1.2 Type generation succeeds: `npm run db:types` — 822c33b
+- [x] 1.3 Lint passes: `npm run lint` — 822c33b
+- [x] 1.4 Build passes: `npm run build` — 822c33b
 
 #### Manual
 
-- [x] 1.5 User A can insert and read their own `channel_profiles` row via direct REST calls
-- [x] 1.6 User B's REST read of user A's row returns zero rows
-- [x] 1.7 Second insert attempt for user A's `user_id` is rejected (unique constraint)
-- [x] 1.8 UPDATE to user A's row advances `updated_at` via the trigger
+- [x] 1.5 User A can insert and read their own `channel_profiles` row via direct REST calls — 822c33b
+- [x] 1.6 User B's REST read of user A's row returns zero rows — 822c33b
+- [x] 1.7 Second insert attempt for user A's `user_id` is rejected (unique constraint) — 822c33b
+- [x] 1.8 UPDATE to user A's row advances `updated_at` via the trigger — 822c33b
