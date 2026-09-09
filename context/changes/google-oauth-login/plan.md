@@ -220,15 +220,15 @@ No data model changes. There is a real existing-user edge case worth naming: a u
 
 #### Automated
 
-- [x] 2.1 Lint passes: `npm run lint`
-- [x] 2.2 Build passes: `npm run build`
+- [x] 2.1 Lint passes: `npm run lint` — 3bb6167
+- [x] 2.2 Build passes: `npm run build` — 3bb6167
 
 #### Manual
 
-- [x] 2.3 First-time Google sign-in from `/auth/signin` creates account and redirects to `/`
-- [x] 2.4 Returning Google sign-in logs the same user back in
-- [x] 2.5 Google button on `/auth/signup` completes the flow successfully
-- [x] 2.6 Denying the Google consent screen redirects to `/auth/signin` with a visible error
-- [x] 2.7 Existing email+password flows still work unaffected
-- [x] 2.8 All repo-wide `*.scaffold` files removed (`git ls-files | grep '\.scaffold$'` returns empty); `SignInForm.tsx`/`SignUpForm.tsx` (live files) untouched
-- [x] 2.9 Cross-provider same-email behavior (password account + Google sign-in, same address) observed and confirmed non-broken
+- [x] 2.3 First-time Google sign-in from `/auth/signin` creates account and redirects to `/` — 3bb6167
+- [x] 2.4 Returning Google sign-in logs the same user back in — 3bb6167
+- [x] 2.5 Google button on `/auth/signup` completes the flow successfully — 3bb6167
+- [x] 2.6 Denying the Google consent screen redirects to `/auth/signin` with a visible error — 3bb6167
+- [x] 2.7 Existing email+password flows still work unaffected — 3bb6167
+- [x] 2.8 All repo-wide `*.scaffold` files removed (`git ls-files | grep '\.scaffold$'` returns empty); `SignInForm.tsx`/`SignUpForm.tsx` (live files) untouched — 3bb6167
+- [x] 2.9 Cross-provider same-email behavior (password account + Google sign-in, same address) observed and confirmed non-broken — 3bb6167
