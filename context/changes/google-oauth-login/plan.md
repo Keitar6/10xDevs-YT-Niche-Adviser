@@ -206,29 +206,29 @@ No data model changes. There is a real existing-user edge case worth naming: a u
 
 #### Automated
 
-- [x] 1.1 Lint passes: `npm run lint`
-- [x] 1.2 Build passes: `npm run build`
+- [x] 1.1 Lint passes: `npm run lint` — 5b47201
+- [x] 1.2 Build passes: `npm run build` — 5b47201
 
 #### Manual
 
-- [x] 1.3 Google Cloud OAuth Client created, with its Authorized redirect URI set to Supabase's hosted callback
-- [x] 1.4 Supabase Dashboard → Authentication → Providers → Google enabled with Client ID/Secret
-- [x] 1.5 Supabase Dashboard → Authentication → URL Configuration → Redirect URLs includes dev and prod origins
-- [x] 1.6 Requesting `/api/auth/google` directly returns a redirect toward Supabase's `/auth/v1/authorize` endpoint, which itself leads to `accounts.google.com`
+- [x] 1.3 Google Cloud OAuth Client created, with its Authorized redirect URI set to Supabase's hosted callback — 5b47201
+- [x] 1.4 Supabase Dashboard → Authentication → Providers → Google enabled with Client ID/Secret — 5b47201
+- [x] 1.5 Supabase Dashboard → Authentication → URL Configuration → Redirect URLs includes dev and prod origins — 5b47201
+- [x] 1.6 Requesting `/api/auth/google` directly returns a redirect toward Supabase's `/auth/v1/authorize` endpoint, which itself leads to `accounts.google.com` — 5b47201
 
 ### Phase 2: UI integration
 
 #### Automated
 
-- [ ] 2.1 Lint passes: `npm run lint`
-- [ ] 2.2 Build passes: `npm run build`
+- [x] 2.1 Lint passes: `npm run lint`
+- [x] 2.2 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 2.3 First-time Google sign-in from `/auth/signin` creates account and redirects to `/`
-- [ ] 2.4 Returning Google sign-in logs the same user back in
-- [ ] 2.5 Google button on `/auth/signup` completes the flow successfully
-- [ ] 2.6 Denying the Google consent screen redirects to `/auth/signin` with a visible error
-- [ ] 2.7 Existing email+password flows still work unaffected
-- [ ] 2.8 All repo-wide `*.scaffold` files removed (`git ls-files | grep '\.scaffold$'` returns empty); `SignInForm.tsx`/`SignUpForm.tsx` (live files) untouched
-- [ ] 2.9 Cross-provider same-email behavior (password account + Google sign-in, same address) observed and confirmed non-broken
+- [x] 2.3 First-time Google sign-in from `/auth/signin` creates account and redirects to `/`
+- [x] 2.4 Returning Google sign-in logs the same user back in
+- [x] 2.5 Google button on `/auth/signup` completes the flow successfully
+- [x] 2.6 Denying the Google consent screen redirects to `/auth/signin` with a visible error
+- [x] 2.7 Existing email+password flows still work unaffected
+- [x] 2.8 All repo-wide `*.scaffold` files removed (`git ls-files | grep '\.scaffold$'` returns empty); `SignInForm.tsx`/`SignUpForm.tsx` (live files) untouched
+- [x] 2.9 Cross-provider same-email behavior (password account + Google sign-in, same address) observed and confirmed non-broken

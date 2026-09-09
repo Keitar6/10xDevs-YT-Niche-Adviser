@@ -11,6 +11,9 @@ export const POST: APIRoute = async (context) => {
     provider: "google",
     options: {
       redirectTo: `${context.url.origin}/api/auth/callback`,
+      queryParams: {
+        prompt: "select_account",
+      },
     },
   });
 
