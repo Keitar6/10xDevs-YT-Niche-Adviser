@@ -10,7 +10,7 @@ top_blocker: time
 milestone_id: mvp-core-loop
 milestone_seq: 1
 milestone_status: open
-updated: 2026-09-09
+updated: 2026-09-10
 ---
 
 # Roadmap: YT-Niche-Adviser
@@ -44,7 +44,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 |----|-----------|----------------------|----------------|----------|--------|
 | F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | in-progress |
 | F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | in-progress |
-| S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | proposed |
+| S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | in-progress |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | proposed |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
 
@@ -112,7 +112,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Prosty CRUD; główne ryzyko to walidacja formatu i liczby ID konkurentów (3–5) po stronie klienta i serwera. Sekwencjonowany zaraz po F-02, bo to pierwsza user-facing zdolność i odblokowuje gwiazdę przewodnią (S-02).
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-02: Użytkownik uruchamia analizę i widzi ranking okazji (gwiazda przewodnia)
 
