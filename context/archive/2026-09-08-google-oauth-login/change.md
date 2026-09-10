@@ -1,10 +1,10 @@
 ---
 change_id: google-oauth-login
 title: Google oauth login
-status: impl_reviewed
+status: archived
 created: 2026-09-08
 updated: 2026-09-10
-archived_at: null
+archived_at: 2026-09-10T20:51:11Z
 ---
 
 ## Notes

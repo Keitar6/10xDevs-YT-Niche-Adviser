@@ -3,14 +3,13 @@ project: "YT-Niche-Adviser"
 version: 1
 status: draft
 created: 2026-09-07
-updated: 2026-09-07
+updated: 2026-09-10
 prd_version: 1
 main_goal: speed
 top_blocker: time
 milestone_id: mvp-core-loop
 milestone_seq: 1
 milestone_status: open
-updated: 2026-09-10
 ---
 
 # Roadmap: YT-Niche-Adviser
@@ -42,7 +41,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |----|-----------|----------------------|----------------|----------|--------|
-| F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | in-progress |
+| F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | done |
 | F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | in-progress |
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | in-progress |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | proposed |
@@ -83,7 +82,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Mały, izolowany dodatek do istniejącego scaffoldu auth (Supabase ma wbudowane wsparcie dla providera Google) — niskie ryzyko naruszenia innych warstw. Sekwencjonowany wcześnie, bo `main_goal: speed` faworyzuje domykanie małych must-have luk teraz, zanim staną się zapomnianym długiem tuż przed deadline'em.
-- **Status:** in-progress
+- **Status:** done
 
 ### F-02: Model danych profilu kanału (RLS per-owner)
 
@@ -181,4 +180,4 @@ Wszystkie pozycje poniżej są też zamkniętymi issues (`state_reason: not_plan
 
 ## Done
 
-(brak — pierwsza generacja)
+- **F-01: (foundation) Użytkownik może zalogować się przez Google OAuth, obok już działającego email+hasło; FR-001 w pełni spełniony.** — Archived 2026-09-10 → `context/archive/2026-09-08-google-oauth-login/`. Lesson: —.
