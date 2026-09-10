@@ -176,16 +176,16 @@ No schema changes — reuses `channel_profiles` as-is from `channel-profile-data
 
 #### Automated
 
-- [x] 1.1 Lint passes: `npm run lint`
-- [x] 1.2 Build passes: `npm run build`
+- [x] 1.1 Lint passes: `npm run lint` — 3df99f1
+- [x] 1.2 Build passes: `npm run build` — 3df99f1
 
 #### Manual
 
-- [x] 1.3 Opening the dialog with no profile yet shows "Set up profile" trigger and an empty form with 3 rows
-- [x] 1.4 Creating a profile succeeds, shows "Profile saved" inline, dialog stays open, trigger updates to "Profile" — no page reload
-- [x] 1.5 Reopening the dialog shows the just-saved data pre-filled
-- [x] 1.6 Adding more than 3 competitor-ID rows and saving succeeds (no upper cap)
-- [x] 1.7 Editing the niche and re-saving persists the change on reopen
-- [x] 1.8 Submitting with fewer than 3 competitor IDs is rejected with a visible error inside the dialog
-- [x] 1.9 Submitting a duplicate competitor ID is rejected with a visible error
-- [x] 1.10 Closing and reopening the dialog reflects current saved state, not stale data
+- [x] 1.3 Opening the dialog with no profile yet shows "Set up profile" trigger and an empty form with 3 rows — 3df99f1
+- [x] 1.4 Creating a profile succeeds, shows "Profile saved" inline, dialog stays open, trigger updates to "Profile" — no page reload — 3df99f1
+- [x] 1.5 Reopening the dialog shows the just-saved data pre-filled — 3df99f1
+- [x] 1.6 Adding more than 3 competitor-ID rows and saving succeeds (no upper cap) — 3df99f1
+- [x] 1.7 Editing the niche and re-saving persists the change on reopen — 3df99f1
+- [x] 1.8 Submitting with fewer than 3 competitor IDs is rejected with a visible error inside the dialog — 3df99f1
+- [x] 1.9 Submitting a duplicate competitor ID is rejected with a visible error — 3df99f1
+- [x] 1.10 Closing and reopening the dialog reflects current saved state, not stale data — 3df99f1
