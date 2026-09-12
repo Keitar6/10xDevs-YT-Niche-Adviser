@@ -3,7 +3,7 @@ project: "YT-Niche-Adviser"
 version: 1
 status: draft
 created: 2026-09-07
-updated: 2026-09-11
+updated: 2026-09-12
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -42,8 +42,8 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |----|-----------|----------------------|----------------|----------|--------|
 | F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | done |
-| F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | in-progress |
-| S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | in-progress |
+| F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | done |
+| S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | proposed |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
 
@@ -96,7 +96,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Poprawność polityk RLS to jedyny obszar, w który warto zainwestować mocniej mimo `main_goal: speed` — to twardy guardrail PRD (izolacja danych), a wszystko downstream na tym polega. Sekwencjonowany jako pierwszy w warstwie danych, bo S-01 nie da się zaplanować bez niego.
-- **Status:** in-progress
+- **Status:** done
 
 ## Slices
 
@@ -110,8 +110,9 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Parallel with:** F-01
 - **Blockers:** —
 - **Unknowns:** —
+- **Rozstrzygnięcia (2026-09-12):** limit 3–5 konkurentów wdrożony po obu stronach (zod `.max(5)` + lustrzana walidacja w formularzu, przycisk „Add competitor" wyłączany przy 5) — domyka decyzję D1 i przywraca zgodność z FR-003. Impl-review zamknięty: 0 krytycznych, 8 ustaleń naprawionych (`context/changes/channel-profile-crud/reviews/impl-review.md`).
 - **Risk:** Prosty CRUD; główne ryzyko to walidacja formatu i liczby ID konkurentów (3–5) po stronie klienta i serwera. Sekwencjonowany zaraz po F-02, bo to pierwsza user-facing zdolność i odblokowuje gwiazdę przewodnią (S-02).
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Użytkownik uruchamia analizę i widzi ranking okazji (gwiazda przewodnia)
 
@@ -149,9 +150,9 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 | Roadmap ID | Change ID | Suggested issue title | GitHub Issue | Ready for `/10x-plan` | Notes |
 |------------|-----------|------------------------|--------------|------------------------|-------|
 | F-01 | `google-oauth-login` | Add Google OAuth login alongside email+password | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1) | yes | Run `/10x-plan google-oauth-login` |
-| F-02 | `channel-profile-data-model` | Create `channel_profiles` table with per-owner RLS | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) | yes | Run `/10x-plan channel-profile-data-model` |
-| S-01 | `channel-profile-crud` | Channel profile create/edit UI | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) | no | Waiting on F-02 |
-| S-02 | `analyze-and-rank-opportunities` | Analyze competitors → ranked content opportunities | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) | no | Waiting on S-01; north star |
+| F-02 | `channel-profile-data-model` | Create `channel_profiles` table with per-owner RLS | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) | — | done (tabela + RLS wdrożone) |
+| S-01 | `channel-profile-crud` | Channel profile create/edit UI | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) | — | done (impl-review 2026-09-12, F1–F8 zamknięte) |
+| S-02 | `analyze-and-rank-opportunities` | Analyze competitors → ranked content opportunities | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) | yes | Run `/10x-plan analyze-and-rank-opportunities`; north star — research (internal + external) gotowy |
 | S-03 | `save-and-view-opportunities` | Save and browse content opportunities | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) | no | Waiting on S-02 |
 
 All roadmap items are tracked as GitHub Issues in `Keitar6/10xDevs-YT-Niche-Adviser`, milestone [`M-1: MVP core loop`](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/milestone/1). Parked items and the open roadmap question are also mirrored as issues (see their sections below) — this table only lists active milestone work.
