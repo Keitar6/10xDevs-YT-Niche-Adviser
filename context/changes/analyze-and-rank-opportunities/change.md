@@ -113,3 +113,132 @@ comment explaining *why* that endpoint is never used named it literally, which
 made the criterion fail on its own documentation. The comment now says "the
 search endpoint" so the grep stays a real check rather than one that permanently
 trips.
+
+### Deviation from plan — Phase 4, Anthropic error-chain order
+
+**Planned:** "Errors are caught on the typed chain, most specific first —
+`Anthropic.RateLimitError` → `Anthropic.APIError` → `Anthropic.APIConnectionError`."
+
+**Implemented:** `RateLimitError` → `APIConnectionError` → `APIError`.
+
+**Why.** In the TypeScript SDK `APIConnectionError extends APIError`
+(`@anthropic-ai/sdk/core/error.d.ts:24`), so the order the plan lists leaves the
+`APIConnectionError` branch unreachable — every transport failure, including the
+20s timeout, would collapse into the generic `APIError` branch. The plan's stated
+intent ("most specific first") is preserved; only the listed sequence was wrong.
+
+### Deviation from plan — Phase 4, generated worker types are global
+
+**Planned:** "Generate and commit the worker types (`wrangler types`)."
+
+**Implemented:** as planned, plus two one-line fixes in pre-existing files.
+
+**Why.** `wrangler types` emits ~15k lines of workerd runtime typings that
+override DOM globals project-wide, including for browser-side React files. That
+changes `Response.json()` from DOM's `Promise<any>` to workerd's generic
+`json<T>()`, which made two existing `as` assertions redundant and so a lint
+**error** under `no-unnecessary-type-assertion`:
+
+- `src/pages/api/profile.ts:38` — dropped ` as typeof body`; `body`'s existing
+  annotation still supplies the type, and the `try/catch` guard is untouched
+  (the shape fixed in `677c648` is not reintroduced).
+- `src/components/profile/ChannelProfileForm.tsx:76` — moved the type from an
+  assertion to a variable annotation. Chosen over `res.json<T>()` because that
+  form reads as workerd-specific in a file that runs in the browser.
+
+`--include-runtime=false` was tried first and rejected: without runtime types the
+`cloudflare:workers` module has no declaration, so `env` itself resolves to
+`error`-typed and the binding access becomes three `no-unsafe-*` errors. The
+adapter leaves no alternative — `createLocals` in
+`@astrojs/cloudflare/dist/utils/cf-helpers.js` defines `locals.runtime.env` as a
+getter that *throws*, pointing at the `cloudflare:workers` import. The generated
+file is excluded from ESLint alongside `database.types.ts`.
+
+### Deviation from plan — Phase 4, shared result types are interfaces, not zod
+
+**Planned:** "Define the zod schemas as the source of truth in their owning
+service module and re-export the `z.infer` types through `src/types.ts`."
+
+**Implemented:** `justify.ts` owns its zod schema and `src/types.ts` re-exports
+the inferred `Justification` type, per the convention. The `/api/analyze`
+response DTOs (`AnalyzeResponse`, `AnalyzeSummary`, `AnalyzeOpportunity`,
+`SkippedChannel`) are plain interfaces declared in `src/types.ts`.
+
+**Why.** The server *constructs* that payload and never parses one, so a runtime
+schema for it would validate nothing. Phase 5's island is the only consumer that
+reads it as untrusted input, and it can add a parse schema when it needs one.
+
+### Addition beyond plan — Phase 4, a fourth empty-ranking case
+
+The plan enumerates three empty outcomes (zero resolved, all skipped, LLM
+degraded). A fourth exists: every competitor scores, but every video in the
+sample is still inside the `MIN_RANKABLE_AGE_DAYS` window, so `rankOpportunities`
+returns nothing. Left unhandled this is exactly the unexplained-empty-screen the
+PRD guardrail forbids, so it gets its own `empty_reason`. `summary.empty_reason`
+is the single field Phase 5 renders for all four.
+
+`/api/analyze` reads **no request body** — the run is defined entirely by the
+caller's saved profile, so there is nothing to parse and nothing to guard.
+
+### Phase 4 pre-verification (live, before the manual gate)
+
+Run through the app's own endpoints against local Supabase and the live YouTube
+and Anthropic APIs, with a throwaway account `p4-smoke@example.com` /
+`Passw0rd!123` (still in the local DB — reuse it or sign up your own):
+
+- **4.6** — unauthenticated POST returns `{"error":"You must be signed in"}` with
+  HTTP 401 and `Content-Type: application/json`. Note that Astro's CSRF check
+  rejects a POST with no `Origin` header first (403, plain text); a browser
+  `fetch` always sends one, as `/api/profile` already relies on.
+- **4.7** — calls 1–4 passed, call 5 onward returned 429 with
+  "You can run at most 5 analyses per 60 seconds…". Confirms the `RATE_LIMITER`
+  binding resolves through `import { env } from "cloudflare:workers"` under
+  `astro dev`.
+- **4.4** — a 3-competitor profile (@mkbhd, @kurzgesagt, @veritasium) returned
+  **HTTP 200 in 10.15s** with 5 ranked opportunities, scores 1.41–1.78, and one
+  grounded justification each. `@anthropic-ai/sdk` runs on workerd unmodified.
+- No profile saved → 400 naming the profile as the missing prerequisite.
+
+- **4.5** — two consecutive live runs returned **identical ordering**; scores
+  moved only in the 4th decimal (`1.7796 → 1.7797`) from view-count growth. One
+  row's score *fell* on +0 views, which is the median shifting under it — exactly
+  the drift mechanism the plan describes, and why exact equality is a unit-test
+  claim rather than a live one.
+- **4.8** — with a fourth, bogus `UCzzzzzzzzzzzzzzzzzzzzzz` competitor inserted
+  directly into `channel_profiles`, the run returned 200 with the full 5-row
+  ranking, `resolved: 3`, `requested: 4`, and the bogus id named in
+  `unresolved`. Removed afterwards; the profile is back to its three channels.
+- **4.9** — with the key genuinely unset: 5 opportunities, every score intact,
+  every `justification` null, `justifications_available: false`, and
+  `justifications_error` naming the missing configuration. The dashboard banner
+  reads "Anthropic API is not configured — analyses will run without
+  justifications."
+- **4.10** — HTTP 500, `Content-Type: application/json`,
+  `{"error":"YouTube Data API is not configured, so an analysis cannot run"}`,
+  plus the matching config banner. No crash, no HTML error page.
+
+**4.8 cannot be exercised through the UI.** Since the Phase 1 deviation,
+`/api/profile` resolves every competitor at save time and rejects a well-formed
+but non-existent `UC…` id with a 400, so a bogus competitor can only reach
+`channel_profiles` by direct DB insert (done here with the local service-role key
+against the REST API, then reverted).
+
+### Phase 4 finding — "unset a secret" means both `.env` *and* `.dev.vars`
+
+Removing `ANTHROPIC_API_KEY` from `.dev.vars` alone does **not** unset it under
+`astro dev`: the first 4.9 attempt still produced justifications and no banner,
+because `.env` carries the same key and Astro's dev pipeline reads it too. The
+plan's manual steps 7 and 8 ("Unset `ANTHROPIC_API_KEY`, restart") are therefore
+incomplete as written — both files have to lose the line, or the test silently
+passes while proving nothing. Worth folding into the manual protocol before
+anyone repeats it.
+
+### Note for Phase 5 — the LLM call *is* the latency
+
+Measured at 3 competitors: **10.15s / 9.96s / 9.30s** with justifications, and
+**1.22s** on the same profile with `ANTHROPIC_API_KEY` unset. The YouTube chain
+plus scoring is ~1.2s; the single batched Anthropic call is the remaining ~9s,
+already at the ~10s line the plan set for escalating to streamed NDJSON — and
+that is at `effort: "low"` with `maxRetries: 0`. Measure a 5-competitor run
+(row 5.12) before assuming the blocking POST holds; if it does not, the lever is
+this call, not the YouTube paging.

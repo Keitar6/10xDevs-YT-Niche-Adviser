@@ -35,7 +35,7 @@ export const POST: APIRoute = async (context) => {
 
   let body: { niche?: unknown; subNiche?: unknown; competitors?: unknown };
   try {
-    body = (await context.request.json()) as typeof body;
+    body = await context.request.json();
   } catch {
     return jsonError("Invalid JSON body", 400);
   }

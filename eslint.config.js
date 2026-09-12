@@ -70,7 +70,9 @@ const astroConfig = tseslint.config({
 
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
-  { ignores: ["src/lib/database.types.ts"] },
+  // Both are generated: `wrangler types` emits 15k lines of runtime typings,
+  // and `supabase gen types` the DB row types. Neither is ours to lint.
+  { ignores: ["src/lib/database.types.ts", "worker-configuration.d.ts"] },
   baseConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

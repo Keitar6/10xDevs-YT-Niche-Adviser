@@ -509,19 +509,19 @@ Out-of-band setup required before the feature works in production, in order:
 
 #### Automated
 
-- [ ] 4.1 Lint passes: `npm run lint`
-- [ ] 4.2 Build passes: `npm run build`
-- [ ] 4.3 Unit tests pass: `npm test`
+- [x] 4.1 Lint passes: `npm run lint`
+- [x] 4.2 Build passes: `npm run build`
+- [x] 4.3 Unit tests pass: `npm test`
 
 #### Manual
 
-- [ ] 4.4 A valid profile returns 200 with 5 ranked opportunities and justifications
-- [ ] 4.5 The scoring unit tests pass: identical input data yields identical scores and ordering (repeatability NFR); a second live run is ordering-stable, with scores drifting only by view-count growth
-- [ ] 4.6 An unauthenticated request returns 401 JSON, not HTML
-- [ ] 4.7 Rapid clicks trigger 429 with a message naming the limit and retry window
-- [ ] 4.8 A profile with one bogus competitor returns a ranking plus an accurate resolved-N-of-M summary
-- [ ] 4.9 With `ANTHROPIC_API_KEY` unset, the ranking returns with justifications omitted and the flag set
-- [ ] 4.10 With `YOUTUBE_API_KEY` unset, the response is a readable 500 naming the service
+- [x] 4.4 A valid profile returns 200 with 5 ranked opportunities and justifications
+- [x] 4.5 The scoring unit tests pass: identical input data yields identical scores and ordering (repeatability NFR); a second live run is ordering-stable, with scores drifting only by view-count growth
+- [x] 4.6 An unauthenticated request returns 401 JSON, not HTML
+- [x] 4.7 Rapid clicks trigger 429 with a message naming the limit and retry window
+- [x] 4.8 A profile with one bogus competitor returns a ranking plus an accurate resolved-N-of-M summary
+- [x] 4.9 With `ANTHROPIC_API_KEY` unset, the ranking returns with justifications omitted and the flag set
+- [x] 4.10 With `YOUTUBE_API_KEY` unset, the response is a readable 500 naming the service
 
 ### Phase 5: Dashboard UI
 

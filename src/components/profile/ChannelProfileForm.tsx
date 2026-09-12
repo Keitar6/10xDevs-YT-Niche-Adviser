@@ -73,7 +73,7 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ niche, subNiche, competitors: competitorRows.map((row) => row.value) }),
       });
-      const json = (await res.json()) as { profile?: ChannelProfile; error?: string };
+      const json: { profile?: ChannelProfile; error?: string } = await res.json();
 
       if (!res.ok || !json.profile) {
         setServerError(json.error ?? "Something went wrong");

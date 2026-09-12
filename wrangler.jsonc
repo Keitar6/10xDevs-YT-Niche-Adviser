@@ -12,4 +12,21 @@
   "observability": {
     "enabled": true,
   },
+  // Burst guard on /api/analyze. The budget being protected is the shared
+  // YouTube Data API quota (10,000 units/day per Google Cloud project), so the
+  // limiter is keyed on the authenticated user rather than on IP or path.
+  //
+  // `period` accepts only 10 or 60 — no other value validates. Enforcement is
+  // per Cloudflare location, not global, so this is a burst guard rather than a
+  // daily budget; local `wrangler dev` behaviour may not match production.
+  "ratelimits": [
+    {
+      "name": "RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 5,
+        "period": 60,
+      },
+    },
+  ],
 }
