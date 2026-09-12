@@ -7,25 +7,41 @@
 - **Project:** [`YT-Niche-Adviser`](https://linear.app/mateusz-yt-niche-advisor/project/yt-niche-adviser-1534140fd428) — linked to the GitHub repo via a project resource link
 - **Milestone:** `M-1: MVP core loop` (inside the project above), description copied verbatim from the GitHub milestone
 - **Snapshot taken:** 2026-09-07, created in one pass from `context/foundation/tasks-github.md` + full GitHub issue bodies (`gh issue list --state all`)
-- **Last hand-edit:** 2026-09-09 — `/10x-implement google-oauth-login` finished both plan phases (commits `b313653`, `5b47201`, `3bb6167`, `05a2e7b`); `MAT-5` moved `Todo` → `In Progress` and `status-ready` label removed to match. Not yet `Done` — that flip happens at `/10x-archive google-oauth-login` time, matching `roadmap.md`'s forward-only status convention (still `in-progress` there too).
-- **Last hand-edit:** 2026-09-09 — `/10x-plan` + `/10x-implement channel-profile-data-model` created and finished the plan's single phase (`channel_profiles` table, RLS, `updated_at` trigger, generated types); `MAT-6` moved `Todo` → `In Progress` and `status-ready` label removed to match. Not yet `Done` — same forward-only convention, flips at `/10x-archive channel-profile-data-model` time (`roadmap.md` also still `in-progress`).
+- **Last refresh:** 2026-09-12 — read live Linear state via `list_issues`, reconciled against `roadmap.md`, applied four status changes, then regenerated this file from the result. See "Refresh log" below.
 
 ## Milestone M-1 — active work (6 issues)
 
 | Issue | Roadmap ID | Type | Title | Linear status | Blocked by | Labels | GitHub source |
 |-------|------------|------|-------|----------------|------------|--------|----------------|
-| [MAT-5](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-5/f-01-domkniecie-must-have-logowania-google-oauth) | F-01 | Foundation | Domknięcie must-have logowania (Google OAuth) | In Progress | — | `roadmap-foundation` | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1) |
-| [MAT-6](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-6/f-02-model-danych-profilu-kanalu-rls-per-owner) | F-02 | Foundation | Model danych profilu kanału (RLS per-owner) | In Progress | — | `roadmap-foundation` | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) |
-| [MAT-7](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-7/s-01-uzytkownik-tworzy-i-edytuje-profil-kanalu) | S-01 | Slice | Użytkownik tworzy i edytuje profil kanału | Backlog | MAT-6 | `roadmap-slice`, `status-proposed` | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) |
-| [MAT-8](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-8/s-02-uzytkownik-uruchamia-analize-i-widzi-ranking-okazji-gwiazda) | S-02 | Slice (★ north star) | Użytkownik uruchamia analizę i widzi ranking okazji | Backlog | MAT-7 | `roadmap-slice`, `status-proposed` | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) |
+| [MAT-5](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-5/f-01-domkniecie-must-have-logowania-google-oauth) | F-01 | Foundation | Domknięcie must-have logowania (Google OAuth) | **Done** | — | `roadmap-foundation` | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1) |
+| [MAT-6](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-6/f-02-model-danych-profilu-kanalu-rls-per-owner) | F-02 | Foundation | Model danych profilu kanału (RLS per-owner) | **Done** | — | `roadmap-foundation` | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) |
+| [MAT-7](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-7/s-01-uzytkownik-tworzy-i-edytuje-profil-kanalu) | S-01 | Slice | Użytkownik tworzy i edytuje profil kanału | **Done** | MAT-6 | `roadmap-slice` | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) |
+| [MAT-8](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-8/s-02-uzytkownik-uruchamia-analize-i-widzi-ranking-okazji-gwiazda) | S-02 | Slice (★ north star) | Użytkownik uruchamia analizę i widzi ranking okazji | **In Progress** | MAT-7 | `roadmap-slice` | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) |
 | [MAT-9](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-9/s-03-uzytkownik-zapisuje-i-przeglada-okazje-contentowe) | S-03 | Slice | Użytkownik zapisuje i przegląda okazje contentowe | Backlog | MAT-8 | `roadmap-slice`, `status-proposed` | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) |
 | [MAT-10](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-10/question-shape-notes-quality-cross-check-nie-zostal-ukonczony) | — | Question | Shape-notes quality cross-check nie został ukończony | Todo, non-blocking | — | `question` | [#6](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/6) |
 
-**Dependency chain:** `MAT-6 → MAT-7 → MAT-8 (★) → MAT-9`, with `MAT-5` independent (can run in parallel). Ready now: **MAT-5** and **MAT-6**. Recommended next step: `MAT-6` (unblocks `MAT-7` → the north-star slice `MAT-8`).
+**Dependency chain:** `MAT-6 → MAT-7 → MAT-8 (★) → MAT-9`, with `MAT-5` independent. The chain is now unblocked up to the north star: **MAT-8 is the active item**; `MAT-9` remains blocked until it completes.
 
 Unlike the GitHub mirror (which encodes "Prerequisites" only as body text), the dependency chain here is a real Linear **blocking relation** (`blockedBy`/`blocks`), so Linear's own UI (and any automation reading it) can see the chain directly — not just read it out of the issue description.
 
 `MAT-8` (S-02, the north-star slice) also carries **High priority** in Linear — a field GitHub Issues doesn't have an equivalent for, added here to flag it as the highest-value/highest-risk item in the milestone.
+
+### MAT-8 progress (S-02, in flight)
+
+Implementation runs through `context/changes/analyze-and-rank-opportunities/plan.md`, five phases. A progress comment is posted on MAT-8 at each phase boundary.
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 1 | Foundation — secrets, config visibility, shared helpers, test harness | Done — `bac33fe` |
+| 2 | Scoring core — pure functions + unit tests | Next |
+| 3 | YouTube data client — three-call chain, bounded paging, reconciliation | Pending |
+| 4 | Analyze endpoint — auth, rate limit, orchestration, LLM justification | Pending |
+| 5 | Dashboard UI — trigger, ranked results, failure surfaces | Pending |
+
+Two deviations from the reviewed plan landed in Phase 1, both recorded in `change.md` and in the MAT-8 comment thread:
+
+1. Competitor input accepts `@handle` / channel URL / `UC…` id, resolved to a canonical id at **profile-save** time (the plan contracted a `UC`-only regex). `forHandle` cannot batch, so resolving at save keeps `/api/analyze` on its contracted single batched `channels.list` call.
+2. `competitor_channel_ids text[]` → `competitors jsonb` (`{id, handle, title}`), migration `20260912190947_competitors_as_objects.sql` — so the UI shows `@mkbhd` rather than a raw id, including after a reload.
 
 ## Parked / not planned (12 issues, all Canceled)
 
@@ -59,7 +75,9 @@ Created as **team-scoped labels** on `Mateusz` (not workspace-wide), same names/
 | `status-proposed` | `#fbca04` | Sequenced but blocked on an earlier item |
 | `question` | `#d876e3` | Open roadmap question, not yet a plannable item |
 
-Note: the workspace also ships three unrelated default labels (`Feature`, `Bug`, `Improvement`) from Linear's onboarding — not part of the roadmap mirror, left untouched. Four unrelated onboarding issues (`MAT-1`–`MAT-4`: "Get familiar with Linear", "Connect your tools", "Set up your teams", "Import your data") also pre-existed in the team and were left as-is.
+As of the 2026-09-12 refresh, `status-proposed` remains only on `MAT-9` — it is removed from an item once that item starts. `status-ready` is currently unused: items have moved straight from proposed to started.
+
+Note: the workspace also ships three unrelated default labels (`Feature`, `Bug`, `Improvement`) from Linear's onboarding — not part of the roadmap mirror, left untouched. Four unrelated onboarding issues (`MAT-1`–`MAT-4`: "Get familiar with Linear", "Connect your tools", "Set up your teams", "Import your data") also pre-existed in the team; they no longer appear in an active `list_issues` query and were left as-is.
 
 ## Mapping notes — how GitHub state translates to Linear
 
@@ -69,7 +87,23 @@ Linear has richer primitives than GitHub Issues for a couple of fields used here
 - **Closed as `not_planned` (GitHub)** → Linear state `Canceled` (not `Done` — these were never completed, they were descoped).
 - **GitHub "Prerequisites" body text** (e.g. "Prerequisites: #2 (F-02)") → real Linear `blockedBy` issue relations on MAT-7/MAT-8/MAT-9, in addition to keeping the text in the description for readability.
 - **North-star slice (★ in roadmap.md / GitHub title)** → additionally marked **High priority** in Linear (MAT-8), since GitHub Issues has no priority field to carry that signal.
+- **`roadmap.md` status → Linear state:** `done` → `Done`, `in-progress` → `In Progress`, `ready` → `Todo`, `proposed` → `Backlog`.
 - Each Linear issue description mirrors the full GitHub issue body (Outcome, Roadmap ID, PRD refs, Prerequisites, Parallel with, Blockers, Unknowns, Risk, Status) and ends with a link back to the source GitHub issue; a matching GitHub-URL attachment was also added to each Linear issue for one-click cross-navigation.
+
+## Refresh log
+
+**2026-09-12** — live state read via `list_issues` (team `Mateusz`, 18 issues) and reconciled against `roadmap.md`. No drift had occurred *in* Linear; the gap was that Linear had never been advanced past 2026-09-09. Four changes applied:
+
+| Issue | Was | Now | Driven by |
+|-------|-----|-----|-----------|
+| MAT-5 (F-01) | In Progress | Done | `roadmap.md` F-01 `done` |
+| MAT-6 (F-02) | In Progress | Done | `roadmap.md` F-02 `done` |
+| MAT-7 (S-01) | Backlog | Done (− `status-proposed`) | `roadmap.md` S-01 `done` |
+| MAT-8 (S-02) | Backlog | In Progress (− `status-proposed`) | `roadmap.md` S-02 `in-progress`; `/10x-implement` Phase 1 landed |
+
+A Phase 1 progress comment was also posted to MAT-8.
+
+**Known inconsistency, not resolved by this refresh:** `roadmap.md` marks F-02 and S-01 `done`, but their `change.md` files still read `implemented` and `impl_reviewed` respectively, and neither folder has been moved to `context/archive/` (only `google-oauth-login` has). The earlier convention recorded here was that `Done` flips at `/10x-archive` time. This refresh followed `roadmap.md`, since this file's own header names it the source of truth — but the two are genuinely out of step, and running `/10x-archive channel-profile-data-model` and `/10x-archive channel-profile-crud` would close the gap properly.
 
 ## Keeping this in sync
 
