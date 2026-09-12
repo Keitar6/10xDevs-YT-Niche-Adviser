@@ -466,16 +466,16 @@ Out-of-band setup required before the feature works in production, in order:
 
 #### Automated
 
-- [x] 1.1 Lint passes: `npm run lint`
-- [x] 1.2 Build passes: `npm run build`
-- [x] 1.3 Test runner executes: `npm test`
+- [x] 1.1 Lint passes: `npm run lint` — bac33fe
+- [x] 1.2 Build passes: `npm run build` — bac33fe
+- [x] 1.3 Test runner executes: `npm test` — bac33fe
 
 #### Manual
 
-- [x] 1.4 With no `YOUTUBE_API_KEY`, the dashboard shows a config banner naming YouTube as unconfigured
-- [x] 1.5 Saving a profile with a valid `UC...` competitor ID still succeeds
-- [x] 1.6 `@handle`, a channel URL, or a bare word is rejected with a format message
-- [x] 1.7 Existing profile save flow unchanged after the `jsonError` move
+- [x] 1.4 With no `YOUTUBE_API_KEY`, the dashboard shows a config banner naming YouTube as unconfigured — bac33fe
+- [x] 1.5 Saving a profile with a valid `UC...` competitor ID still succeeds — bac33fe
+- [x] 1.6 `@handle`, a channel URL, or a bare word is rejected with a format message — bac33fe
+- [x] 1.7 Existing profile save flow unchanged after the `jsonError` move — bac33fe
 
 ### Phase 2: Scoring core — pure functions and unit tests
 
