@@ -83,3 +83,33 @@ re-requesting them.
 
 **Local DB was reset** to apply the migration, so local auth users and profiles
 are gone — sign up again before manual testing.
+
+### Phase 3 manual verification deferred to after Phase 4
+
+Rows 3.5–3.8 are intentionally left `- [ ]` at the Phase 3 boundary. Phase 3
+ships `fetchCompetitorVideos` with no caller — `/api/analyze` is Phase 4 and the
+dashboard section is Phase 5 — so there is no UI through which to confirm them,
+which is the reason given for deferring.
+
+What was already demonstrated, via a live scratch run against the real API
+(harness kept out of the repo, in the session scratchpad):
+
+- **3.5** — MKBHD 20, Kurzgesagt 7, Veritasium 14, Fireship 20 long-form videos;
+  every channel's minimum duration above 300s, so the Shorts filter held.
+- **3.6** — Fireship alone: `channels -> playlistItems(first) ->
+  playlistItems(next) -> videos(n=50)`. Paging stopped on `MAX_PAGES`, and the
+  first `videos.list` came strictly after the last `playlistItems`.
+- **3.7** — `UCzzzzzzzzzzzzzzzzzzzzzz` landed in `unresolved` without throwing.
+- **3.8** — 10 calls (= 10 units, every call in this chain costs 1 regardless of
+  `part` count) for 4 resolved + 1 bogus competitor. **Not yet confirmed against
+  the Google Cloud console**, which is the half only the user can read.
+
+Re-confirm all four through the UI once Phase 4/5 land.
+
+### Deviation from plan — Phase 3, comment wording
+
+Success criterion 3.4 greps `src/` for the forbidden search endpoint. The module
+comment explaining *why* that endpoint is never used named it literally, which
+made the criterion fail on its own documentation. The comment now says "the
+search endpoint" so the grep stays a real check rather than one that permanently
+trips.
