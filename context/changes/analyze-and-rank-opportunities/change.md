@@ -1,7 +1,7 @@
 ---
 change_id: analyze-and-rank-opportunities
 title: Analyze and rank opportunities
-status: planned
+status: plan_reviewed
 created: 2026-09-10
 updated: 2026-09-12
 archived_at: null

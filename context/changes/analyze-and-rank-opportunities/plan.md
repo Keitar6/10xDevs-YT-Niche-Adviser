@@ -17,18 +17,18 @@ This is the slice that proves the product's core hypothesis — curated competit
 - **`src/lib/services/` does not exist** despite CLAUDE.md naming it. All logic to date lives inline in route handlers. This slice has four separable concerns (YouTube client, Shorts filter, scoring, LLM) and is the change that forces the directory into being.
 - **No test runner.** `package.json` has no `test` script, zero `*.test.*` files exist, `ci.yml` runs lint + build only. Three prior changes each recorded this and used a phase-gated manual protocol instead.
 - **`src/components/ui/` holds only `LibBadge.astro`, `button.tsx`, and `dialog.tsx`.** No card, table, skeleton, alert, badge, or toast.
-- **Observability is absent** — no logger, no Sentry, `no-console: "warn"` in `eslint.config.js:23`, and `wrangler tail` is live-only.
+- **Observability is partial, not absent.** There is no logger and no Sentry, and `no-console: "warn"` in `eslint.config.js:23` discourages ad-hoc logging — but `wrangler.jsonc:11-13` already sets `"observability": { "enabled": true }`, so Workers Logs retains per-invocation records including **CPU time**. That is the one diagnostic this slice actually needs (see Performance Considerations), and it requires no new code — only reading the dashboard after a deploy. `wrangler tail` remains live-only, but it is not the only option.
 - **Secrets follow a fixed six-point plumbing path** (`astro.config.mjs` → consuming module → `.env` → `.dev.vars` → `ci.yml` → `wrangler secret put`). `.env.example` and `.dev.vars` do not exist despite the README referencing the former.
 
 ## Desired End State
 
 A logged-in user with a saved profile sees an "Analyze" button on `/dashboard`. Clicking it disables the button, shows a spinner, and within a few seconds renders a ranked list of up to 5 opportunities — each showing the video title, its channel, a numeric `outlier_score`, and a one-sentence justification. Competitors that could not be resolved, or that had too little data to score, are named explicitly rather than silently dropped. Any failure — missing API key, YouTube quota exceeded, rate limit hit, LLM unavailable — produces a readable message, never an empty or broken screen.
 
-**Verification:** run an analysis against a real profile of 3–5 valid competitor channels and confirm a ranking appears with plausible scores; confirm the same profile analyzed twice returns identical scores and identical ordering; confirm a profile containing one bogus competitor ID still produces a ranking plus a "resolved N of M" notice; confirm the ranking is empty-but-explained (not blank) when no competitor clears the minimum-sample floor.
+**Verification:** run an analysis against a real profile of 3–5 valid competitor channels and confirm a ranking appears with plausible scores; confirm the scoring unit tests demonstrate the repeatability NFR — identical scores and identical ordering for identical input data (live view counts drift between runs, so two live runs are not expected to match exactly); confirm a profile containing one bogus competitor ID still produces a ranking plus a "resolved N of M" notice; confirm the ranking is empty-but-explained (not blank) when no competitor clears the minimum-sample floor.
 
 ### Key Discoveries:
 
-- **The call chain is a hard contract, not an optimization.** `channels.list(part=contentDetails, id=<batched>)` → `playlistItems.list(playlistId, maxResults=50)` → `videos.list(part=snippet,statistics,contentDetails, id=<up to 50>)`. At ~3 units per competitor this is ~15 units per run (~650 runs/day against the 10,000/day project bucket). `search.list` costs 100 units and would cap the product at ~20 runs/day — **any use of `search.list` in this slice is a defect.**
+- **The call chain is a hard contract, not an optimization.** `channels.list(part=contentDetails,snippet, id=<batched>)` → `playlistItems.list(playlistId, maxResults=50)` → `videos.list(part=snippet,statistics,contentDetails, id=<up to 50>)`. At ~3 units per competitor this is ~15 units per run (~650 runs/day against the 10,000/day project bucket). `search.list` costs 100 units and would cap the product at ~20 runs/day — **any use of `search.list` in this slice is a defect.**
 - **`statistics.viewCount` is a JSON string, not a number** (`yt-api-docs.md`). Arithmetic on the raw value concatenates instead of summing. Schemas need `z.coerce.number()`.
 - **A `part` the request did not ask for is absent from the response object, not `null`.** Schemas must model missing parts as absent keys (`.optional()`), not nullable fields.
 - **There is no Shorts flag anywhere in the API.** A query against a 3,015-snippet index of the official docs returned `No documentation matched this query`. Shorts are only identifiable after `videos.list` returns a duration, so `playlistItems` paging pays quota for Shorts it then discards — "50 uploads" does not mean "50 long-form videos."
@@ -69,7 +69,9 @@ The ordering is deliberate: scoring is pure and fully testable before any networ
 
 **Shorts must be filtered before the baseline is computed.** The natural implementation order — fetch, compute median, filter, rank — is wrong and produces silently degraded results on every channel that posts Shorts. The correct order is fetch → filter Shorts → compute median over what remains → apply the minimum-sample floor → rank. The 7-day recency rule is different and applies **only at the ranking step**: recent videos still count toward the median, they just cannot be returned as opportunities.
 
-**Paging is data-dependent and must be bounded on two axes.** A channel posting mostly Shorts yields few long-form videos per page, so a naive "page until N long-form collected" loop can page indefinitely. The loop stops at whichever comes first: `TARGET_LONGFORM_PER_CHANNEL` reached, or an item older than `MAX_WINDOW_DAYS`, or the playlist is exhausted. Both bounds are required; either alone is unbounded in one direction.
+**Paging is data-dependent and must be bounded without knowing durations.** A channel posting mostly Shorts yields few long-form videos per page, so a naive "page until N long-form collected" loop can page indefinitely — and worse, it cannot even be written as stated, because duration is only known after `videos.list`. Stopping on a *confirmed* long-form count would force a `videos.list` call inside the paging loop, turning the three-call chain into an interleaved one and blowing the quota figures below.
+
+The resolution: **the paging loop never looks at durations.** It bounds on the two signals `playlistItems` actually carries — an item published earlier than `MAX_WINDOW_DAYS`, or `MAX_PAGES` pages (2, i.e. at most 100 candidates per channel), or no `nextPageToken`. Only then does `videos.list` run over the collected candidates, in 50-ID batches; durations arrive, Shorts are dropped, and the first `TARGET_LONGFORM_PER_CHANNEL` survivors form the sample. `TARGET_LONGFORM_PER_CHANNEL` is therefore a *cap on the sample*, not a paging stop condition. The cost is a handful of Shorts paid for and discarded — which is exactly what the quota budget already assumes.
 
 **CPU, not wall-clock, is the runtime budget.** Awaiting `fetch()` is free; parsing and validating the video records is not. Keep scoring to a single pass over each channel's array and avoid re-sorting — a CPU overrun on the free plan surfaces as an intermittent Error 1102, which is nearly undiagnosable with no logger.
 
@@ -95,31 +97,35 @@ Everything the later phases assume exists: two new secrets plumbed through all s
 
 **Intent**: `.env.example` does not exist despite `README.md:36,41,84,118` instructing readers to copy it; `.dev.vars` does not exist either, so Cloudflare local dev has no secret source. Both must be written, and CI's build step needs the new keys or the build sees `undefined`.
 
-**Contract**: `.env.example` lists all four variable names with placeholder values and is committed. `.dev.vars` mirrors it with real values and stays gitignored (`.gitignore:14`). The `env:` block on the `npm run build` step in `ci.yml:22-24` gains both keys, sourced from repository secrets. Production values are set out of band via `wrangler secret put` — note this in the plan's Migration Notes, not in code.
+**Contract**: `.env.example` lists all four variable names with placeholder values and is committed. `.dev.vars` mirrors it with real values and stays gitignored (`.gitignore:20`). The `env:` block on the `npm run build` step in `ci.yml:22-24` gains both keys, sourced from repository secrets. Production values are set out of band via `wrangler secret put` — note this in the plan's Migration Notes, not in code.
 
 #### 3. Make a missing key visible on every page load
 
-**File**: `src/lib/config-status.ts`
+**Files**: `src/lib/config-status.ts`, `src/layouts/Layout.astro`
 
 **Intent**: Because secrets are optional and CI auto-deploys, a missing key ships a silently broken Analyze button. The existing banner mechanism is the countermeasure and already renders app-wide.
 
 **Contract**: Add two `ConfigStatus` entries — one for YouTube, one for Anthropic — each `configured` on the presence of its key, following the existing Supabase entry's shape. Per the language decision, all three `message` strings are **English**; rewrite the existing Polish Supabase message to match rather than adding new inconsistency.
 
+**The message strings are not the whole English pass.** `src/layouts/Layout.astro:23,30` hardcodes the banner's chrome outside the `ConfigStatus` objects — `<strong>Uwaga:</strong>` and the `"Dokumentacja"` fallback link label — so every banner, including the two new ones, would still render Polish. Translate both literals in the same edit (`Warning:` / `Documentation`), or the slice does not actually remove the inconsistency the language decision claims.
+
 #### 4. Share the JSON error helper
 
 **Files**: `src/lib/http.ts` (new), `src/pages/api/profile.ts`
 
-**Intent**: `jsonError` is defined locally in `profile.ts:19-24` and imported by nobody. S-02 is its second consumer; the prior impl-review already flagged the unshared error envelope as a repeat-finding risk.
+**Intent**: `jsonError` is defined locally in `profile.ts:20-25` and imported by nobody. S-02 is its second consumer; the prior impl-review already flagged the unshared error envelope as a repeat-finding risk.
 
 **Contract**: Move `jsonError(message, status)` to `src/lib/http.ts` unchanged — returns a `Response` with `{ error: string }` and `Content-Type: application/json`. Update `profile.ts` to import it. No behaviour change.
 
-#### 5. Vitest harness
+#### 5. Vitest harness and the Anthropic dependency
 
 **Files**: `package.json`, `vitest.config.ts` (new), `.github/workflows/ci.yml`
 
 **Intent**: The decision to hand-roll the statistics was justified on the assumption they would be unit-tested, and the repeatability NFR is a property no manual click-through verifies.
 
 **Contract**: Add `vitest` as a dev dependency and a `test` script (`vitest run`). Config scoped to `src/lib/services/**/*.test.ts` only — no jsdom, no React testing, no setup files. Add a `npm test` step to CI after lint. Keep the harness minimal: this phase adds no tests, only the ability to run them.
+
+Also add **`@anthropic-ai/sdk`** as a runtime dependency in this phase, even though its first consumer is Phase 4. No phase installed it otherwise, and `npm run build` would fail on the first line of `justify.ts`. Installing it here keeps every phase's build green.
 
 #### 6. Competitor-ID format validation
 
@@ -162,13 +168,15 @@ The product's core hypothesis, expressed as pure functions with no I/O and no fr
 
 **Intent**: Turn a channel's list of videos into scored, ranked opportunities, applying every sampling rule decided during planning. Pure and synchronous so it is trivially testable and cheap against the 10ms CPU budget.
 
-**Contract**: Exports the tuning constants as named values in one place — `SHORTS_MAX_SECONDS = 300`, `MIN_RANKABLE_AGE_DAYS = 7`, `MIN_SAMPLE_SIZE = 5`, `TARGET_LONGFORM_PER_CHANNEL = 20`, `MAX_WINDOW_DAYS = 180` — so all of them are tunable without hunting through logic.
+**Contract**: Exports the tuning constants as named values in one place — `SHORTS_MAX_SECONDS = 300`, `MIN_RANKABLE_AGE_DAYS = 7`, `MIN_SAMPLE_SIZE = 5`, `TARGET_LONGFORM_PER_CHANNEL = 20`, `MAX_WINDOW_DAYS = 180`, `MAX_PAGES = 2` — so all of them are tunable without hunting through logic.
 
 Core functions:
 - `median(values: number[]): number` — sorted middle, mean of the two middles for even counts. Returns `0` (or throws, documented either way) for an empty array; this case must be unreachable because the min-sample floor runs first.
 - `isShort(durationSeconds: number): boolean` — `<= SHORTS_MAX_SECONDS`.
 - `parseIsoDuration(iso: string): number` — ISO-8601 to seconds. YouTube never emits years, months, or weeks for a video, so a compact regex over hours/minutes/seconds is sufficient; no dependency.
-- `scoreChannel(videos, now)` — the ordered pipeline: exclude Shorts → if fewer than `MIN_SAMPLE_SIZE` remain, return a skipped result naming the channel and its count → compute the median over the remaining set → score every video as `viewCount / median` → return only videos at least `MIN_RANKABLE_AGE_DAYS` old as rankable, while the younger ones remain in the baseline.
+- `scoreChannel(videos, now)` — the ordered pipeline: exclude Shorts → if fewer than `MIN_SAMPLE_SIZE` remain, return a skipped result naming the channel and its count → compute the median over the remaining set → **if the median is `0`, return a skipped result on the same path, with its own reason string** → score every video as `viewCount / median` → return only videos at least `MIN_RANKABLE_AGE_DAYS` old as rankable, while the younger ones remain in the baseline.
+
+  The zero-median guard is not theoretical: the sample floor guarantees a non-empty array but not a non-zero median, and three of five long-form videos at 0 views is enough. Without it every video on that channel scores `Infinity` (or `NaN` for `0 / 0`) — `Infinity` sorts straight to rank 1 and renders as the literal string "Infinity" in the results row, while `NaN` compares inconsistently and breaks the deterministic ordering the NFR requires. A divide-by-zero must never reach the ranking.
 - `rankOpportunities(perChannelResults, limit = 5)` — flatten, sort by `outlier_score` descending, take `limit`. Ties broken by a stable secondary key (published date descending, then video ID) so ordering is deterministic across runs, as the NFR requires.
 
 The `now` parameter is injected rather than read from `Date.now()` inside, so age-dependent behaviour is testable.
@@ -179,7 +187,7 @@ The `now` parameter is injected rather than read from `Date.now()` inside, so ag
 
 **Intent**: Cover the cases where silent wrongness hides — wrong numbers still look like numbers in the UI.
 
-**Contract**: Tests for: `median` on odd, even, single-element, and unsorted input; `parseIsoDuration` on `PT15M51S`, `PT1H2M3S`, `PT45S`, `PT2H`; the Shorts boundary at exactly 300s (excluded) and 301s (included); a channel that falls below the sample floor returning skipped rather than a score; a video younger than 7 days being excluded from the ranking **but still moving the median**; deterministic ordering when two videos tie on score; and the documented empty-array behaviour of `median`.
+**Contract**: Tests for: `median` on odd, even, single-element, and unsorted input; `parseIsoDuration` on `PT15M51S`, `PT1H2M3S`, `PT45S`, `PT2H`; the Shorts boundary at exactly 300s (excluded) and 301s (included); a channel that falls below the sample floor returning skipped rather than a score; a channel whose median is `0` returning skipped rather than `Infinity`/`NaN` scores; a video younger than 7 days being excluded from the ranking **but still moving the median**; deterministic ordering when two videos tie on score; and the documented empty-array behaviour of `median`.
 
 ### Success Criteria:
 
@@ -214,9 +222,11 @@ The three-call chain behind zod schemas, with bounded paging and explicit reconc
 **Contract**: Module-scope zod schemas for the three response shapes, modelling absent parts as absent keys (`.optional()`) and `statistics.viewCount` via `z.coerce.number()`. Exported entry point takes the competitor ID list and the API key and returns, per channel, the validated long-form video records plus a reconciliation summary naming which requested IDs produced no channel.
 
 Call sequence, exactly as contracted:
-1. `channels.list(part=contentDetails, id=<all competitor IDs, comma-joined>)` — one call for the whole set; read the uploads playlist from `contentDetails.relatedPlaylists.uploads` rather than string-munging the channel ID. IDs absent from `items` are the unresolved set.
-2. `playlistItems.list(playlistId, part=snippet,contentDetails, maxResults=50)` per channel, paging via `nextPageToken`. **Stop at whichever comes first**: `TARGET_LONGFORM_PER_CHANNEL` long-form videos confirmed, an item older than `MAX_WINDOW_DAYS`, or no `nextPageToken`. Because duration is unavailable here, the long-form count is only known after step 3 — so the loop collects candidate IDs and evaluates the stop condition against the running confirmed count.
-3. `videos.list(part=snippet,statistics,contentDetails, id=<up to 50 comma-joined>)` — batch IDs 50 per call. Requesting three parts costs the same one unit as requesting one, so never split parts across calls.
+1. `channels.list(part=contentDetails,snippet, id=<all competitor IDs, comma-joined>)` — one call for the whole set; read the uploads playlist from `contentDetails.relatedPlaylists.uploads` rather than string-munging the channel ID. IDs absent from `items` are the unresolved set.
+
+   **`snippet` is requested here for a reason, not by habit.** The Desired End State promises that competitors which resolved but were skipped by the sample floor are *named*; `snippet.title` is the only place a channel title is available for a channel whose videos never get scored, and an unrequested part is simply absent from the response (see Key Discoveries). Requesting it costs the same single unit. Store `snippet.title` per resolved channel and carry it through to the reconciliation summary. Unresolved IDs have no title by definition — report those as the raw `UC...` string the user typed.
+2. `playlistItems.list(playlistId, part=snippet,contentDetails, maxResults=50)` per channel, paging via `nextPageToken`, collecting candidate video IDs. **The loop stops on duration-independent signals only** — whichever comes first: an item published earlier than `MAX_WINDOW_DAYS`, `MAX_PAGES` (2) pages fetched, or no `nextPageToken`. It must **not** try to stop on a confirmed long-form count: duration is unavailable at this step, and evaluating it would require calling `videos.list` inside the loop, which breaks the three-call chain and the quota budget. The `TARGET_LONGFORM_PER_CHANNEL` cap is applied in step 3, after durations are known.
+3. `videos.list(part=snippet,statistics,contentDetails, id=<up to 50 comma-joined>)` — batch the collected candidate IDs 50 per call. Requesting three parts costs the same one unit as requesting one, so never split parts across calls. Durations arrive here: drop the Shorts, then take the first `TARGET_LONGFORM_PER_CHANNEL` survivors in playlist order as the channel's sample.
 
 Fan-out across channels uses `Promise.all`; with at most 5 competitors this stays under Cloudflare's limit of 6 simultaneous outgoing connections. A per-video fan-out would not, and is forbidden.
 
@@ -234,7 +244,7 @@ Errors are classified rather than collapsed: HTTP 403 carrying `quotaExceeded` i
 #### Manual Verification:
 
 - A scratch invocation against 3–5 real channel IDs returns the expected number of long-form videos per channel
-- A deliberately Shorts-heavy channel terminates paging rather than looping, and does so within the window bound
+- A deliberately Shorts-heavy channel terminates paging rather than looping, stopping on the window or `MAX_PAGES` bound — and `videos.list` is called only after paging ends, never inside the loop
 - A bogus-but-well-formed ID (`UC` + 22 valid characters that no channel uses) appears in the unresolved set rather than throwing
 - Observed quota consumption for one run is in the expected range (~15 units for 5 competitors), confirmed in the Google Cloud console
 
@@ -256,7 +266,11 @@ The route that ties it together: auth, rate limiting, profile read, orchestratio
 
 **Intent**: Stop one user hammering Analyze from draining the shared 10,000 units/day project bucket.
 
-**Contract**: Add a Rate Limiting binding (`ratelimit`) with a short-window configuration — on the order of 5 requests per 60-second period — alongside the existing `ASSETS` binding. Note in a comment that enforcement is per Cloudflare location, so this is a burst guard rather than a global daily budget.
+**Contract**: Add a `ratelimits` array alongside the existing `assets` binding, with one entry: `name: "RATE_LIMITER"`, an integer `namespace_id` unique within the account (e.g. `"1001"`), and `simple: { limit: 5, period: 60 }`. **`period` accepts only `10` or `60`** — no other value validates. Note in a comment that enforcement is per Cloudflare location, so this is a burst guard rather than a global daily budget.
+
+**Access is not `locals.runtime`.** `Astro.locals.runtime` was **removed in `@astrojs/cloudflare` v13 / Astro 6**, and this project is on `@astrojs/cloudflare ^13.5.0` + `astro ^6.3.1`. Every tutorial written against v12 uses `context.locals.runtime.env.X`; that pattern no longer exists here. The binding is reached with `import { env } from "cloudflare:workers"`, then `await env.RATE_LIMITER.limit({ key })`.
+
+**Typing**: `src/env.d.ts` declares `App.Locals` with `user` only and the project has no `Env` type, so the binding would be untyped — a `no-unsafe-*` error under `strictTypeChecked` (`eslint.config.js:15`). Generate and commit the worker types (`wrangler types`) and add the generated file to `tsconfig.json`'s include if it is not already covered by `**/*`.
 
 #### 2. LLM justification module
 
@@ -268,7 +282,7 @@ The route that ties it together: auth, rate limiting, profile read, orchestratio
 
 The prompt carries, per opportunity: video title, channel title, `outlier_score`, the channel's median, sample size, and publication age. It asks for one sentence per opportunity explaining *why this topic is worth recording next*, in **English**, grounded in the numbers supplied rather than invented context.
 
-Returns justifications on success. On any failure — including a schema mismatch — it returns a typed failure the caller can degrade on, never throwing past the route. Errors are caught on the typed chain (`RateLimitError` → `APIStatusError` → `APIConnectionError`), not one broad class.
+Returns justifications on success. On any failure — including a schema mismatch — it returns a typed failure the caller can degrade on, never throwing past the route. Errors are caught on the typed chain, most specific first — `Anthropic.RateLimitError` → `Anthropic.APIError` → `Anthropic.APIConnectionError` — not one broad class. Note these are the **TypeScript** SDK's class names: there is no `APIStatusError` in this SDK (that is the Python SDK's name), and all status errors extend `Anthropic.APIError` with a typed `status` field.
 
 #### 3. The analyze route
 
@@ -276,16 +290,16 @@ Returns justifications on success. On any failure — including a schema mismatc
 
 **Intent**: The single orchestration point, and the only place that decides what the user sees when something fails.
 
-**Contract**: `POST`, JSON in and out, following `profile.ts`'s conventions — self-guarded auth (middleware's `PROTECTED_ROUTES` covers only `/dashboard`, never `/api/*`), zod at module scope, `jsonError` from `src/lib/http.ts` for every failure exit. Body parsing, if any body is read at all, is guarded — `profile.ts:31`'s unguarded `request.json()` was an impl-review finding and must not be copied.
+**Contract**: `POST`, JSON in and out, following `profile.ts`'s conventions — self-guarded auth (middleware's `PROTECTED_ROUTES` covers only `/dashboard`, never `/api/*`), zod at module scope, `jsonError` from `src/lib/http.ts` for every failure exit. Body parsing, if any body is read at all, is guarded in `try/catch` returning a 400 — follow the pattern now at `profile.ts:33-37`, which is the fixed form of the unguarded `request.json()` the prior impl-review flagged (fixed in `677c648`). Do not reintroduce the unguarded shape.
 
 Ordered pipeline, each step with its own failure exit:
 1. No `context.locals.user` → 401.
-2. Rate limit exceeded → **429 with a message naming the limit and when to retry**, not a generic failure.
-3. Missing `YOUTUBE_API_KEY` → 500 naming the unconfigured service, mirroring `profile.ts:47-49`'s treatment of a null Supabase client.
+2. Rate limit exceeded → **429 with a message naming the limit and when to retry** (5 runs per 60 seconds), not a generic failure. Key the limiter on the authenticated user — `env.RATE_LIMITER.limit({ key: context.locals.user.id })` — not on IP or path: the budget being protected is the shared YouTube quota, which is consumed per user, and an IP key would rate-limit co-located users against each other. This step runs after the auth check for exactly that reason.
+3. Missing `YOUTUBE_API_KEY` → 500 naming the unconfigured service, mirroring `profile.ts:48-51`'s treatment of a null Supabase client.
 4. No profile, or a profile with no competitors → 400 telling the user to set up their profile first.
 5. YouTube quota exceeded → a distinct, readable message, not a generic upstream error. This is the `quotaExceeded` case the archived OAuth impl-review's skipped F1 finding predicted would recur.
 6. Zero competitors resolved → 200 with an empty ranking and an explanation naming the unresolved IDs. **An empty result is a successful response with a reason, never a bare empty list** — the PRD guardrail is explicit that a click never ends in unexplained emptiness.
-7. All competitors skipped by the sample floor → 200 with an empty ranking naming them and their counts.
+7. All competitors skipped by the sample floor (or by the zero-median guard) → 200 with an empty ranking naming them by **channel title** (from `channels.list`'s `snippet.title`, not the raw ID) along with their counts and the reason each was skipped.
 8. LLM failure → 200 with the full ranking, justifications omitted, and a flag the UI renders as a notice.
 
 Success returns 200 with the ranked opportunities and the run metadata the UI needs: which competitors resolved, which were skipped and why, and whether justifications are present.
@@ -309,7 +323,7 @@ Success returns 200 with the ranked opportunities and the run metadata the UI ne
 #### Manual Verification:
 
 - A signed-in user with a valid profile gets a 200 carrying 5 ranked opportunities with justifications
-- The same profile analyzed twice returns identical scores and identical ordering (the repeatability NFR)
+- The scoring unit tests pass: identical input data yields identical scores and identical ordering (the repeatability NFR as the PRD states it — "na tych samych danych wejściowych"). Two live runs are **not** expected to match exactly: view counts grow between runs, which moves the channel median, and a video crossing `MIN_RANKABLE_AGE_DAYS` changes set membership. Do not "fix" that drift with caching — caching is out of scope
 - An unauthenticated request returns 401 JSON, not an HTML error
 - Clicking Analyze rapidly triggers the 429 path, and the message states the limit and when to retry
 - A profile with one bogus competitor still returns a ranking plus an accurate "resolved N of M" summary
@@ -383,6 +397,7 @@ An empty ranking always renders its explanation — never a bare "no results".
 - With `ANTHROPIC_API_KEY` unset, the ranking renders with a visible notice that justifications are unavailable
 - Stopping the dev server mid-request surfaces a readable connection error, not a silent reset
 - Measured p95 for a 5-competitor run is recorded — if it exceeds ~10s, note it as the trigger for escalating to streamed progress in a follow-up
+- **CPU time** per invocation for a 5-competitor run is read from Workers Logs after the smoke deploy and recorded separately from wall-clock — at or near the free plan's 10ms ceiling, the escalation is the $5/mo Workers Paid plan (`infrastructure.md:87`)
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful.
 
@@ -400,19 +415,25 @@ An empty ranking always renders its explanation — never a bare "no results".
 
 ### Manual Testing Steps:
 
+**Run the rate-limit test last.** The limiter allows 5 runs per 60 seconds, so tripping it blocks every subsequent Analyze click for the rest of the window. Ordering it last means no other step has to wait; if you do need to re-run something after it, wait a full 60 seconds. Note also that enforcement is per Cloudflare location, so local `wrangler dev` behaviour may not match production exactly.
+
 1. Run `npm run dev` with all four secrets set, sign in, and confirm no config banner appears.
-2. Save a profile with 3 valid `UC...` competitor IDs, click Analyze, and confirm a ranking of up to 5 opportunities with scores and justifications.
-3. Click Analyze again on the unchanged profile — confirm identical scores and identical ordering.
-4. Click Analyze repeatedly to trip the rate limit; confirm the toast names the limit and the retry window.
-5. Edit the profile to include one well-formed but non-existent `UC...` ID; re-run and confirm the ranking still appears alongside an accurate "resolved N of M" notice.
-6. Unset `ANTHROPIC_API_KEY`, restart, and confirm the ranking renders with justifications omitted and a visible notice.
-7. Unset `YOUTUBE_API_KEY`, restart, and confirm both the config banner and a readable error on click.
-8. Attempt to save a profile with an `@handle` or a channel URL; confirm rejection with a message naming the expected format.
-9. Record the wall-clock time of a 5-competitor run for the p95 note.
+2. Attempt to save a profile with an `@handle` or a channel URL; confirm rejection with a message naming the expected format.
+3. Save a profile with 3 valid `UC...` competitor IDs, click Analyze, and confirm a ranking of up to 5 opportunities with scores and justifications.
+4. Click Analyze again on the unchanged profile — confirm the ordering is stable and scores move only with live view-count drift. Exact equality is verified by the scoring unit tests, not here.
+5. Record the wall-clock time of that 5-competitor run for the p95 note, and read its CPU time from Workers Logs after the smoke deploy.
+6. Edit the profile to include one well-formed but non-existent `UC...` ID; re-run and confirm the ranking still appears alongside an accurate "resolved N of M" notice.
+7. Unset `ANTHROPIC_API_KEY`, restart, and confirm the ranking renders with justifications omitted and a visible notice.
+8. Unset `YOUTUBE_API_KEY`, restart, and confirm both the config banner and a readable error on click.
+9. **Last:** restore the keys and click Analyze repeatedly to trip the rate limit; confirm the toast names the limit (5 per 60s) and the retry window. Wait 60 seconds before any further manual run.
 
 ## Performance Considerations
 
-Wall-clock time is unbounded for HTTP-triggered Workers and awaiting `fetch()` costs no CPU, so a multi-second analysis is architecturally fine. The real budget is the free plan's **10ms CPU**, consumed by JSON parsing and zod validation of the video records. With the competitor cap of 5 and `TARGET_LONGFORM_PER_CHANNEL = 20`, the worst case is roughly 100 validated records plus the Shorts that were paged through and discarded — comfortably bounded, which is exactly what decision D1's cap bought. Scoring is a single pass per channel plus one sort; `infrastructure.md`'s risk register already prescribes keeping it lightweight, and an overrun would surface as an intermittent Error 1102 rather than a clean failure.
+Wall-clock time is unbounded for HTTP-triggered Workers and awaiting `fetch()` costs no CPU, so a multi-second analysis is architecturally fine. The real budget is the free plan's **10ms CPU**, consumed by JSON parsing and zod validation of the video records. With the competitor cap of 5, `MAX_PAGES = 2` and `TARGET_LONGFORM_PER_CHANNEL = 20`, the work is *bounded* — at most ~500 candidate records validated, ~100 scored — which is what decision D1's cap bought. Scoring is a single pass per channel plus one sort.
+
+**Bounded is not the same as under 10ms, and this is not assumed — it is measured.** `infrastructure.md:55,62,87` makes this the pre-mortem's headline failure precisely because an overrun surfaces as an intermittent Error 1102 with no clean error, and the team in that scenario didn't notice for days. The measurement is cheap: `observability` is already enabled on the Worker, so Workers Logs records CPU time per invocation. After the Phase 4 smoke deploy (Migration Notes step 5), read the CPU time of a real 5-competitor run from the dashboard and record it. If it is at or near 10ms, the prescribed escalation is the $5/mo Workers Paid plan (`infrastructure.md:87`) — not premature optimization of the scoring maths.
+
+Note that wall-clock p95 (measured in Phase 5) tells you nothing about this: it is dominated by network I/O, which costs no CPU. The two numbers must both be recorded.
 
 Quota: ~15 units per run at 5 competitors against 10,000/day per Google Cloud project, shared with the existing `yt-niche-adviser` project that backs F-01's OAuth client. That is ~650 runs/day — not a binding constraint at MVP scale, which is why caching is deferred.
 
@@ -480,7 +501,7 @@ Out-of-band setup required before the feature works in production, in order:
 #### Manual
 
 - [ ] 3.5 A scratch run against 3–5 real channel IDs returns the expected long-form counts
-- [ ] 3.6 A Shorts-heavy channel terminates paging within the window bound
+- [ ] 3.6 A Shorts-heavy channel terminates paging on the window or `MAX_PAGES` bound, with no `videos.list` call inside the paging loop
 - [ ] 3.7 A well-formed but non-existent ID lands in the unresolved set rather than throwing
 - [ ] 3.8 Observed quota for one run is ~15 units at 5 competitors (Google Cloud console)
 
@@ -495,7 +516,7 @@ Out-of-band setup required before the feature works in production, in order:
 #### Manual
 
 - [ ] 4.4 A valid profile returns 200 with 5 ranked opportunities and justifications
-- [ ] 4.5 The same profile analyzed twice returns identical scores and ordering
+- [ ] 4.5 The scoring unit tests pass: identical input data yields identical scores and ordering (repeatability NFR); a second live run is ordering-stable, with scores drifting only by view-count growth
 - [ ] 4.6 An unauthenticated request returns 401 JSON, not HTML
 - [ ] 4.7 Rapid clicks trigger 429 with a message naming the limit and retry window
 - [ ] 4.8 A profile with one bogus competitor returns a ranking plus an accurate resolved-N-of-M summary
@@ -521,3 +542,4 @@ Out-of-band setup required before the feature works in production, in order:
 - [ ] 5.10 With `ANTHROPIC_API_KEY` unset, the ranking renders with a justifications-unavailable notice
 - [ ] 5.11 Stopping the dev server mid-request surfaces a readable connection error, not a silent reset
 - [ ] 5.12 Measured p95 for a 5-competitor run is recorded
+- [ ] 5.13 CPU time per invocation is read from Workers Logs and recorded; escalate to Workers Paid if at/near 10ms

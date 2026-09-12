@@ -23,7 +23,7 @@ An Analyze button on `/dashboard` returns, within seconds, a ranked list of up t
 | Competitor cap | 3–5, enforced in the profile | Makes quota, latency and CPU bounded at once — the cheapest single lever on all three. | Research (D1) |
 | API access | Plain `fetch()` + zod, never `search.list` | `googleapis` needs `http2`, which workerd lacks; `search.list` costs 100 units vs 1 and would cap the product at ~20 runs/day. | Research |
 | Competitor ID integrity | `UC`-format check at the profile **and** resolved-N-of-M reconciliation at analysis | `channels.list` silently omits unknown IDs — the worst failure shape for a product whose entire output is a ranked list. | Plan |
-| Sampling window | Last 20 long-form videos, capped at 180 days | Stable across wildly different upload cadences, and bounds paging for Shorts-heavy channels on both axes. | Plan |
+| Sampling window | Last 20 long-form videos, from candidates paged to 180 days / 2 pages | Stable across wildly different upload cadences, and bounds paging for Shorts-heavy channels on both axes. | Plan |
 | Too-small sample | Skip the channel below 5 videos, name it in the response | A median over n=2 is degenerate; better to explain the gap than emit an undefendable score. | Plan |
 | Recent videos | Excluded from ranking under 7 days, still counted in the median | Launch-week spikes read as 4x outliers and settle to ~1.2x by day ten. | Plan |
 | Shorts cutoff | Under 5 minutes | User's call; risk is asymmetric — a leaked Short corrupts the baseline, a lost real video only shrinks the sample. | Plan |
@@ -55,7 +55,7 @@ api/analyze.ts   auth -> rate limit -> profile -> fetch -> score -> justify
 components/analyze/*   trigger + ranked results
 ```
 
-The call chain is fixed: `channels.list` (one call, all competitors) → `playlistItems.list` (paged, stopping at 20 long-form or 180 days) → `videos.list` (50 IDs per batch). Ordering matters inside scoring: **Shorts are filtered before the median is computed**, not merely before ranking.
+The call chain is fixed: `channels.list` (one call, all competitors) → `playlistItems.list` (paged, stopping at 180 days or 2 pages — never on a duration-dependent count) → `videos.list` (50 IDs per batch). Ordering matters inside scoring: **Shorts are filtered before the median is computed**, not merely before ranking.
 
 ## Phases at a Glance
 
@@ -74,12 +74,12 @@ The call chain is fixed: `channels.list` (one call, all competitors) → `playli
 
 - **The 5-minute Shorts cutoff is aggressive.** Any channel whose normal format is 3–5 minute videos has its entire catalog classified as Shorts, gets skipped by the sample floor, and could push a run below the PRD's ≥3 opportunities. Implemented as a single named constant so it is tunable in one place.
 - **Latency is measured, not predicted.** D4 chose a blocking POST with a spinner on the assumption the capped work keeps p95 comfortably under ~30s. Phase 5 records the real figure; if it exceeds ~10s the escalation path is streamed NDJSON progress, which would be new architecture.
-- **The free plan's 10ms CPU ceiling is assumed, not verified** against the actual Cloudflare account. An overrun surfaces as an intermittent Error 1102 — hard to diagnose with no logger, no Sentry, and live-only `wrangler tail`.
+- **The free plan's 10ms CPU ceiling is measured, not assumed.** Phase 5 reads CPU time per invocation from Workers Logs (`observability` is already enabled on the Worker) after the smoke deploy. An unmeasured overrun would surface as an intermittent Error 1102; the escalation at/near 10ms is the $5/mo Workers Paid plan.
 - **Justification quality is subjective** and has no automated check. The Secondary success criterion — that the sentence is good enough to actually choose a topic on — is judged by reading the output.
 - **The quota bucket is shared** with the Google Cloud project backing F-01's OAuth client. Harmless today since OAuth consumes no YouTube quota, but anything else added to that project competes for the same 10,000 units/day.
 
 ## Success Criteria (Summary)
 
 - A user with a valid profile clicks Analyze and gets ≥3 (target 5) ranked opportunities, each with a score and a one-sentence justification.
-- The same profile analyzed twice returns identical scores in identical order.
+- The same input data scored twice returns identical scores in identical order (verified by unit test; live runs drift with view counts).
 - Every failure path — no profile, bad competitor IDs, quota exceeded, rate limited, LLM down, key missing — produces a readable explanation rather than an empty or broken screen.
