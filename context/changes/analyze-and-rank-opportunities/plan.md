@@ -481,13 +481,13 @@ Out-of-band setup required before the feature works in production, in order:
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm test`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Build passes: `npm run build`
+- [x] 2.1 Unit tests pass: `npm test` — bba4bd7
+- [x] 2.2 Lint passes: `npm run lint` — bba4bd7
+- [x] 2.3 Build passes: `npm run build` — bba4bd7
 
 #### Manual
 
-- [x] 2.4 Every sampling rule decided in planning has a test that would fail if the rule were removed
+- [x] 2.4 Every sampling rule decided in planning has a test that would fail if the rule were removed — bba4bd7
 
 ### Phase 3: YouTube data client
 
