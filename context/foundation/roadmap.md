@@ -3,7 +3,7 @@ project: "YT-Niche-Adviser"
 version: 1
 status: draft
 created: 2026-09-07
-updated: 2026-09-10
+updated: 2026-09-11
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -29,7 +29,7 @@ milestone_status: open
 
 ## Vision recap
 
-Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurentów, żeby zrozumieć, co u nich „wystrzeliło" ponad normę — żmudne, czasochłonne, bez twardych liczb. Produkt normalizuje wyniki konkurentów (wyświetlenia filmu względem średniej danego kanału z okna czasowego — **outlier_score**) i zwraca ranking okazji contentowych z jednozdaniowym uzasadnieniem, żeby decyzja „o czym nagrać" miała twarde podstawy zamiast być „na czuja".
+Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurentów, żeby zrozumieć, co u nich „wystrzeliło" ponad normę — żmudne, czasochłonne, bez twardych liczb. Produkt normalizuje wyniki konkurentów (wyświetlenia filmu względem **mediany** danego kanału z okna czasowego — **outlier_score**) i zwraca ranking okazji contentowych z jednozdaniowym uzasadnieniem, żeby decyzja „o czym nagrać" miała twarde podstawy zamiast być „na czuja".
 
 ## North star
 
@@ -123,8 +123,11 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - Dokładna definicja „okna czasowego" do pobierania filmów i liczenia średniej (ile dni/miesięcy) — Owner: user. Block: no (reguła deterministyczna stoi; dokładny parametr można ustalić podczas `/10x-plan`).
-  - Realne limity quoty YouTube Data API v3 dla wybranego trybu uwierzytelnienia nie zostały jeszcze zweryfikowane w praktyce — Owner: user. Block: no (guardrail z PRD już zakłada graceful degradation).
+  - Dokładna definicja „okna czasowego" do pobierania filmów i liczenia wartości bazowej (ile dni/miesięcy) — Owner: user. Block: no (reguła deterministyczna stoi; dokładny parametr można ustalić podczas `/10x-plan`).
+  - Realne limity quoty YouTube Data API v3 dla wybranego trybu uwierzytelnienia nie zostały jeszcze zweryfikowane w praktyce — Owner: user. Block: no (guardrail z PRD już zakłada graceful degradation). **Częściowo rozstrzygnięte 2026-09-11**: klucz API (bez OAuth), 10 000 jednostek/dobę na projekt Google Cloud, ~15 jednostek na przebieg przy 5 konkurentach — szczegóły w `context/changes/analyze-and-rank-opportunities/yt-library-research.md`; w praktyce nadal niezweryfikowane.
+- **Rozstrzygnięcia (2026-09-11):**
+  - **Wartość bazowa: mediana, nie średnia** — PRD FR-008 poprawione; decyzja D2 w `context/changes/analyze-and-rank-opportunities/research.md`.
+  - **Limit konkurentów: max 5, egzekwowany w profilu (S-01)** — profil jest źródłem prawdy dla analizy; przywraca zgodność z FR-003 („3–5"). Decyzja D1 tamże; wymaga domknięcia w S-01.
 - **Risk:** To jest gwiazda przewodnia — najbardziej ryzykowny i najbardziej wartościowy fragment (integracja z YouTube Data API + LLM-owe uzasadnienie + rdzeń logiki scoringu w jednym miejscu). Sekwencjonowany możliwie wcześnie (zaraz po S-01), zgodnie z `main_goal: speed` i zasadą, że gwiazdy przewodniej nie odkłada się dla symetrii.
 - **Status:** proposed
 

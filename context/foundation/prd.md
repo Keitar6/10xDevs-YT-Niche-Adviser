@@ -28,12 +28,12 @@ twardych liczb.
 
 Insight: wartość nie leży w automatycznym „odkrywaniu nisz", lecz w **kurateli
 konkurentów** — użytkownik sam definiuje wąską listę 3–5 realnych konkurentów,
-a narzędzie normalizuje ich wyniki (outlier: wyświetlenia względem średniej
+a narzędzie normalizuje ich wyniki (outlier: wyświetlenia względem mediany
 danego kanału), by pokazać powtarzalny sygnał niezależny od wielkości kanału.
 Wąskie, ręcznie dobrane wejście bije ogólny algorytm na trafności i zaufaniu.
 
 Notka o skali (sonda 100×): przy 100-krotnym wzroście liczby użytkowników sama
-reguła (views/średnia) się nie zmienia — wąskim gardłem staje się wspólna,
+reguła (views/mediana) się nie zmienia — wąskim gardłem staje się wspólna,
 dzielona dzienna quota zewnętrznego API danych YouTube, nie matematyka scoringu.
 
 ## User & Persona
@@ -102,8 +102,9 @@ konkurentów z nazwy/ID.
   > Socrates: Kontrargument rozważony: „koszt/quota API przy ręcznym przycisku". Rozstrzygnięcie: on-demand zachowane (najprostsze dla MVP); ryzyko limitów adresowane guardrailem graceful-degradation i NFR.
 - FR-007: System pobiera ostatnie długie filmy konkurentów z okna czasowego podczas analizy, wykluczając Shorts. Priority: must-have
   > Socrates: Kontrargument przyjęty: „Shorts zaburzają porównania wyświetleń". Rozstrzygnięcie: doprecyzowane — Shorts wykluczone; brane pod uwagę tylko długie filmy z okna czasowego.
-- FR-008: System liczy outlier_score = wyświetlenia filmu / średnia wyświetleń kanału z okna czasowego, dla każdego filmu. Priority: must-have
-  > Socrates: Kontrargument przyjęty: „średnia z całej historii zawyżona przez stare virale". Rozstrzygnięcie: średnia liczona z okna czasowego, nie z całej historii kanału.
+- FR-008: System liczy outlier_score = wyświetlenia filmu / **mediana** wyświetleń kanału z okna czasowego, dla każdego filmu. Priority: must-have
+  > Socrates: Kontrargument przyjęty: „średnia z całej historii zawyżona przez stare virale". Rozstrzygnięcie: wartość bazowa liczona z okna czasowego, nie z całej historii kanału.
+  > Poprawka 2026-09-11 (decyzja użytkownika, PRD v1 draft): **średnia → mediana**. Uzasadnienie: średnia ma punkt załamania 0 — pojedynczy stary hit trwale zawyża własną wartość bazową kanału, więc metryka systematycznie nie wykrywa tego, po co istnieje. Każdy kurateli wart konkurent ma już takie outliery. Dowody: `context/changes/analyze-and-rank-opportunities/yt-library-research.md` (Architecture Insights §2, Leys et al.; zbieżność narzędzi analitycznych YouTube) oraz decyzja D2 w `research.md` tego samego change'a. Okno czasowe pozostaje bez zmian. Docelowo (poza MVP) liczone będą obie wartości — mediana jako score, średnia jako dodatkowa statystyka prezentowana użytkownikowi.
 - FR-009: Użytkownik otrzymuje top 5 okazji (tematów) z wynikiem liczbowym i jednozdaniowym uzasadnieniem. Priority: must-have
   > Socrates: Brak kontrargumentu — ranking top 5 z uzasadnieniem to rdzeń dostarczanej wartości; stoi jak jest.
 
@@ -131,13 +132,13 @@ konkurentów z nazwy/ID.
 
 Aplikacja wskazuje twórcy najlepsze tematy na kolejny film, rankingując ostatnie
 długie filmy jego kuratelowanych konkurentów po outlier_score (wyświetlenia
-filmu względem średniej wyświetleń danego kanału z okna czasowego) i zwracając
+filmu względem mediany wyświetleń danego kanału z okna czasowego) i zwracając
 top 5 z jednozdaniowym uzasadnieniem.
 
 Wejścia (widziane przez użytkownika): wąska, ręcznie dobrana lista 3–5
 konkurentów (ID kanałów) w profilu oraz okno czasowe, z którego brane są filmy.
 Reguła pomija Shorts, liczy dla każdego kwalifikującego się filmu iloraz jego
-wyświetleń do średniej wyświetleń danego kanału w oknie, i porządkuje wyniki
+wyświetleń do mediany wyświetleń danego kanału w oknie, i porządkuje wyniki
 malejąco.
 
 Wyjście: ranking top 5 okazji contentowych, każda z liczbowym outlier_score i

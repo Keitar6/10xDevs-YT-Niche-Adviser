@@ -227,7 +227,7 @@ S-02's risk note treats the multi-API integration as the highest-risk element. O
 
 ## Open Questions
 
-1. **Mean vs median for `outlier_score`** — Owner: user. **Block: yes for `/10x-plan`.** A PRD-level definition change; see Architecture Insights #2. Everything downstream (S-03 persisted scores) depends on it.
+1. **RESOLVED 2026-09-11 → median.** User decision recorded in [`research.md`](./research.md) (Follow-up, D2); FR-008 in the PRD and `roadmap.md:32` still specify the mean and need reconciling. ~~**Mean vs median for `outlier_score`** — Owner: user. **Block: yes for `/10x-plan`.**~~ A PRD-level definition change; see Architecture Insights #2. Everything downstream (S-03 persisted scores) depends on it.
 2. **Which Cloudflare Workers plan is this project on?** — Owner: user. Block: no. Could not be determined from the repo. Free-plan 10 ms CPU is a genuine risk for parsing ~250 video records; paid removes the concern entirely.
 3. **Time-window parameter** (how many days/months of uploads form the baseline) — Owner: user. Block: no. Pre-existing Unknown from `roadmap.md:126`. Research suggests a *count*-based window (last 20-50 comparable uploads) is more stable than a *date*-based one, since upload cadence varies per channel.
 4. **Shorts duration threshold** — Owner: user. Block: no. `contentDetails.duration` gives an exact figure, but the Shorts cutoff is a heuristic (<=60s historically, <=3min for newer Shorts), not an API flag.
