@@ -1,4 +1,13 @@
 import { z } from "zod";
+import {
+  MAX_PAGES,
+  MAX_WINDOW_DAYS,
+  TARGET_LONGFORM_PER_CHANNEL,
+  type ChannelSample,
+  type ScorableVideo,
+  isShort,
+  parseIsoDuration,
+} from "./scoring";
 import { type ChannelRef, parseChannelRef } from "./youtube-ids";
 
 const API_BASE = "https://www.googleapis.com/youtube/v3";
@@ -196,4 +205,262 @@ export async function resolveChannelRefs(inputs: string[], apiKey: string): Prom
   }
 
   return { resolved, unresolved, invalid };
+}
+
+/* -------------------------------------------------------------------------- *
+ * The analysis call chain: channels.list -> playlistItems.list -> videos.list
+ *
+ * Three calls per competitor, ~3 units each, ~15 units for a 5-competitor run
+ * against the project's 10,000/day bucket. The search endpoint costs 100 units
+ * on its own and would cap the product at ~20 runs/day, so it is never used
+ * here — a grep for it over `src/` is a success criterion of this slice.
+ * -------------------------------------------------------------------------- */
+
+/**
+ * One page of an uploads playlist. `contentDetails.videoId` is the video's own
+ * id; `snippet.resourceId.videoId` carries the same value and exists as a
+ * fallback for the case where only `snippet` came back.
+ *
+ * `contentDetails.videoPublishedAt` is when the *video* went public, whereas
+ * `snippet.publishedAt` is when the item was added to the playlist. They
+ * coincide on an uploads playlist, but the former is the meaningful one.
+ */
+const playlistItemsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        snippet: z
+          .object({
+            publishedAt: z.string().optional(),
+            resourceId: z.object({ videoId: z.string().optional() }).optional(),
+          })
+          .optional(),
+        contentDetails: z.object({ videoId: z.string(), videoPublishedAt: z.string().optional() }).optional(),
+      }),
+    )
+    .optional(),
+  nextPageToken: z.string().optional(),
+});
+
+/**
+ * `videos.list` items. `statistics.viewCount` arrives as a JSON *string*, so
+ * `z.coerce.number()` is load-bearing: arithmetic on the raw value would
+ * concatenate instead of summing.
+ *
+ * `viewCount` is optional because a channel can hide its view counts. Such a
+ * video is dropped rather than scored as 0 — a false zero drags the channel
+ * median down and can trip the zero-median guard for the whole channel.
+ */
+const videoListSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string(),
+        snippet: z
+          .object({
+            title: z.string(),
+            channelId: z.string(),
+            channelTitle: z.string().optional(),
+            publishedAt: z.string(),
+          })
+          .optional(),
+        statistics: z.object({ viewCount: z.coerce.number().optional() }).optional(),
+        contentDetails: z.object({ duration: z.string() }).optional(),
+      }),
+    )
+    .optional(),
+});
+
+/** `videos.list` accepts up to 50 comma-joined ids for the same single unit. */
+const VIDEOS_PER_CALL = 50;
+
+const MS_PER_DAY = 86_400_000;
+
+export interface CompetitorVideosResult {
+  /** One entry per competitor that resolved, in the order they were requested. */
+  channels: ChannelSample[];
+  /**
+   * Requested ids that `channels.list` returned nothing for. Reported as the
+   * raw `UC…` string because an unresolved channel has no title by definition.
+   */
+  unresolved: string[];
+}
+
+interface ChannelTarget {
+  channelId: string;
+  title: string | null;
+  uploadsPlaylistId: string;
+}
+
+function parsePlaylistItems(payload: unknown): z.infer<typeof playlistItemsSchema> {
+  const parsed = playlistItemsSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new YouTubeError({ kind: "malformed", message: "The YouTube API returned an unexpected playlist payload." });
+  }
+  return parsed.data;
+}
+
+function parseVideoList(payload: unknown): z.infer<typeof videoListSchema> {
+  const parsed = videoListSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new YouTubeError({ kind: "malformed", message: "The YouTube API returned an unexpected video payload." });
+  }
+  return parsed.data;
+}
+
+/**
+ * Walk an uploads playlist for candidate video ids.
+ *
+ * The loop bounds on the only two signals `playlistItems` actually carries —
+ * an upload older than `MAX_WINDOW_DAYS`, or `MAX_PAGES` pages — plus the
+ * absence of a `nextPageToken`. It deliberately does **not** stop on a
+ * confirmed long-form count: duration is unknown at this step, and checking it
+ * would mean calling `videos.list` inside the loop, turning the three-call
+ * chain into an interleaved one and breaking the quota budget. A channel that
+ * posts nothing but Shorts therefore terminates on the page cap rather than
+ * paging forever; the Shorts it paid for are discarded once durations arrive.
+ */
+async function collectCandidateIds(playlistId: string, apiKey: string, now: Date): Promise<string[]> {
+  const cutoff = now.getTime() - MAX_WINDOW_DAYS * MS_PER_DAY;
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const params: Record<string, string> = {
+      part: "snippet,contentDetails",
+      playlistId,
+      maxResults: "50",
+    };
+    if (pageToken !== undefined) params.pageToken = pageToken;
+
+    const parsed = parsePlaylistItems(await getJson("playlistItems", params, apiKey));
+
+    let reachedWindowEdge = false;
+    for (const item of parsed.items ?? []) {
+      const videoId = item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId;
+      if (videoId === undefined) continue;
+
+      const publishedAt = item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt;
+      const publishedMs = publishedAt === undefined ? NaN : Date.parse(publishedAt);
+      // An uploads playlist is ordered newest first, so the first item outside
+      // the window ends the walk. An unreadable timestamp is kept rather than
+      // treated as a stop signal — one bad record must not truncate the sample.
+      if (!Number.isNaN(publishedMs) && publishedMs < cutoff) {
+        reachedWindowEdge = true;
+        break;
+      }
+      ids.push(videoId);
+    }
+
+    if (reachedWindowEdge) break;
+    pageToken = parsed.nextPageToken;
+    if (pageToken === undefined) break;
+  }
+
+  return ids;
+}
+
+/**
+ * Hydrate candidate ids into scorable records, 50 ids per call.
+ *
+ * Returned as a map rather than an array because `videos.list` may omit ids
+ * (a deleted or private video) and does not guarantee request order, while the
+ * sample cap is defined in playlist order.
+ */
+async function fetchVideoDetails(
+  videoIds: string[],
+  fallbackChannelTitle: string | null,
+  apiKey: string,
+): Promise<Map<string, ScorableVideo>> {
+  const byId = new Map<string, ScorableVideo>();
+
+  for (let offset = 0; offset < videoIds.length; offset += VIDEOS_PER_CALL) {
+    const batch = videoIds.slice(offset, offset + VIDEOS_PER_CALL);
+    // Three parts cost the same single unit as one, so they are never split
+    // across calls.
+    const parsed = parseVideoList(
+      await getJson("videos", { part: "snippet,statistics,contentDetails", id: batch.join(",") }, apiKey),
+    );
+
+    for (const item of parsed.items ?? []) {
+      const { snippet, statistics, contentDetails } = item;
+      // A record missing any of these cannot be scored, and guessing a value
+      // would let it pollute the channel baseline. Dropping it is the safe half.
+      if (!snippet || contentDetails === undefined || statistics?.viewCount === undefined) continue;
+
+      byId.set(item.id, {
+        video_id: item.id,
+        title: snippet.title,
+        channel_id: snippet.channelId,
+        channel_title: snippet.channelTitle ?? fallbackChannelTitle,
+        published_at: snippet.publishedAt,
+        duration_seconds: parseIsoDuration(contentDetails.duration),
+        view_count: statistics.viewCount,
+      });
+    }
+  }
+
+  return byId;
+}
+
+async function collectChannelSample(target: ChannelTarget, apiKey: string, now: Date): Promise<ChannelSample> {
+  const candidates = await collectCandidateIds(target.uploadsPlaylistId, apiKey, now);
+  const byId = await fetchVideoDetails(candidates, target.title, apiKey);
+
+  // Durations are only known now, so this is where Shorts are dropped and where
+  // `TARGET_LONGFORM_PER_CHANNEL` applies — it caps the sample, it never bounds
+  // the paging above. Playlist order is preserved, so the cap keeps the newest.
+  const videos: ScorableVideo[] = [];
+  for (const videoId of candidates) {
+    if (videos.length >= TARGET_LONGFORM_PER_CHANNEL) break;
+    const video = byId.get(videoId);
+    if (video === undefined || isShort(video.duration_seconds)) continue;
+    videos.push(video);
+  }
+
+  return { channel_id: target.channelId, channel_title: target.title, videos };
+}
+
+/**
+ * Fetch the long-form video sample for every competitor, plus the
+ * reconciliation summary the route needs to explain what it could not use.
+ *
+ * `now` is injected so the `MAX_WINDOW_DAYS` cutoff is testable.
+ */
+export async function fetchCompetitorVideos(
+  channelIds: string[],
+  apiKey: string,
+  now: Date = new Date(),
+): Promise<CompetitorVideosResult> {
+  const requested = [...new Set(channelIds.map((id) => id.trim()).filter((id) => id.length > 0))];
+  if (requested.length === 0) return { channels: [], unresolved: [] };
+
+  // One unit for the whole set. `snippet` is requested alongside
+  // `contentDetails` at no extra cost because a channel skipped by the sample
+  // floor still has to be named in the results, and `snippet.title` is the only
+  // place that title exists.
+  const payload = await getJson("channels", { part: "contentDetails,snippet", id: requested.join(",") }, apiKey);
+  const items = parseChannelList(payload).items ?? [];
+  const byId = new Map(items.map((item) => [item.id, item]));
+
+  const targets: ChannelTarget[] = [];
+  const unresolved: string[] = [];
+  for (const channelId of requested) {
+    const item = byId.get(channelId);
+    // The uploads playlist is read from `relatedPlaylists`, never derived by
+    // string-munging the channel id — that shortcut is not a documented
+    // guarantee. A channel without one is unusable, so it counts as unresolved.
+    const uploads = item?.contentDetails?.relatedPlaylists.uploads;
+    if (item === undefined || uploads === undefined) {
+      unresolved.push(channelId);
+      continue;
+    }
+    targets.push({ channelId: item.id, title: item.snippet?.title ?? null, uploadsPlaylistId: uploads });
+  }
+
+  // Fan-out is per channel, never per video: at most 5 competitors keeps this
+  // under Cloudflare's limit of 6 simultaneous outgoing connections.
+  const channels = await Promise.all(targets.map((target) => collectChannelSample(target, apiKey, now)));
+
+  return { channels, unresolved };
 }

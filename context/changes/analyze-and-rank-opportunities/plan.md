@@ -493,10 +493,10 @@ Out-of-band setup required before the feature works in production, in order:
 
 #### Automated
 
-- [ ] 3.1 Lint passes: `npm run lint` (no `no-unsafe-*` violations)
-- [ ] 3.2 Build passes: `npm run build`
-- [ ] 3.3 Unit tests pass: `npm test`
-- [ ] 3.4 `grep -r "search.list\|/search?" src/` returns nothing
+- [x] 3.1 Lint passes: `npm run lint` (no `no-unsafe-*` violations)
+- [x] 3.2 Build passes: `npm run build`
+- [x] 3.3 Unit tests pass: `npm test`
+- [x] 3.4 `grep -r "search.list\|/search?" src/` returns nothing
 
 #### Manual
 
