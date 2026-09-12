@@ -1,9 +1,9 @@
 ---
 change_id: channel-profile-crud
 title: Channel profile crud
-status: implemented
+status: impl_reviewed
 created: 2026-09-09
-updated: 2026-09-10
+updated: 2026-09-11
 archived_at: null
 ---
 

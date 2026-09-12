@@ -13,6 +13,7 @@ const profileSchema = z.object({
   competitor_channel_ids: z
     .array(z.string().trim().min(1, "Competitor channel ID cannot be empty"))
     .min(3, "At least 3 competitor channel IDs are required")
+    .max(5, "At most 5 competitor channel IDs are allowed")
     .refine((ids) => new Set(ids).size === ids.length, "Competitor channel IDs must be unique"),
 });
 
@@ -28,11 +29,12 @@ export const POST: APIRoute = async (context) => {
     return jsonError("You must be signed in", 401);
   }
 
-  const body = (await context.request.json()) as {
-    niche?: unknown;
-    subNiche?: unknown;
-    competitorChannelIds?: unknown;
-  };
+  let body: { niche?: unknown; subNiche?: unknown; competitorChannelIds?: unknown };
+  try {
+    body = (await context.request.json()) as typeof body;
+  } catch {
+    return jsonError("Invalid JSON body", 400);
+  }
   const parsed = profileSchema.safeParse({
     niche: body.niche,
     sub_niche: body.subNiche,

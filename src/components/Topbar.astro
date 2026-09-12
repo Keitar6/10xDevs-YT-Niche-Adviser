@@ -5,10 +5,10 @@ import ProfileDialog from "@/components/profile/ProfileDialog";
 const { user } = Astro.locals;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-const { data: profile } =
+const { data: profile, error: profileError } =
   supabase && user
     ? await supabase.from("channel_profiles").select("*").eq("user_id", user.id).maybeSingle()
-    : { data: null };
+    : { data: null, error: null };
 ---
 
 <div
@@ -22,7 +22,7 @@ const { data: profile } =
           <a href="/dashboard" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
             Dashboard
           </a>
-          <ProfileDialog initialProfile={profile} client:load />
+          <ProfileDialog initialProfile={profile} loadFailed={!!profileError} client:load />
           <form method="POST" action="/api/auth/signout">
             <button type="submit" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
               Sign out

@@ -19,7 +19,9 @@ Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` 
 
 ### Rendering mode
 
-Full server-side rendering (`output: "server"` in astro.config.mjs). All pages are server-rendered by default. API routes must export `const prerender = false`.
+Full server-side rendering (`output: "server"` in astro.config.mjs). All pages and API routes are server-rendered by default, so `export const prerender = false` is redundant and no route in this project declares it.
+
+**API route auth:** `PROTECTED_ROUTES` in `src/middleware.ts` only redirects *page* requests; it does not cover `/api/*`. Every API route that touches user data must check `context.locals.user` itself and return a 401 when absent (see `src/pages/api/profile.ts`).
 
 ### Auth flow
 

@@ -5,6 +5,17 @@ import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
 import type { ChannelProfile } from "@/types";
 
+interface CompetitorRow {
+  id: string;
+  value: string;
+}
+
+let rowSeq = 0;
+function newRow(value: string): CompetitorRow {
+  rowSeq += 1;
+  return { id: `competitor-${rowSeq}`, value };
+}
+
 interface Props {
   profile: ChannelProfile | null;
   onSaved: (profile: ChannelProfile) => void;
@@ -13,10 +24,11 @@ interface Props {
 export default function ChannelProfileForm({ profile, onSaved }: Props) {
   const [niche, setNiche] = useState(profile?.niche ?? "");
   const [subNiche, setSubNiche] = useState(profile?.sub_niche ?? "");
-  const [competitorIds, setCompetitorIds] = useState<string[]>(
-    profile?.competitor_channel_ids && profile.competitor_channel_ids.length > 0
+  const [competitorRows, setCompetitorRows] = useState<CompetitorRow[]>(() =>
+    (profile?.competitor_channel_ids && profile.competitor_channel_ids.length > 0
       ? profile.competitor_channel_ids
-      : ["", "", ""],
+      : ["", "", ""]
+    ).map(newRow),
   );
   const [errors, setErrors] = useState<{ niche?: string; competitorIds?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -30,9 +42,12 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       next.niche = "Niche is required";
     }
 
-    const trimmed = competitorIds.map((id) => id.trim());
-    if (trimmed.filter((id) => id.length > 0).length < 3 || trimmed.some((id) => id.length === 0)) {
+    const trimmed = competitorRows.map((row) => row.value.trim());
+    const filled = trimmed.filter((id) => id.length > 0);
+    if (filled.length < 3 || trimmed.some((id) => id.length === 0)) {
       next.competitorIds = "At least 3 competitor channel IDs are required";
+    } else if (filled.length > 5) {
+      next.competitorIds = "At most 5 competitor channel IDs are allowed";
     } else if (new Set(trimmed).size !== trimmed.length) {
       next.competitorIds = "Competitor channel IDs must be unique";
     }
@@ -54,7 +69,7 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ niche, subNiche, competitorChannelIds: competitorIds }),
+        body: JSON.stringify({ niche, subNiche, competitorChannelIds: competitorRows.map((row) => row.value) }),
       });
       const json = (await res.json()) as { profile?: ChannelProfile; error?: string };
 
@@ -65,22 +80,24 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
 
       setSaved(true);
       onSaved(json.profile);
+    } catch {
+      setServerError("Could not reach the server. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
   }
 
-  function updateCompetitorId(index: number, value: string) {
-    setCompetitorIds((prev) => prev.map((id, i) => (i === index ? value : id)));
+  function updateCompetitorId(id: string, value: string) {
+    setCompetitorRows((prev) => prev.map((row) => (row.id === id ? { ...row, value } : row)));
     if (errors.competitorIds) setErrors((prev) => ({ ...prev, competitorIds: undefined }));
   }
 
   function addCompetitorRow() {
-    setCompetitorIds((prev) => [...prev, ""]);
+    setCompetitorRows((prev) => (prev.length >= 5 ? prev : [...prev, newRow("")]));
   }
 
-  function removeCompetitorRow(index: number) {
-    setCompetitorIds((prev) => prev.filter((_, i) => i !== index));
+  function removeCompetitorRow(id: string) {
+    setCompetitorRows((prev) => prev.filter((row) => row.id !== id));
   }
 
   return (
@@ -110,26 +127,26 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       />
 
       <div>
-        <label className="mb-1 block text-sm text-blue-100/80">Competitor channel IDs (min. 3)</label>
+        <label className="mb-1 block text-sm text-blue-100/80">Competitor channel IDs (3–5)</label>
         <div className="space-y-2">
-          {competitorIds.map((id, index) => (
+          {competitorRows.map((row, index) => (
             <FormField
-              key={index}
+              key={row.id}
               id={`competitorChannelIds-${index}`}
               name="competitorChannelIds"
               label=""
-              value={id}
+              value={row.value}
               onChange={(v) => {
-                updateCompetitorId(index, v);
+                updateCompetitorId(row.id, v);
               }}
               placeholder="Channel ID"
               icon={<Link className="size-4" />}
               endContent={
-                competitorIds.length > 3 ? (
+                competitorRows.length > 3 ? (
                   <button
                     type="button"
                     onClick={() => {
-                      removeCompetitorRow(index);
+                      removeCompetitorRow(row.id);
                     }}
                     className="absolute top-1/2 right-3 -translate-y-1/2 text-white/40 hover:text-white/80"
                     aria-label="Remove competitor"
@@ -145,7 +162,8 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
         <button
           type="button"
           onClick={addCompetitorRow}
-          className="mt-2 flex items-center gap-1 text-xs text-purple-300 hover:underline"
+          disabled={competitorRows.length >= 5}
+          className="mt-2 flex items-center gap-1 text-xs text-purple-300 hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline"
         >
           <Plus className="size-3" />
           Add competitor

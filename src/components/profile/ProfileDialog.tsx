@@ -5,11 +5,20 @@ import type { ChannelProfile } from "@/types";
 
 interface Props {
   initialProfile: ChannelProfile | null;
+  loadFailed?: boolean;
 }
 
-export default function ProfileDialog({ initialProfile }: Props) {
+export default function ProfileDialog({ initialProfile, loadFailed = false }: Props) {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(initialProfile);
+
+  if (loadFailed && !profile) {
+    return (
+      <span className="text-white/40" title="Could not load your profile. Refresh to try again.">
+        Profile unavailable
+      </span>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
