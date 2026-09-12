@@ -1,5 +1,6 @@
 // Shared entity and DTO types go here.
+//
+// Convention: zod schemas are the source of truth in their owning service
+// module; this file re-exports the inferred types so consumers import one path.
 
-import type { Database } from "@/lib/database.types";
-
-export type ChannelProfile = Database["public"]["Tables"]["channel_profiles"]["Row"];
+export type { ChannelProfile, Competitor } from "@/lib/services/channel-profile";

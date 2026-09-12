@@ -7,12 +7,14 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
     "@astrojs/check": "^0.9.8",
     "@astrojs/cloudflare": "^13.5.0",
     "@astrojs/react": "^5.0.4",
@@ -55,6 +57,7 @@
     "supabase": "^2.116.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.2",
+    "vitest": "^5.0.0",
     "wrangler": "^4.126.0"
   },
   "overrides": {

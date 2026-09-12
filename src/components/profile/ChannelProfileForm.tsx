@@ -4,6 +4,8 @@ import { FormField } from "@/components/auth/FormField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
 import type { ChannelProfile } from "@/types";
+import { competitorLabel } from "@/lib/services/channel-profile";
+import { parseChannelRef, COMPETITOR_INPUT_MESSAGE } from "@/lib/services/youtube-ids";
 
 interface CompetitorRow {
   id: string;
@@ -25,10 +27,7 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
   const [niche, setNiche] = useState(profile?.niche ?? "");
   const [subNiche, setSubNiche] = useState(profile?.sub_niche ?? "");
   const [competitorRows, setCompetitorRows] = useState<CompetitorRow[]>(() =>
-    (profile?.competitor_channel_ids && profile.competitor_channel_ids.length > 0
-      ? profile.competitor_channel_ids
-      : ["", "", ""]
-    ).map(newRow),
+    (profile && profile.competitors.length > 0 ? profile.competitors.map(competitorLabel) : ["", "", ""]).map(newRow),
   );
   const [errors, setErrors] = useState<{ niche?: string; competitorIds?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -50,6 +49,9 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       next.competitorIds = "At most 5 competitor channel IDs are allowed";
     } else if (new Set(trimmed).size !== trimmed.length) {
       next.competitorIds = "Competitor channel IDs must be unique";
+    } else if (!filled.every((v) => parseChannelRef(v) !== null)) {
+      // Shape only — whether the channel actually exists is resolved server-side.
+      next.competitorIds = COMPETITOR_INPUT_MESSAGE;
     }
 
     setErrors(next);
@@ -69,7 +71,7 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ niche, subNiche, competitorChannelIds: competitorRows.map((row) => row.value) }),
+        body: JSON.stringify({ niche, subNiche, competitors: competitorRows.map((row) => row.value) }),
       });
       const json = (await res.json()) as { profile?: ChannelProfile; error?: string };
 
@@ -79,6 +81,9 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       }
 
       setSaved(true);
+      // Re-seed from what was actually stored, showing each competitor's handle
+      // rather than the raw UC… id it resolved to.
+      setCompetitorRows(json.profile.competitors.map(competitorLabel).map(newRow));
       onSaved(json.profile);
     } catch {
       setServerError("Could not reach the server. Check your connection and try again.");
@@ -127,7 +132,7 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
       />
 
       <div>
-        <label className="mb-1 block text-sm text-blue-100/80">Competitor channel IDs (3–5)</label>
+        <label className="mb-1 block text-sm text-blue-100/80">Competitor channels (3–5)</label>
         <div className="space-y-2">
           {competitorRows.map((row, index) => (
             <FormField
@@ -139,7 +144,7 @@ export default function ChannelProfileForm({ profile, onSaved }: Props) {
               onChange={(v) => {
                 updateCompetitorId(row.id, v);
               }}
-              placeholder="Channel ID"
+              placeholder="@handle, UC… ID, or channel URL"
               icon={<Link className="size-4" />}
               endContent={
                 competitorRows.length > 3 ? (

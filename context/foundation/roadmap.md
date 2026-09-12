@@ -44,7 +44,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | done |
 | F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | done |
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
-| S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | planning |
+| S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | in-progress |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
 
 ## Streams
@@ -130,7 +130,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
   - **Wartość bazowa: mediana, nie średnia** — PRD FR-008 poprawione; decyzja D2 w `context/changes/analyze-and-rank-opportunities/research.md`.
   - **Limit konkurentów: max 5, egzekwowany w profilu (S-01)** — profil jest źródłem prawdy dla analizy; przywraca zgodność z FR-003 („3–5"). Decyzja D1 tamże; wymaga domknięcia w S-01.
 - **Risk:** To jest gwiazda przewodnia — najbardziej ryzykowny i najbardziej wartościowy fragment (integracja z YouTube Data API + LLM-owe uzasadnienie + rdzeń logiki scoringu w jednym miejscu). Sekwencjonowany możliwie wcześnie (zaraz po S-01), zgodnie z `main_goal: speed` i zasadą, że gwiazdy przewodniej nie odkłada się dla symetrii.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-03: Użytkownik zapisuje i przegląda okazje contentowe
 

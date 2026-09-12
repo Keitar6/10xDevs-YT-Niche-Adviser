@@ -1,14 +1,18 @@
 ---
 import { createClient } from "@/lib/supabase";
+import { parseChannelProfile } from "@/lib/services/channel-profile";
 import ProfileDialog from "@/components/profile/ProfileDialog";
 
 const { user } = Astro.locals;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-const { data: profile, error: profileError } =
+const { data: profileRow, error: profileError } =
   supabase && user
     ? await supabase.from("channel_profiles").select("*").eq("user_id", user.id).maybeSingle()
     : { data: null, error: null };
+
+// `competitors` is generated as `Json`, so the row is validated before use.
+const profile = parseChannelProfile(profileRow);
 ---
 
 <div

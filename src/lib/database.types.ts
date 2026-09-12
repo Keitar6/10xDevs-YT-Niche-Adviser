@@ -36,7 +36,7 @@ export type Database = {
     Tables: {
       channel_profiles: {
         Row: {
-          competitor_channel_ids: string[]
+          competitors: Json
           created_at: string
           id: string
           niche: string
@@ -45,7 +45,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          competitor_channel_ids: string[]
+          competitors: Json
           created_at?: string
           id?: string
           niche: string
@@ -54,7 +54,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
-          competitor_channel_ids?: string[]
+          competitors?: Json
           created_at?: string
           id?: string
           niche?: string
