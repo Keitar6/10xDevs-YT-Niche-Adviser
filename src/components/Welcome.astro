@@ -1,3 +1,19 @@
+---
+import { loadChannelProfile } from "@/lib/services/channel-profile-server";
+
+const { user } = Astro.locals;
+
+// The hero CTAs depend on how far along the visitor already is: signed out they
+// open the auth dialog, signed in they point at the next real step.
+const { profile, loadFailed } = user
+  ? await loadChannelProfile(Astro.request.headers, Astro.cookies, user.id)
+  : { profile: null, loadFailed: false };
+
+// Only offer profile setup when we know there is none — a failed read is not
+// evidence of absence, so those users get sent to the dashboard instead.
+const needsProfile = Boolean(user) && !profile && !loadFailed;
+---
+
 <!-- Landing-page decoration only. The cosmic ground and the top bar are the
      shell and live in Layout.astro; these orbs and the star field do not. -->
 <div class="pointer-events-none absolute inset-0 overflow-hidden">
@@ -37,20 +53,49 @@
       opportunities, each with a one-line reason it made the cut.
     </p>
     <div class="flex flex-col gap-4 sm:flex-row">
-      <button
-        type="button"
-        data-auth-open="signup"
-        class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
-      >
-        Get started
-      </button>
-      <button
-        type="button"
-        data-auth-open="signin"
-        class="inline-flex items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
-      >
-        Sign in
-      </button>
+      {
+        !user ? (
+          <>
+            <button
+              type="button"
+              data-auth-open="signup"
+              class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
+            >
+              Get started
+            </button>
+            <button
+              type="button"
+              data-auth-open="signin"
+              class="inline-flex items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
+            >
+              Sign in
+            </button>
+          </>
+        ) : needsProfile ? (
+          <>
+            <button
+              type="button"
+              data-profile-open
+              class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
+            >
+              Set up your channel profile
+            </button>
+            <a
+              href="/dashboard"
+              class="inline-flex items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
+            >
+              Go to dashboard
+            </a>
+          </>
+        ) : (
+          <a
+            href="/dashboard"
+            class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
+          >
+            Go to dashboard
+          </a>
+        )
+      }
     </div>
   </div>
 

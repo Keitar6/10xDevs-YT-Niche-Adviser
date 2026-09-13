@@ -1,6 +1,5 @@
 ---
-import { createClient } from "@/lib/supabase";
-import { parseChannelProfile } from "@/lib/services/channel-profile";
+import { loadChannelProfile } from "@/lib/services/channel-profile-server";
 import ProfileDialog from "@/components/profile/ProfileDialog";
 import AuthDialog from "@/components/auth/AuthDialog";
 
@@ -10,14 +9,9 @@ const { user } = Astro.locals;
 // middleware bounce) wins over this once the island mounts.
 const next = `${Astro.url.pathname}${Astro.url.search}`;
 
-const supabase = createClient(Astro.request.headers, Astro.cookies);
-const { data: profileRow, error: profileError } =
-  supabase && user
-    ? await supabase.from("channel_profiles").select("*").eq("user_id", user.id).maybeSingle()
-    : { data: null, error: null };
-
-// `competitors` is generated as `Json`, so the row is validated before use.
-const profile = parseChannelProfile(profileRow);
+const { profile, loadFailed } = user
+  ? await loadChannelProfile(Astro.request.headers, Astro.cookies, user.id)
+  : { profile: null, loadFailed: false };
 ---
 
 <div
@@ -31,7 +25,7 @@ const profile = parseChannelProfile(profileRow);
           <a href="/dashboard" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
             Dashboard
           </a>
-          <ProfileDialog initialProfile={profile} loadFailed={!!profileError} client:load />
+          <ProfileDialog initialProfile={profile} loadFailed={loadFailed} client:load />
           <form method="POST" action="/api/auth/signout">
             <button type="submit" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
               Sign out

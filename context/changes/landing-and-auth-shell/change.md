@@ -51,3 +51,25 @@ Recorded so `/10x-impl-review` reads these as decisions, not drift.
 8. **Topbar keeps a "Sign up" entry point.** The plan replaced both anonymous links with the dialog
    alone, which would have dropped the sign-up affordance. It is now a `data-auth-open="signup"`
    button picked up by the delegated listener the plan itself designed — no extra state.
+
+### Follow-up after first manual look (2026-09-13)
+
+9. **Hero CTAs were dead for signed-in visitors — bug introduced by this slice.** `AuthDialog` owns
+   the `[data-auth-open]` listener and renders only in the anonymous branch of `Topbar.astro`, so
+   signed in, nothing listened and both hero buttons did nothing. Phase 4 had assumed `/` only ever
+   has anonymous visitors. Fixed by branching the hero on state (user's call): signed out keeps
+   Get started / Sign in; signed in without a profile gets "Set up your channel profile"
+   (`data-profile-open`, a new delegated listener on `ProfileDialog` mirroring the auth one) plus
+   "Go to dashboard"; signed in with a profile gets "Go to dashboard" alone. A *failed* profile
+   read is deliberately not treated as "no profile" — those users are sent to the dashboard rather
+   than told to create one they may already have.
+   - **`loadChannelProfile` lives in a new `channel-profile-server.ts`.** Putting it beside
+     `parseChannelProfile` broke the client build: `channel-profile.ts` is imported by
+     `ChannelProfileForm.tsx`, so `createClient` pulled `astro:env/server` into the browser bundle.
+     `Topbar.astro` now shares the loader, so the query is written once.
+   - **Cost accepted:** `/` runs that profile query twice for a signed-in user (Topbar + Welcome).
+     Both are indexed single-row reads; resolving the profile onto `Astro.locals` in middleware
+     would fix it but adds a query to every route including `/api/*`.
+   - **Creating a profile reloads the page once, on dialog close.** The hero is server-rendered, so
+     React state cannot update it. Reloading on close rather than on save keeps the in-dialog
+     success banner visible; `if (!profile)` reads the pre-save value, so edits do not reload.
