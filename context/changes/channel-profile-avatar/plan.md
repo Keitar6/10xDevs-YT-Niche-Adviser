@@ -363,28 +363,28 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm test`
-- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm test` — 8ea494f
+- [x] 2.2 Linting passes: `npm run lint` — 8ea494f
 
 #### Manual
 
-- [x] 2.3 Prompts built from real niches read sensibly as image prompts
+- [x] 2.3 Prompts built from real niches read sensibly as image prompts — 8ea494f
 
 ### Phase 3: Upload end-to-end
 
 #### Automated
 
-- [ ] 3.1 Linting passes: `npm run lint`
-- [ ] 3.2 Unit tests still pass: `npm test`
-- [ ] 3.3 Production build succeeds: `npm run build`
+- [x] 3.1 Linting passes: `npm run lint`
+- [x] 3.2 Unit tests still pass: `npm test`
+- [x] 3.3 Production build succeeds: `npm run build`
 
 #### Manual
 
 - [ ] 3.4 Uploading a PNG shows the avatar in the dialog and topbar, object under `avatars/<user_id>/`
 - [ ] 3.5 Oversized file and `.pdf` rejected in the browser and by direct `curl`
-- [ ] 3.6 Re-uploading replaces the image, previous object gone, no stale image
-- [ ] 3.7 Remove clears the avatar and deletes the object
-- [ ] 3.8 A signed-out request for the raw object path is refused
+- [x] 3.6 Re-uploading replaces the image, previous object gone, no stale image
+- [x] 3.7 Remove clears the avatar and deletes the object
+- [x] 3.8 A signed-out request for the raw object path is refused
 
 ### Phase 4: AI generation
 

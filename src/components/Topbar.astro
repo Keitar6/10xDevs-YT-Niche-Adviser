@@ -1,6 +1,7 @@
 ---
 import { createClient } from "@/lib/supabase";
 import { parseChannelProfile } from "@/lib/services/channel-profile";
+import { signAvatarUrl } from "@/lib/services/avatar-storage";
 import ProfileDialog from "@/components/profile/ProfileDialog";
 
 const { user } = Astro.locals;
@@ -13,6 +14,16 @@ const { data: profileRow, error: profileError } =
 
 // `competitors` is generated as `Json`, so the row is validated before use.
 const profile = parseChannelProfile(profileRow);
+
+// The bucket is private, so the row stores an object path and the readable URL
+// is minted here, per render. Its ~1h window is therefore spent on how long the
+// tab stays open, not on how long the image is displayed.
+//
+// A failed signing is kept distinct from "no avatar": the write path replaces
+// objects, so letting a misread look like an empty slot would invite a
+// destructive overwrite (impl-review F4).
+const avatarUrl = supabase && profile?.avatar_path ? await signAvatarUrl(supabase, profile.avatar_path) : null;
+const avatarLoadFailed = !!profile?.avatar_path && avatarUrl === null;
 ---
 
 <div
@@ -26,7 +37,13 @@ const profile = parseChannelProfile(profileRow);
           <a href="/dashboard" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
             Dashboard
           </a>
-          <ProfileDialog initialProfile={profile} loadFailed={!!profileError} client:load />
+          <ProfileDialog
+            initialProfile={profile}
+            loadFailed={!!profileError}
+            initialAvatarUrl={avatarUrl}
+            avatarLoadFailed={avatarLoadFailed}
+            client:load
+          />
           <form method="POST" action="/api/auth/signout">
             <button type="submit" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
               Sign out
