@@ -1,7 +1,7 @@
 ---
 change_id: channel-profile-avatar
 title: Channel profile avatar
-status: implementing
+status: implemented
 created: 2026-09-13
 updated: 2026-09-13
 archived_at: null
@@ -45,3 +45,29 @@ all four `storage.objects` policies with the expected `foldername(name)[1]` pred
 Worker redeployed (version `2ef8e060`); `env.AI` and `env.AVATAR_LIMITER` are both
 present in the production binding list, and `SUPABASE_URL`/`SUPABASE_KEY` were already
 set as Worker secrets, so no new secret was introduced — as the plan predicted.
+
+**Phase 5 closed out with four rows unchecked (2026-09-13):** local verification is
+complete (3.4/3.5 confirmed in the browser by the user; every other row proven by
+automated checks or direct curl/SQL against the real stack). The four remaining rows
+are deliberately not claimed:
+
+- **5.1 CI green on `master`** — *won't-do, blocked on infrastructure outside this
+  slice.* `.github/workflows/ci.yml` is committed on `master`, the API reports it
+  `state=active`, and Actions is `enabled: true` / `allowed_actions: all`, yet the
+  repository has **zero workflow runs ever** and PR #21 did not trigger one either.
+  This contradicts CLAUDE.md's claim that CI "runs lint + build on every push and PR
+  to master". Needs an account-level Actions/billing check. What *did* pass on PR #21
+  is Cloudflare's own "Workers Builds" check, so the production build is verified —
+  just not by the workflow the plan named.
+- **5.4 two-user isolation in production** — *won't-do, accepted by the user.* The
+  hosted policies were dumped and compared after `db push` and are byte-identical to
+  the local ones, which were proven with a full two-user REST protocol (B gets 404 on
+  read, 403 `new row violates row-level security policy` on insert, 403 `AccessDenied`
+  on delete, `[]` on list; A and anon behave correctly). Re-running it in production
+  would require creating throwaway users in real auth.
+- **5.3 / 5.5 production smoke + CPU time** — *pending.* The Worker is deployed
+  (version `2ef8e060`) with `env.AI` and `env.AVATAR_LIMITER` present, but it has not
+  been exercised through the browser yet. Note that `YOUTUBE_API_KEY` and
+  `ANTHROPIC_API_KEY` are **not** set as Worker secrets, so on the deployed app profile
+  saving accepts only full `UC…` IDs and `/api/analyze` returns 500 — neither affects
+  avatar upload or generation.

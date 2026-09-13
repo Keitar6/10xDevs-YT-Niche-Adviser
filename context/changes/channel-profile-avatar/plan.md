@@ -380,8 +380,8 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Manual
 
-- [ ] 3.4 Uploading a PNG shows the avatar in the dialog and topbar, object under `avatars/<user_id>/`
-- [ ] 3.5 Oversized file and `.pdf` rejected in the browser and by direct `curl`
+- [x] 3.4 Uploading a PNG shows the avatar in the dialog and topbar, object under `avatars/<user_id>/`
+- [x] 3.5 Oversized file and `.pdf` rejected in the browser and by direct `curl`
 - [x] 3.6 Re-uploading replaces the image, previous object gone, no stale image — 5d70c5e
 - [x] 3.7 Remove clears the avatar and deletes the object — 5d70c5e
 - [x] 3.8 A signed-out request for the raw object path is refused — 5d70c5e
