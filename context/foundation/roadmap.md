@@ -47,7 +47,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | in-progress |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
-| S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | in-progress |
+| S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | done |
 | S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | proposed |
 
 ## Streams
@@ -165,7 +165,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
   - **FR-013 i FR-014 w jednym slice, nie w dwóch.** Obie zmiany przepisują `Topbar.astro` i `Welcome.astro`, więc rozdzielone kolidowałyby ze sobą; razem tworzą jeden spójny deliverable o wadze porównywalnej z S-01.
 - **Stan zastany (2026-09-13):** `src/components/Welcome.astro` i domyślny `title` w `src/layouts/Layout.astro` nadal reklamują „10x Astro Starter" (Supabase auth, ESLint, „Astro 5"); logowanie i rejestracja to osobne trasy (`src/pages/auth/{signin,signup}.astro`), a wylogowanie to goły `form method="POST"` w `Topbar.astro`.
 - **Risk:** Najlżejszy element milestone'a — czysty UI, zero migracji, zero nowych sekretów, zero integracji zewnętrznych. Główne ryzyko to regresja istniejących ścieżek auth przy przenoszeniu formularzy ze stron do dialogu (zwłaszcza obsługa błędu serwera, dziś przekazywanego przez `?error=` w URL, oraz redirect po Google OAuth). Sekwencjonowany po S-03, bo `main_goal: speed` stawia domknięcie ścieżki must-have przed polerką prezentacji.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Profil kanału ma awatar — wgrany albo wygenerowany
 
@@ -226,3 +226,4 @@ Wszystkie pozycje poniżej są też zamkniętymi issues (`state_reason: not_plan
 ## Done
 
 - **F-01: (foundation) Użytkownik może zalogować się przez Google OAuth, obok już działającego email+hasło; FR-001 w pełni spełniony.** — Archived 2026-09-10 → `context/archive/2026-09-08-google-oauth-login/`. Lesson: —.
+- **S-04: niezalogowany odwiedzający rozumie ze strony głównej, czym jest produkt (kuratela konkurentów → ranking okazji contentowych) zamiast czytać treść szablonu startera; zalogowany i niezalogowany użytkownik loguje się, rejestruje i wylogowuje z dialogu w obrębie bieżącej strony, spójnie z istniejącym dialogiem profilu kanału.** — Archived 2026-09-13 → `context/archive/2026-09-13-landing-and-auth-shell/`. Lesson: —.
