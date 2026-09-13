@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Mail, Lock, LogIn } from "lucide-react";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
@@ -6,14 +6,22 @@ import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
 
 interface Props {
-  serverError?: string | null;
+  initialError?: string | null;
+  /**
+   * Called instead of navigating. Astro cannot pass a function across the
+   * island boundary, so the standalone /auth/signin page relies on the
+   * navigating fallback; the dialog passes its own handler.
+   */
+  onSuccess?: () => void;
 }
 
-export default function SignInForm({ serverError }: Props) {
+export default function SignInForm({ initialError = null, onSuccess }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [serverError, setServerError] = useState<string | null>(initialError);
+  const [submitting, setSubmitting] = useState(false);
 
   function validate() {
     const next: typeof errors = {};
@@ -33,14 +41,43 @@ export default function SignInForm({ serverError }: Props) {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
-  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    // Never a native submit: this form also runs inside a Radix dialog, where a
+    // navigation would destroy the dialog mid-flight.
+    e.preventDefault();
+    setServerError(null);
     if (!validate()) {
-      e.preventDefault();
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const json: { ok?: boolean; error?: string } = await res.json();
+
+      if (!res.ok || !json.ok) {
+        setServerError(json.error ?? "Something went wrong");
+        return;
+      }
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        window.location.assign("/");
+      }
+    } catch {
+      setServerError("Could not reach the server. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
-    <form method="POST" action="/api/auth/signin" className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
       <FormField
         id="email"
         type="email"
@@ -79,7 +116,7 @@ export default function SignInForm({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText="Signing in..." icon={<LogIn className="size-4" />}>
+      <SubmitButton pending={submitting} pendingText="Signing in..." icon={<LogIn className="size-4" />}>
         Sign in
       </SubmitButton>
     </form>

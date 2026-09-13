@@ -402,11 +402,11 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [ ] 1.1 `safeNextPath` unit tests pass (`npm run test`)
-- [ ] 1.2 Lint and type check pass (`npm run lint`)
-- [ ] 1.3 Production build succeeds (`npm run build`)
-- [ ] 1.4 No auth route redirects with `?error=`
-- [ ] 1.5 No auth form declares a native action
+- [x] 1.1 `safeNextPath` unit tests pass (`npm run test`)
+- [x] 1.2 Lint and type check pass (`npm run lint`)
+- [x] 1.3 Production build succeeds (`npm run build`)
+- [x] 1.4 No auth route redirects with `?error=`
+- [x] 1.5 No auth form declares a native action
 
 #### Manual
 

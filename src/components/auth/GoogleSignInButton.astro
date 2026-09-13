@@ -1,13 +1,13 @@
 ---
 interface Props {
-  origin?: "signin" | "signup";
+  next?: string;
 }
 
-const { origin = "signin" } = Astro.props;
+const { next = "/" } = Astro.props;
 ---
 
 <form method="POST" action="/api/auth/google">
-  <input type="hidden" name="origin" value={origin} />
+  <input type="hidden" name="next" value={next} />
   <button
     type="submit"
     class="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
