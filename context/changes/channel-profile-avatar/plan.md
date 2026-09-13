@@ -349,26 +349,26 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase db reset`
-- [x] 1.2 Types regenerate and `git diff src/lib/database.types.ts` shows `avatar_path`
-- [x] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Migration applies cleanly: `npx supabase db reset` — 205bbb4
+- [x] 1.2 Types regenerate and `git diff src/lib/database.types.ts` shows `avatar_path` — 205bbb4
+- [x] 1.3 Linting passes: `npm run lint` — 205bbb4
 
 #### Manual
 
-- [x] 1.4 Bucket `avatars` exists, private, with size and MIME limits applied
-- [x] 1.5 All four policies are present on `storage.objects`
-- [x] 1.6 Two-user isolation: user B cannot read, overwrite or delete user A's object
+- [x] 1.4 Bucket `avatars` exists, private, with size and MIME limits applied — 205bbb4
+- [x] 1.5 All four policies are present on `storage.objects` — 205bbb4
+- [x] 1.6 Two-user isolation: user B cannot read, overwrite or delete user A's object — 205bbb4
 
 ### Phase 2: Pure service module
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm test`
-- [ ] 2.2 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm test`
+- [x] 2.2 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.3 Prompts built from real niches read sensibly as image prompts
+- [x] 2.3 Prompts built from real niches read sensibly as image prompts
 
 ### Phase 3: Upload end-to-end
 
