@@ -1,4 +1,7 @@
 ---
+// Bindings come off the module-level `env`; `Astro.locals.runtime` was removed
+// in @astrojs/cloudflare v13 / Astro 6 (see src/pages/api/analyze.ts:15).
+import { env } from "cloudflare:workers";
 import { createClient } from "@/lib/supabase";
 import { parseChannelProfile } from "@/lib/services/channel-profile";
 import { signAvatarUrl } from "@/lib/services/avatar-storage";
@@ -24,6 +27,12 @@ const profile = parseChannelProfile(profileRow);
 // destructive overwrite (impl-review F4).
 const avatarUrl = supabase && profile?.avatar_path ? await signAvatarUrl(supabase, profile.avatar_path) : null;
 const avatarLoadFailed = !!profile?.avatar_path && avatarUrl === null;
+
+// Deliberately not routed through src/lib/config-status.ts: that module reads
+// secrets from astro:env/server at module scope, and this is neither a secret
+// nor module-scoped. Checking per request means the Generate button is hidden
+// rather than offered and then failing with a 503.
+const canGenerate = !!(env as Record<string, unknown>).AI;
 ---
 
 <div
@@ -42,6 +51,7 @@ const avatarLoadFailed = !!profile?.avatar_path && avatarUrl === null;
             loadFailed={!!profileError}
             initialAvatarUrl={avatarUrl}
             avatarLoadFailed={avatarLoadFailed}
+            canGenerate={canGenerate}
             client:load
           />
           <form method="POST" action="/api/auth/signout">

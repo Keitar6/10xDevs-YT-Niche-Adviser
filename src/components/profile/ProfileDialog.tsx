@@ -10,6 +10,8 @@ interface Props {
   initialAvatarUrl?: string | null;
   /** The profile names an avatar object, but signing a URL for it failed. */
   avatarLoadFailed?: boolean;
+  /** The `AI` binding is present on this deployment, so generation can be offered. */
+  canGenerate?: boolean;
 }
 
 export default function ProfileDialog({
@@ -17,6 +19,7 @@ export default function ProfileDialog({
   loadFailed = false,
   initialAvatarUrl = null,
   avatarLoadFailed = false,
+  canGenerate = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(initialProfile);
@@ -55,6 +58,7 @@ export default function ProfileDialog({
           avatarUrl={avatarUrl}
           loadFailed={avatarLoadFailed}
           hasProfile={profile !== null}
+          canGenerate={canGenerate}
           onChanged={setAvatarUrl}
         />
 

@@ -374,32 +374,32 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Automated
 
-- [x] 3.1 Linting passes: `npm run lint`
-- [x] 3.2 Unit tests still pass: `npm test`
-- [x] 3.3 Production build succeeds: `npm run build`
+- [x] 3.1 Linting passes: `npm run lint` — 5d70c5e
+- [x] 3.2 Unit tests still pass: `npm test` — 5d70c5e
+- [x] 3.3 Production build succeeds: `npm run build` — 5d70c5e
 
 #### Manual
 
 - [ ] 3.4 Uploading a PNG shows the avatar in the dialog and topbar, object under `avatars/<user_id>/`
 - [ ] 3.5 Oversized file and `.pdf` rejected in the browser and by direct `curl`
-- [x] 3.6 Re-uploading replaces the image, previous object gone, no stale image
-- [x] 3.7 Remove clears the avatar and deletes the object
-- [x] 3.8 A signed-out request for the raw object path is refused
+- [x] 3.6 Re-uploading replaces the image, previous object gone, no stale image — 5d70c5e
+- [x] 3.7 Remove clears the avatar and deletes the object — 5d70c5e
+- [x] 3.8 A signed-out request for the raw object path is refused — 5d70c5e
 
 ### Phase 4: AI generation
 
 #### Automated
 
-- [ ] 4.1 `npx wrangler types` regenerates cleanly, `AI` is typed, `npm run lint` passes
-- [ ] 4.2 Production build succeeds: `npm run build`
-- [ ] 4.3 Unit tests still pass: `npm test`
+- [x] 4.1 `npx wrangler types` regenerates cleanly, `AI` is typed, `npm run lint` passes
+- [x] 4.2 Production build succeeds: `npm run build`
+- [x] 4.3 Unit tests still pass: `npm test`
 
 #### Manual
 
-- [ ] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed
-- [ ] 4.5 Generate produces a niche-derived 512×512 avatar within a few seconds
-- [ ] 4.6 A sixth generation inside a minute returns 429
-- [ ] 4.7 With the `ai` binding removed, Generate is absent and upload still works
+- [x] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed
+- [x] 4.5 Generate produces a niche-derived 512×512 avatar within a few seconds
+- [x] 4.6 A sixth generation inside a minute returns 429
+- [x] 4.7 With the `ai` binding removed, Generate is absent and upload still works
 
 ### Phase 5: Deploy
 
