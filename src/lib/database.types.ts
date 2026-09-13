@@ -67,6 +67,57 @@ export type Database = {
         }
         Relationships: []
       }
+      content_opportunities: {
+        Row: {
+          channel_id: string
+          channel_median: number
+          channel_title: string | null
+          id: string
+          justification: string | null
+          outlier_score: number
+          published_at: string
+          sample_size: number
+          saved_at: string
+          status: string
+          title: string
+          user_id: string
+          video_id: string
+          view_count: number
+        }
+        Insert: {
+          channel_id: string
+          channel_median: number
+          channel_title?: string | null
+          id?: string
+          justification?: string | null
+          outlier_score: number
+          published_at: string
+          sample_size: number
+          saved_at?: string
+          status?: string
+          title: string
+          user_id?: string
+          video_id: string
+          view_count: number
+        }
+        Update: {
+          channel_id?: string
+          channel_median?: number
+          channel_title?: string | null
+          id?: string
+          justification?: string | null
+          outlier_score?: number
+          published_at?: string
+          sample_size?: number
+          saved_at?: string
+          status?: string
+          title?: string
+          user_id?: string
+          video_id?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

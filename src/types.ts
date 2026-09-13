@@ -8,6 +8,7 @@ import type { ScoredOpportunity, SkipReason } from "@/lib/services/scoring";
 export type { ChannelProfile, Competitor } from "@/lib/services/channel-profile";
 export type { ScoredOpportunity, SkipReason } from "@/lib/services/scoring";
 export type { Justification } from "@/lib/services/justify";
+export type { SavedOpportunity } from "@/lib/services/content-opportunity";
 
 /* -------------------------------------------------------------------------- *
  * `/api/analyze` response
