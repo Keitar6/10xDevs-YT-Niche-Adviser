@@ -1,7 +1,7 @@
 ---
 change_id: save-and-view-opportunities
 title: Save and view opportunities
-status: implemented
+status: impl_reviewed
 created: 2026-09-13
 updated: 2026-09-13
 archived_at: null

@@ -47,6 +47,8 @@ export const POST: APIRoute = async (context) => {
   if (error) {
     // Idempotent on (user_id, video_id): a repeat save is a no-op that hands
     // back the row already stored, so the first-saved score wins.
+    // Assumes (user_id, video_id) is the table's only unique constraint — if
+    // another one is ever added, this re-select needs to disambiguate.
     if (error.code === "23505") {
       const { data: existing } = await supabase
         .from("content_opportunities")

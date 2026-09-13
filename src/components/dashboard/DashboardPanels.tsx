@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import AnalyzePanel from "@/components/analyze/AnalyzePanel";
 import SavedOpportunitiesPanel from "@/components/opportunities/SavedOpportunitiesPanel";
+import { SAVED_LIST_LIMIT } from "@/lib/services/content-opportunity";
 import type { AnalyzeOpportunity, SavedOpportunity } from "@/types";
 
 const CONNECTION_ERROR = "Could not reach the server. Check your connection and try again.";
@@ -59,7 +60,7 @@ export default function DashboardPanels({ initialSaved, loadFailed }: Props) {
       // would otherwise prepend a row already in the array — a duplicate id.
       setSaved((prev) => {
         const existingIndex = prev.findIndex((r) => r.id === row.id);
-        if (existingIndex === -1) return [row, ...prev];
+        if (existingIndex === -1) return [row, ...prev].slice(0, SAVED_LIST_LIMIT);
         const next = [...prev];
         next[existingIndex] = row;
         return next;
