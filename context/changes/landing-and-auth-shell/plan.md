@@ -441,10 +441,10 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [x] 3.1 Lint, build, and tests pass
-- [x] 3.2 No page mounts `Topbar` directly
-- [x] 3.3 No dangling references to deleted files
-- [x] 3.4 Only the layout paints `bg-cosmic`
+- [x] 3.1 Lint, build, and tests pass — bed66e4
+- [x] 3.2 No page mounts `Topbar` directly — bed66e4
+- [x] 3.3 No dangling references to deleted files — bed66e4
+- [x] 3.4 Only the layout paints `bg-cosmic` — bed66e4
 
 #### Manual
 
@@ -458,10 +458,10 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [ ] 4.1 Lint, build, and tests pass
-- [ ] 4.2 No starter references remain in `src`, `public`, or `README.md`
-- [ ] 4.3 `LibBadge` is gone and unreferenced
-- [ ] 4.4 `public/og.png` exists at 1200×630
+- [x] 4.1 Lint, build, and tests pass
+- [x] 4.2 No starter references remain in `src`, `public`, or `README.md`
+- [x] 4.3 `LibBadge` is gone and unreferenced
+- [x] 4.4 `public/og.png` exists at 1200×630
 
 #### Manual
 
