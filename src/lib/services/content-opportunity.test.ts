@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { saveOpportunitySchema } from "./content-opportunity";
 
-const VALID: unknown = {
+const VALID = {
   video_id: "abc123",
   title: "How to speedrun a niche",
   channel_id: "UC1234567890",

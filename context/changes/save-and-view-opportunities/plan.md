@@ -568,38 +568,38 @@ so no additional index is created.
 
 #### Automated
 
-- [x] 1.1 Migration applies on a fresh database
-- [x] 1.2 Types regenerate and include the table
-- [x] 1.3 Unit tests pass
-- [x] 1.4 Linting passes
-- [x] 1.5 Build passes
-- [x] 1.6 Duplicate insert refused with 23505, bad status refused by CHECK
-- [x] 1.7 RLS enabled with four owner-scoped policies, expressions checked
+- [x] 1.1 Migration applies on a fresh database — 38e5c37
+- [x] 1.2 Types regenerate and include the table — 38e5c37
+- [x] 1.3 Unit tests pass — 38e5c37
+- [x] 1.4 Linting passes — 38e5c37
+- [x] 1.5 Build passes — 38e5c37
+- [x] 1.6 Duplicate insert refused with 23505, bad status refused by CHECK — 38e5c37
+- [x] 1.7 RLS enabled with four owner-scoped policies, expressions checked — 38e5c37
 
 #### Manual
 
-- [x] 1.8 Policy set reviewed against the channel_profiles migration
+- [x] 1.8 Policy set reviewed against the channel_profiles migration — 38e5c37
 
 ### Phase 2: Save & remove API
 
 #### Automated
 
-- [ ] 2.1 Linting passes
-- [ ] 2.2 Build passes
-- [ ] 2.3 Unit tests pass
-- [ ] 2.4 Both handlers guard themselves with a locals.user check
-- [ ] 2.5 Unauthenticated POST returns 401 in the JSON envelope
-- [ ] 2.6 Unauthenticated DELETE with Origin header returns 401 in the JSON envelope
-- [ ] 2.7 Authenticated POST persists the row and returns 200
-- [ ] 2.8 Repeat POST returns the same row id and leaves one row
-- [ ] 2.9 Invalid payloads return 400 naming the problem
-- [ ] 2.10 DELETE removes the row; a second DELETE returns 404
-- [ ] 2.11 DELETE with a non-uuid id returns 400
-- [ ] 2.12 Two-account isolation protocol passes all five assertions
+- [x] 2.1 Linting passes
+- [x] 2.2 Build passes
+- [x] 2.3 Unit tests pass
+- [x] 2.4 Both handlers guard themselves with a locals.user check
+- [x] 2.5 Unauthenticated POST returns 401 in the JSON envelope
+- [x] 2.6 Unauthenticated DELETE with Origin header returns 401 in the JSON envelope
+- [x] 2.7 Authenticated POST persists the row and returns 200
+- [x] 2.8 Repeat POST returns the same row id and leaves one row
+- [x] 2.9 Invalid payloads return 400 naming the problem
+- [x] 2.10 DELETE removes the row; a second DELETE returns 404
+- [x] 2.11 DELETE with a non-uuid id returns 400
+- [x] 2.12 Two-account isolation protocol passes all five assertions
 
 #### Manual
 
-- [ ] 2.13 Isolation protocol transcript reviewed against two distinct sessions
+- [x] 2.13 Isolation protocol transcript reviewed against two distinct sessions
 
 ### Phase 3: Dashboard composition
 
