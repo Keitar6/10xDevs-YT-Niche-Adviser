@@ -33,3 +33,15 @@ store-and-replace write path that both `/api/avatar` and `/api/avatar/generate` 
 fails `@typescript-eslint/no-unnecessary-condition`. The runtime check is exactly how
 FR-015's degraded upload-only mode is reached, so it is kept and the read is widened
 (`(env as { AI?: Ai }).AI`) rather than deleted.
+
+**Hosted project was further ahead than the plan assumed (2026-09-13):** Phase 5 said
+"this is the first cloud migration push in the project's history" and that `db push`
+would apply all three migrations. `supabase migration list` after linking showed
+`20260909213911` and `20260912190947` were *already* applied remotely; only
+`20260913134159_add_channel_profile_avatar` was pending, and only it was pushed.
+Verified afterwards against the hosted project: `channel_profiles.avatar_path text`,
+bucket `avatars` (`public=false`, `2097152`, `{image/png,image/jpeg,image/webp}`), and
+all four `storage.objects` policies with the expected `foldername(name)[1]` predicate.
+Worker redeployed (version `2ef8e060`); `env.AI` and `env.AVATAR_LIMITER` are both
+present in the production binding list, and `SUPABASE_URL`/`SUPABASE_KEY` were already
+set as Worker secrets, so no new secret was introduced — as the plan predicted.

@@ -390,16 +390,16 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Automated
 
-- [x] 4.1 `npx wrangler types` regenerates cleanly, `AI` is typed, `npm run lint` passes
-- [x] 4.2 Production build succeeds: `npm run build`
-- [x] 4.3 Unit tests still pass: `npm test`
+- [x] 4.1 `npx wrangler types` regenerates cleanly, `AI` is typed, `npm run lint` passes — 2f1ecd5
+- [x] 4.2 Production build succeeds: `npm run build` — 2f1ecd5
+- [x] 4.3 Unit tests still pass: `npm test` — 2f1ecd5
 
 #### Manual
 
-- [x] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed
-- [x] 4.5 Generate produces a niche-derived 512×512 avatar within a few seconds
-- [x] 4.6 A sixth generation inside a minute returns 429
-- [x] 4.7 With the `ai` binding removed, Generate is absent and upload still works
+- [x] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed — 2f1ecd5
+- [x] 4.5 Generate produces a niche-derived 512×512 avatar within a few seconds — 2f1ecd5
+- [x] 4.6 A sixth generation inside a minute returns 429 — 2f1ecd5
+- [x] 4.7 With the `ai` binding removed, Generate is absent and upload still works — 2f1ecd5
 
 ### Phase 5: Deploy
 
@@ -409,7 +409,7 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Manual
 
-- [ ] 5.2 `npx supabase db push` applies all migrations; bucket and policies verified in the hosted project
+- [x] 5.2 `npx supabase db push` applies all migrations; bucket and policies verified in the hosted project
 - [ ] 5.3 Upload and generation both work against the deployed Worker
 - [ ] 5.4 Two-user isolation re-verified in production
 - [ ] 5.5 CPU time per avatar request is within the free-tier budget
