@@ -48,7 +48,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | done |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | done |
 | S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | done |
-| S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | in-progress |
+| S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | done |
 
 ## Streams
 
@@ -182,7 +182,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Rozstrzygnięcia (2026-09-13):**
   - **Tor automatyczny: generowanie obrazu przez API AI**, nie deterministyczny SVG z hasha niszy. Decyzja użytkownika — świadomie przyjęty koszt, latencja i nowy sekret w zamian za realny obraz zamiast geometrycznego zastępnika.
 - **Risk:** Jedyny rozszerzony element dotykający warstwy danych i sekretów, nie tylko widoku: nowy bucket Supabase Storage z RLS per-owner (drugi po `channel_profiles` zestaw polityk do poprawnego wdrożenia — mitygacja: powielić wzorzec z F-02), migracja dokładająca `avatar_url` do `channel_profiles` (dziś tylko `niche`, `sub_niche`, `competitors`), nowy dostawca obrazów wraz z sekretem w `.dev.vars`/Cloudflare oraz ścieżka błędu przy nieudanej generacji — przy braku klucza funkcja musi degradować się łagodnie do samego wgrywania, wzorem degradacji `/api/profile` bez klucza YouTube. Sekwencjonowany po S-03 z tego samego powodu co S-04, ale wymaga własnego `/10x-plan` — jest istotnie cięższy niż S-04.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -230,3 +230,4 @@ Wszystkie pozycje poniżej są też zamkniętymi issues (`state_reason: not_plan
 - **S-04: niezalogowany odwiedzający rozumie ze strony głównej, czym jest produkt (kuratela konkurentów → ranking okazji contentowych) zamiast czytać treść szablonu startera; zalogowany i niezalogowany użytkownik loguje się, rejestruje i wylogowuje z dialogu w obrębie bieżącej strony, spójnie z istniejącym dialogiem profilu kanału.** — Archived 2026-09-13 → `context/archive/2026-09-13-landing-and-auth-shell/`. Lesson: —.
 - **S-03: user zapisuje wybraną okazję z wyników analizy (temat, score, status) jako trwały rekord i później przegląda swoje zapisane okazje; zapisane okazje widoczne wyłącznie dla właściciela.** — Archived 2026-09-13 → `context/archive/2026-09-13-save-and-view-opportunities/`. Lesson: —.
 - **S-02: zalogowany użytkownik z istniejącym profilem klika „Analyze" i widzi ranking ≥3 (docelowo top 5) okazji contentowych, każda z liczbowym `outlier_score` i jednozdaniowym uzasadnieniem, posortowane malejąco; przy błędzie/limicie API użytkownik widzi czytelny komunikat zamiast pustego lub zepsutego ekranu.** — Archived 2026-09-13 → `context/archive/2026-09-10-analyze-and-rank-opportunities/`. Lesson: —.
+- **S-05: user wgrywa własny obraz jako awatar profilu kanału albo generuje go automatycznie na podstawie niszy i sub-niszy; awatar jest widoczny w powłoce aplikacji i dostępny wyłącznie dla właściciela.** — Archived 2026-09-13 → `context/archive/2026-09-13-channel-profile-avatar/`. Lesson: —.
