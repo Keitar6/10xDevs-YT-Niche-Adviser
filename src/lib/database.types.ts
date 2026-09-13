@@ -36,6 +36,7 @@ export type Database = {
     Tables: {
       channel_profiles: {
         Row: {
+          avatar_path: string | null
           competitors: Json
           created_at: string
           id: string
@@ -45,6 +46,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_path?: string | null
           competitors: Json
           created_at?: string
           id?: string
@@ -54,6 +56,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          avatar_path?: string | null
           competitors?: Json
           created_at?: string
           id?: string

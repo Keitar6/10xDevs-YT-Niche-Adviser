@@ -349,57 +349,57 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly: `npx supabase db reset`
-- [ ] 1.2 Types regenerate and `git diff src/lib/database.types.ts` shows `avatar_path`
-- [ ] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Migration applies cleanly: `npx supabase db reset` — 205bbb4
+- [x] 1.2 Types regenerate and `git diff src/lib/database.types.ts` shows `avatar_path` — 205bbb4
+- [x] 1.3 Linting passes: `npm run lint` — 205bbb4
 
 #### Manual
 
-- [ ] 1.4 Bucket `avatars` exists, private, with size and MIME limits applied
-- [ ] 1.5 All four policies are present on `storage.objects`
-- [ ] 1.6 Two-user isolation: user B cannot read, overwrite or delete user A's object
+- [x] 1.4 Bucket `avatars` exists, private, with size and MIME limits applied — 205bbb4
+- [x] 1.5 All four policies are present on `storage.objects` — 205bbb4
+- [x] 1.6 Two-user isolation: user B cannot read, overwrite or delete user A's object — 205bbb4
 
 ### Phase 2: Pure service module
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm test`
-- [ ] 2.2 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm test` — 8ea494f
+- [x] 2.2 Linting passes: `npm run lint` — 8ea494f
 
 #### Manual
 
-- [ ] 2.3 Prompts built from real niches read sensibly as image prompts
+- [x] 2.3 Prompts built from real niches read sensibly as image prompts — 8ea494f
 
 ### Phase 3: Upload end-to-end
 
 #### Automated
 
-- [ ] 3.1 Linting passes: `npm run lint`
-- [ ] 3.2 Unit tests still pass: `npm test`
-- [ ] 3.3 Production build succeeds: `npm run build`
+- [x] 3.1 Linting passes: `npm run lint` — 5d70c5e
+- [x] 3.2 Unit tests still pass: `npm test` — 5d70c5e
+- [x] 3.3 Production build succeeds: `npm run build` — 5d70c5e
 
 #### Manual
 
-- [ ] 3.4 Uploading a PNG shows the avatar in the dialog and topbar, object under `avatars/<user_id>/`
-- [ ] 3.5 Oversized file and `.pdf` rejected in the browser and by direct `curl`
-- [ ] 3.6 Re-uploading replaces the image, previous object gone, no stale image
-- [ ] 3.7 Remove clears the avatar and deletes the object
-- [ ] 3.8 A signed-out request for the raw object path is refused
+- [x] 3.4 Uploading a PNG shows the avatar in the dialog and topbar, object under `avatars/<user_id>/`
+- [x] 3.5 Oversized file and `.pdf` rejected in the browser and by direct `curl`
+- [x] 3.6 Re-uploading replaces the image, previous object gone, no stale image — 5d70c5e
+- [x] 3.7 Remove clears the avatar and deletes the object — 5d70c5e
+- [x] 3.8 A signed-out request for the raw object path is refused — 5d70c5e
 
 ### Phase 4: AI generation
 
 #### Automated
 
-- [ ] 4.1 `npx wrangler types` regenerates cleanly, `AI` is typed, `npm run lint` passes
-- [ ] 4.2 Production build succeeds: `npm run build`
-- [ ] 4.3 Unit tests still pass: `npm test`
+- [x] 4.1 `npx wrangler types` regenerates cleanly, `AI` is typed, `npm run lint` passes — 2f1ecd5
+- [x] 4.2 Production build succeeds: `npm run build` — 2f1ecd5
+- [x] 4.3 Unit tests still pass: `npm test` — 2f1ecd5
 
 #### Manual
 
-- [ ] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed
-- [ ] 4.5 Generate produces a niche-derived 512×512 avatar within a few seconds
-- [ ] 4.6 A sixth generation inside a minute returns 429
-- [ ] 4.7 With the `ai` binding removed, Generate is absent and upload still works
+- [x] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed — 2f1ecd5
+- [x] 4.5 Generate produces a niche-derived 1024×1024 avatar within a few seconds (see change.md deviation: model has no width/height param) — 2f1ecd5
+- [x] 4.6 A sixth generation inside a minute returns 429 — 2f1ecd5
+- [x] 4.7 With the `ai` binding removed, Generate is absent and upload still works — 2f1ecd5
 
 ### Phase 5: Deploy
 
@@ -409,7 +409,7 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Manual
 
-- [ ] 5.2 `npx supabase db push` applies all migrations; bucket and policies verified in the hosted project
+- [x] 5.2 `npx supabase db push` applies all migrations; bucket and policies verified in the hosted project — f18ef28
 - [ ] 5.3 Upload and generation both work against the deployed Worker
 - [ ] 5.4 Two-user isolation re-verified in production
 - [ ] 5.5 CPU time per avatar request is within the free-tier budget
