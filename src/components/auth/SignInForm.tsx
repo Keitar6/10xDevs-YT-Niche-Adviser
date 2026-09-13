@@ -7,12 +7,7 @@ import { ServerError } from "@/components/auth/ServerError";
 
 interface Props {
   initialError?: string | null;
-  /**
-   * Called instead of navigating. Astro cannot pass a function across the
-   * island boundary, so the standalone /auth/signin page relies on the
-   * navigating fallback; the dialog passes its own handler.
-   */
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
 export default function SignInForm({ initialError = null, onSuccess }: Props) {
@@ -64,11 +59,7 @@ export default function SignInForm({ initialError = null, onSuccess }: Props) {
         return;
       }
 
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        window.location.assign("/");
-      }
+      onSuccess();
     } catch {
       setServerError("Could not reach the server. Check your connection and try again.");
     } finally {

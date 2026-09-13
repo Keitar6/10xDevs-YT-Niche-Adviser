@@ -45,7 +45,7 @@ export const POST: APIRoute = async (context) => {
   // Local Supabase auto-confirms, and returns a session; a project with email
   // confirmation on returns none. That is the honest signal for whether the
   // user still has to click a link, so it replaces the unconditional
-  // redirect to /auth/confirm-email.
+  // redirect to the standalone confirmation page.
   return new Response(JSON.stringify({ ok: true, needsConfirmation: !data.session }), {
     status: 200,
     headers: { "Content-Type": "application/json" },

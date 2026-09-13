@@ -3,8 +3,8 @@ interface Props {
 }
 
 /**
- * TSX twin of the former GoogleSignInButton.astro — an .astro component cannot
- * render inside a React island, and the dialog needs one.
+ * TSX twin of the retired .astro version — an .astro component cannot render
+ * inside a React island, and the dialog needs one.
  *
  * This is the one form in the auth flow that should navigate: the trip to
  * Google's consent screen is a full-page redirect no matter what, so a native

@@ -9,12 +9,7 @@ const MIN_PASSWORD_LENGTH = 6;
 
 interface Props {
   initialError?: string | null;
-  /**
-   * Called instead of navigating. Astro cannot pass a function across the
-   * island boundary, so the standalone /auth/signup page relies on the
-   * navigating fallback; the dialog passes its own handler.
-   */
-  onSuccess?: (needsConfirmation: boolean) => void;
+  onSuccess: (needsConfirmation: boolean) => void;
 }
 
 export default function SignUpForm({ initialError = null, onSuccess }: Props) {
@@ -79,12 +74,7 @@ export default function SignUpForm({ initialError = null, onSuccess }: Props) {
         return;
       }
 
-      const needsConfirmation = json.needsConfirmation ?? true;
-      if (onSuccess) {
-        onSuccess(needsConfirmation);
-      } else {
-        window.location.assign(needsConfirmation ? "/auth/confirm-email" : "/");
-      }
+      onSuccess(json.needsConfirmation ?? true);
     } catch {
       setServerError("Could not reach the server. Check your connection and try again.");
     } finally {

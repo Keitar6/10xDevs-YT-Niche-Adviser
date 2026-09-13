@@ -422,9 +422,9 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [x] 2.1 Lint and build pass
-- [x] 2.2 Unit tests still pass
-- [x] 2.3 Top bar has no direct `/auth/sign*` links
+- [x] 2.1 Lint and build pass — 32fb7d8
+- [x] 2.2 Unit tests still pass — 32fb7d8
+- [x] 2.3 Top bar has no direct `/auth/sign*` links — 32fb7d8
 
 #### Manual
 
@@ -441,10 +441,10 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [ ] 3.1 Lint, build, and tests pass
-- [ ] 3.2 No page mounts `Topbar` directly
-- [ ] 3.3 No dangling references to deleted files
-- [ ] 3.4 Only the layout paints `bg-cosmic`
+- [x] 3.1 Lint, build, and tests pass
+- [x] 3.2 No page mounts `Topbar` directly
+- [x] 3.3 No dangling references to deleted files
+- [x] 3.4 Only the layout paints `bg-cosmic`
 
 #### Manual
 

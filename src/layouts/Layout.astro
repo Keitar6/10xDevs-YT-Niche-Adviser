@@ -3,12 +3,15 @@ import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
 import { Toaster } from "@/components/ui/sonner";
+import Topbar from "@/components/Topbar.astro";
 
 interface Props {
   title?: string;
+  /** Set false for a page that wants the bare cosmic ground with no top bar. */
+  topbar?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "10x Astro Starter", topbar = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -36,7 +39,10 @@ const { title = "10x Astro Starter" } = Astro.props;
         </Banner>
       ))
     }
-    <slot />
+    <div class="bg-cosmic relative flex min-h-screen flex-col p-4 sm:p-8">
+      {topbar && <Topbar />}
+      <slot />
+    </div>
     {
       /* `client:only`: sonner is pre-bundled for SSR with its own React copy, so
         rendering `Toaster` on the server throws an invalid-hook-call. The toast
