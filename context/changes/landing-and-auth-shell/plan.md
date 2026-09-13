@@ -458,10 +458,10 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [x] 4.1 Lint, build, and tests pass
-- [x] 4.2 No starter references remain in `src`, `public`, or `README.md`
-- [x] 4.3 `LibBadge` is gone and unreferenced
-- [x] 4.4 `public/og.png` exists at 1200×630
+- [x] 4.1 Lint, build, and tests pass — 2a4b98c
+- [x] 4.2 No starter references remain in `src`, `public`, or `README.md` — 2a4b98c
+- [x] 4.3 `LibBadge` is gone and unreferenced — 2a4b98c
+- [x] 4.4 `public/og.png` exists at 1200×630 — 2a4b98c
 
 #### Manual
 
