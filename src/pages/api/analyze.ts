@@ -81,7 +81,12 @@ export const POST: APIRoute = async (context) => {
     .maybeSingle();
 
   if (error) {
-    return jsonError(error.message, 500);
+    // The raw PostgREST message names columns, constraints and tables, so it
+    // stays server-side. `observability` is enabled on the Worker, so this
+    // reaches Workers Logs — the only diagnostic channel the project has.
+    // eslint-disable-next-line no-console -- deliberate: no logger exists yet
+    console.error("channel_profiles read failed", error.message);
+    return jsonError("Could not read your channel profile. Try again.", 500);
   }
 
   const profile = parseChannelProfile(data);

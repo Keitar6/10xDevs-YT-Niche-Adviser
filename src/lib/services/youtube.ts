@@ -12,6 +12,13 @@ import { type ChannelRef, parseChannelRef } from "./youtube-ids";
 
 const API_BASE = "https://www.googleapis.com/youtube/v3";
 
+// Per-call ceiling on the Data API. A whole 5-competitor run measures ~1.6s of
+// YouTube time, so this bounds a hung connection without truncating a healthy
+// call. Without it an unresponsive upstream has nothing stopping it from
+// holding `/api/analyze` open indefinitely — `justify.ts` already bounds the
+// Anthropic leg the same way.
+const REQUEST_TIMEOUT_MS = 10_000;
+
 /**
  * `channels.list` response, modelling parts as *absent keys* rather than
  * nullable fields: a part the request did not ask for is simply missing from
@@ -68,9 +75,17 @@ async function getJson(path: string, params: Record<string, string>, apiKey: str
 
   let res: Response;
   try {
-    res = await fetch(url);
-  } catch {
-    throw new YouTubeError({ kind: "transport", message: "Could not reach the YouTube API." });
+    res = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  } catch (error) {
+    // A timeout aborts as `TimeoutError`; everything else here is a genuine
+    // transport failure. Both degrade to the same classified failure, but the
+    // message distinguishes them because they need different responses from
+    // whoever reads it.
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    throw new YouTubeError({
+      kind: "transport",
+      message: timedOut ? "The YouTube API did not respond in time." : "Could not reach the YouTube API.",
+    });
   }
 
   let payload: unknown;
@@ -186,7 +201,7 @@ export async function resolveChannelRefs(inputs: string[], apiKey: string): Prom
   // One call per handle. Capped at the competitor limit, so this stays well
   // inside Cloudflare's 6 simultaneous outgoing connections.
   const handleRefs = refs.filter((r) => r.ref.kind === "handle");
-  const handleResults = await Promise.all(
+  const handleResults = await Promise.allSettled(
     handleRefs.map(async ({ input, ref }) => {
       const handle = ref.kind === "handle" ? ref.handle : "";
       const payload = await getJson("channels", { part: "snippet", forHandle: handle }, apiKey);
@@ -196,12 +211,28 @@ export async function resolveChannelRefs(inputs: string[], apiKey: string): Prom
       return { input, item: items.at(0) };
     }),
   );
-  for (const { input, item } of handleResults) {
-    if (item) {
-      resolved.push(toResolved(input, item));
-    } else {
-      unresolved.push(input);
+  for (const [index, outcome] of handleResults.entries()) {
+    if (outcome.status === "fulfilled") {
+      const { input, item } = outcome.value;
+      if (item) {
+        resolved.push(toResolved(input, item));
+      } else {
+        unresolved.push(input);
+      }
+      continue;
     }
+
+    // Quota and auth failures describe the key, not the handle, so they stay
+    // fatal — silently reporting every handle as unresolved would send the user
+    // hunting for a typo that isn't there.
+    const reason: unknown = outcome.reason;
+    if (reason instanceof YouTubeError && (reason.failure.kind === "quota" || reason.failure.kind === "auth")) {
+      throw reason;
+    }
+
+    // Anything else is local to this one lookup: report it as unresolved so the
+    // other handles in the same save still land.
+    unresolved.push(handleRefs[index].input);
   }
 
   return { resolved, unresolved, invalid };
@@ -280,8 +311,10 @@ export interface CompetitorVideosResult {
   /** One entry per competitor that resolved, in the order they were requested. */
   channels: ChannelSample[];
   /**
-   * Requested ids that `channels.list` returned nothing for. Reported as the
-   * raw `UC…` string because an unresolved channel has no title by definition.
+   * Requested ids that produced no usable sample — either `channels.list`
+   * returned nothing for them, or fetching their uploads failed on its own.
+   * Reported as the raw `UC…` string because an unresolved channel has no
+   * title by definition.
    */
   unresolved: string[];
 }
@@ -460,7 +493,28 @@ export async function fetchCompetitorVideos(
 
   // Fan-out is per channel, never per video: at most 5 competitors keeps this
   // under Cloudflare's limit of 6 simultaneous outgoing connections.
-  const channels = await Promise.all(targets.map((target) => collectChannelSample(target, apiKey, now)));
+  const settled = await Promise.allSettled(targets.map((target) => collectChannelSample(target, apiKey, now)));
+
+  const channels: ChannelSample[] = [];
+  for (const [index, outcome] of settled.entries()) {
+    if (outcome.status === "fulfilled") {
+      channels.push(outcome.value);
+      continue;
+    }
+
+    // Quota and auth failures are properties of the run, not of one competitor:
+    // they will hit every remaining call too, so reporting them as a single
+    // unlucky channel would be a lie. They stay fatal.
+    const reason: unknown = outcome.reason;
+    if (reason instanceof YouTubeError && (reason.failure.kind === "quota" || reason.failure.kind === "auth")) {
+      throw reason;
+    }
+
+    // Anything else is local to this competitor. Folding it into `unresolved`
+    // keeps every competitor that did succeed, which is what the slice promises:
+    // a failed competitor is named, not silently dropped together with the run.
+    unresolved.push(targets[index].channelId);
+  }
 
   return { channels, unresolved };
 }

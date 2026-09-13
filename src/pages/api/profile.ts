@@ -108,7 +108,11 @@ export const POST: APIRoute = async (context) => {
     .single();
 
   if (error) {
-    return jsonError(error.message, 400);
+    // Same reasoning as `/api/analyze`: the raw PostgREST message names schema
+    // internals, so it is logged rather than returned.
+    // eslint-disable-next-line no-console -- deliberate: no logger exists yet
+    console.error("channel_profiles upsert failed", error.message);
+    return jsonError("Could not save your channel profile. Try again.", 400);
   }
 
   const profile = parseChannelProfile(data);
