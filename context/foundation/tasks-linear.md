@@ -7,7 +7,7 @@
 - **Project:** [`YT-Niche-Adviser`](https://linear.app/mateusz-yt-niche-advisor/project/yt-niche-adviser-1534140fd428) — linked to the GitHub repo via a project resource link
 - **Milestone:** `M-1: MVP core loop` (inside the project above), description copied verbatim from the GitHub milestone
 - **Snapshot taken:** 2026-09-07, created in one pass from `context/foundation/tasks-github.md` + full GitHub issue bodies (`gh issue list --state all`)
-- **Last refresh:** 2026-09-13 — read live Linear state via `list_issues` (18 issues), reconciled against `roadmap.md`, created the missing `MAT-23` (S-04) and posted its implementation comment. See "Refresh log" below.
+- **Last refresh:** 2026-09-13 — `MAT-9` (S-03) moved Backlog → In Progress (`status-proposed` removed) after `/10x-implement` landed all three phases and `/10x-impl-review` came back APPROVED; implementation comment posted. See "Refresh log" below.
 
 ## Milestone M-1 — active work (7 issues)
 
@@ -17,11 +17,11 @@
 | [MAT-6](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-6/f-02-model-danych-profilu-kanalu-rls-per-owner)                         | F-02       | Foundation           | Model danych profilu kanału (RLS per-owner)                      | **Done**           | —          | `roadmap-foundation`               | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2)   |
 | [MAT-7](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-7/s-01-uzytkownik-tworzy-i-edytuje-profil-kanalu)                         | S-01       | Slice                | Użytkownik tworzy i edytuje profil kanału                        | **Done**           | MAT-6      | `roadmap-slice`                    | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3)   |
 | [MAT-8](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-8/s-02-uzytkownik-uruchamia-analize-i-widzi-ranking-okazji-gwiazda)       | S-02       | Slice (★ north star) | Użytkownik uruchamia analizę i widzi ranking okazji              | **In Progress**    | MAT-7      | `roadmap-slice`                    | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4)   |
-| [MAT-9](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-9/s-03-uzytkownik-zapisuje-i-przeglada-okazje-contentowe)                 | S-03       | Slice                | Użytkownik zapisuje i przegląda okazje contentowe                | Backlog            | MAT-8      | `roadmap-slice`, `status-proposed` | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5)   |
+| [MAT-9](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-9/s-03-uzytkownik-zapisuje-i-przeglada-okazje-contentowe)                 | S-03       | Slice                | Użytkownik zapisuje i przegląda okazje contentowe                | **In Progress**    | MAT-8      | `roadmap-slice`                    | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5)   |
 | [MAT-23](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-23/s-04-strona-glowna-mowi-o-produkcie-a-logowanie-dzieje-sie-w-dialogu) | S-04       | Slice                | Strona główna mówi o produkcie, a logowanie dzieje się w dialogu | **In Progress**    | —          | `roadmap-slice`                    | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) |
 | [MAT-10](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-10/question-shape-notes-quality-cross-check-nie-zostal-ukonczony)        | —          | Question             | Shape-notes quality cross-check nie został ukończony             | Todo, non-blocking | —          | `question`                         | [#6](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/6)   |
 
-**Dependency chain:** `MAT-6 → MAT-7 → MAT-8 (★) → MAT-9`, with `MAT-5` and `MAT-23` independent. `MAT-9` remains blocked until `MAT-8` completes.
+**Dependency chain:** `MAT-6 → MAT-7 → MAT-8 (★) → MAT-9`, with `MAT-5` and `MAT-23` independent. The `blockedBy` relation on `MAT-9` is left in place as the technical dependency it documents (S-03 needs S-02's ranking output), but it did not block *starting* MAT-9 in practice — `/api/analyze` was already functional enough to build the save/browse loop on top of, even though `MAT-8` itself has not reached `Done` in Linear.
 
 `MAT-23` (S-04) carries **no** blocking relation: `roadmap.md` sequences it after S-03 by a scope decision, not a technical dependency, so encoding it as `blockedBy` would misstate the graph. It was implemented out of sequence for exactly that reason.
 
@@ -69,6 +69,24 @@ Nine deviations from the reviewed plan are recorded in `change.md` and summarize
 
 One manual check is deferred rather than passed: _OG card renders with an image in a link preview_ needs a publicly reachable URL and cannot be verified against localhost.
 
+### MAT-9 progress (S-03, implemented)
+
+Implementation ran through `context/changes/save-and-view-opportunities/plan.md`, three phases. A single completion comment is posted on MAT-9.
+
+| Phase | Scope                                                        | Status           |
+| ----- | ------------------------------------------------------------ | ---------------- |
+| 1     | Data model — `content_opportunities` table + per-owner RLS   | Done — `38e5c37` |
+| 2     | Save & remove API — idempotent `POST`, RLS-backed `DELETE`   | Done — `db0ce38` |
+| 3     | Dashboard composition — save control, saved panel, shared island | Done — `d881c7d` |
+
+Plus `234ef7d` (epilogue) and `a64a92e` (impl-review triage fixes).
+
+`/10x-impl-review` on the full plan came back **APPROVED** — 0 critical findings, 1 warning (fixed: capped the client-side saved list at `SAVED_LIST_LIMIT` so a long-lived tab can't grow it past 200), 2 observations (1 fixed: documented the `23505`-handler's single-unique-constraint assumption; 1 skipped as informational-only: `view_count` has no upper bound in the zod schema, not exploitable at real YouTube view-count magnitudes). No plan drift found across any of the 3 phases.
+
+The two-account isolation protocol (PRD's per-user isolation NFR) passed all five scripted assertions against local Supabase: cross-user list reads return zero rows, cross-user `DELETE` and `PATCH` are both refused, and the owner's row is unaffected.
+
+`change.md` is `impl_reviewed`, **not** archived — which is why this issue is `In Progress` and not `Done`, per the mapping below (same treatment MAT-23 got before its own archive).
+
 ## Parked / not planned (12 issues, all Canceled)
 
 Set to Linear state `Canceled` — mirrors GitHub's `state_reason: not_planned` (explicitly out of MVP scope, not "later without a decision").
@@ -101,7 +119,7 @@ Created as **team-scoped labels** on `Mateusz` (not workspace-wide), same names/
 | `status-proposed`    | `#fbca04` | Sequenced but blocked on an earlier item                           |
 | `question`           | `#d876e3` | Open roadmap question, not yet a plannable item                    |
 
-As of the 2026-09-12 refresh, `status-proposed` remains only on `MAT-9` — it is removed from an item once that item starts. `status-ready` is currently unused: items have moved straight from proposed to started.
+As of the 2026-09-13 refresh, no active-milestone issue carries `status-proposed` any more — it is removed from an item once that item starts, and `MAT-9` (the last holdout) started this refresh. `status-ready` is currently unused: items have moved straight from proposed to started.
 
 Note: the workspace also ships three unrelated default labels (`Feature`, `Bug`, `Improvement`) from Linear's onboarding — not part of the roadmap mirror, left untouched. Four unrelated onboarding issues (`MAT-1`–`MAT-4`: "Get familiar with Linear", "Connect your tools", "Set up your teams", "Import your data") also pre-existed in the team; they no longer appear in an active `list_issues` query and were left as-is.
 
@@ -137,7 +155,17 @@ A Phase 1 progress comment was also posted to MAT-8.
 
 A completion comment was posted to MAT-23.
 
-**Still missing from Linear: S-05 (`channel-profile-avatar`, GitHub [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20), `roadmap.md` status `proposed`).** It was added to the roadmap in the same 2026-09-13 pass as S-04 but is not yet planned or started, so no issue was created for it here. `context/foundation/tasks-github.md` is also missing both S-04 and S-05 — that mirror is now a day staler than this one.
+**Still missing from Linear: S-05 (`channel-profile-avatar`, GitHub [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20), `roadmap.md` status `in-progress`).** It was added to the roadmap in the same 2026-09-13 pass as S-04 and has since started, but no issue was created for it here yet.
+
+**2026-09-13 (later same day)** — `/10x-implement` landed all three phases of `save-and-view-opportunities` (S-03) and `/10x-impl-review` came back APPROVED. One change applied:
+
+| Issue        | Was                            | Now                                | Driven by                                                                 |
+| ------------ | ------------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| MAT-9 (S-03) | Backlog (`status-proposed`)    | In Progress (− `status-proposed`)  | `/10x-implement save-and-view-opportunities` landed all 3 phases; `change.md` is `impl_reviewed`, not yet archived |
+
+A completion comment was posted to MAT-9.
+
+**Known inconsistency, still not resolved:** `roadmap.md` still marks S-02 (`MAT-8`) `in-progress` even though S-03 was built on top of its output and treated as functionally complete enough to depend on — the same "roadmap status lags actual state" pattern already flagged for F-02/S-01 below. Not resolved by this refresh since it is out of scope for the S-03 update.
 
 **Known inconsistency, not resolved by this refresh:** `roadmap.md` marks F-02 and S-01 `done`, but their `change.md` files still read `implemented` and `impl_reviewed` respectively, and neither folder has been moved to `context/archive/` (only `google-oauth-login` has). The earlier convention recorded here was that `Done` flips at `/10x-archive` time. This refresh followed `roadmap.md`, since this file's own header names it the source of truth — but the two are genuinely out of step, and running `/10x-archive channel-profile-data-model` and `/10x-archive channel-profile-crud` would close the gap properly.
 

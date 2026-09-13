@@ -46,7 +46,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | done |
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | in-progress |
-| S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
+| S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | in-progress |
 | S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | done |
 | S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | in-progress |
 
@@ -148,7 +148,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Nowa tabela `content_opportunities` + polityka RLS wprowadzana dopiero tutaj (progresywne ujawnianie — tylko ten slice jej potrzebuje, więc nie ma osobnego Foundation). Główne ryzyko to kolejna polityka RLS do poprawnego wdrożenia; mitygacja: powielić wzorzec już zweryfikowany w F-02.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-04: Strona główna mówi o produkcie, a logowanie dzieje się w dialogu
 
@@ -192,7 +192,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 | F-02 | `channel-profile-data-model` | Create `channel_profiles` table with per-owner RLS | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) | — | done (tabela + RLS wdrożone) |
 | S-01 | `channel-profile-crud` | Channel profile create/edit UI | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) | — | done (impl-review 2026-09-12, F1–F8 zamknięte) |
 | S-02 | `analyze-and-rank-opportunities` | Analyze competitors → ranked content opportunities | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) | yes | Run `/10x-plan analyze-and-rank-opportunities`; north star — research (internal + external) gotowy |
-| S-03 | `save-and-view-opportunities` | Save and browse content opportunities | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) | no | Waiting on S-02 |
+| S-03 | `save-and-view-opportunities` | Save and browse content opportunities | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) | — | implemented, impl-reviewed 2026-09-13 (`context/changes/save-and-view-opportunities/reviews/impl-review.md`); pending `/10x-archive` |
 | S-04 | `landing-and-auth-shell` | Product landing page + auth in a dialog | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) | no | Scope added 2026-09-13; sequenced after S-03 — no technical prerequisites |
 | S-05 | `channel-profile-avatar` | Channel profile avatar — upload or AI-generated | [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20) | no | Scope added 2026-09-13; sequenced after S-03; image-gen provider still to be chosen |
 
