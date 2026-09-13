@@ -1,8 +1,9 @@
 ---
 project: "YT-Niche-Adviser"
-version: 1
+version: 2
 status: draft
 created: 2026-08-25
+updated: 2026-09-13
 context_type: greenfield
 product_type: web-app
 target_scale:
@@ -115,6 +116,15 @@ konkurentów z nazwy/ID.
   > Socrates: Kontrargument rozważony: „trywialne, połączyć z FR-010". Rozstrzygnięcie: zachowane osobno — bez przeglądania zapis jest bezużyteczny; FR jest nośny.
 - FR-012: Użytkownik może zmienić status zapisanej okazji (nowa → w produkcji → zrobione). Priority: nice-to-have
   > Socrates: Kontrargument przyjęty: „workflow statusów to zalążek plannera produkcji, wykluczonego z MVP". Rozstrzygnięcie: zdemotowane do nice-to-have; status ustawiany przy zapisie (FR-010) zostaje, pełna zmiana stanów poza rdzeniem v1.
+
+### Prezentacja i tożsamość produktu
+> Dodane 2026-09-13 z obserwacji UX zgłoszonych podczas implementacji S-02 (`analyze-and-rank-opportunities`). Nie przeszły przez pełne shapingowe Socrates-review — zostały wprowadzone jako jawne nice-to-have, żeby slice'y roadmapy miały źródłowy anchor. Przy następnym `/10x-shape`/`/10x-prd` warto je przepuścić przez kontrargumenty.
+- FR-013: Strona główna komunikuje wartość produktu (kuratela konkurentów → ranking okazji contentowych) zamiast treści szablonu startera. Priority: nice-to-have
+  > Stan zastany: `src/components/Welcome.astro` i domyślny `title` w `src/layouts/Layout.astro` nadal reklamują „10x Astro Starter" (Supabase auth, ESLint, „Astro 5") — niezalogowany odwiedzający nie dowiaduje się, czym jest produkt.
+- FR-014: Użytkownik loguje się, rejestruje i wylogowuje z dialogu w obrębie bieżącej strony, spójnie z dialogiem profilu kanału. Priority: nice-to-have
+  > Stan zastany: profil jest dialogiem (`src/components/profile/ProfileDialog.tsx`), a logowanie/rejestracja to osobne trasy (`src/pages/auth/{signin,signup}.astro`), wylogowanie zaś to goły `form method="POST"` w `Topbar.astro` — powłoka aplikacji jest niespójna.
+- FR-015: Profil kanału ma awatar — wgrany przez użytkownika albo wygenerowany przez AI na podstawie niszy i sub-niszy. Priority: nice-to-have
+  > Decyzja użytkownika 2026-09-13: tor automatyczny to **generowanie obrazu przez API AI** (nie deterministyczny SVG). Konsekwencje do rozstrzygnięcia w `/10x-plan`: nowy sekret/dostawca, koszt i latencja na generowanie, ścieżka błędu przy nieudanej generacji, bucket Supabase Storage z RLS per-owner oraz kolumna `avatar_url` w `channel_profiles` (dziś tabela ma tylko `niche`, `sub_niche`, `competitors`).
 
 ## Non-Functional Requirements
 

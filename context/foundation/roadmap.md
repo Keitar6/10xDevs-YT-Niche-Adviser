@@ -1,10 +1,10 @@
 ---
 project: "YT-Niche-Adviser"
-version: 1
+version: 2
 status: draft
 created: 2026-09-07
-updated: 2026-09-12
-prd_version: 1
+updated: 2026-09-13
+prd_version: 2
 main_goal: speed
 top_blocker: time
 milestone_id: mvp-core-loop
@@ -14,7 +14,7 @@ milestone_status: open
 
 # Roadmap: YT-Niche-Adviser
 
-> Derived from `context/foundation/prd.md` (v1) + auto-researched codebase baseline.
+> Derived from `context/foundation/prd.md` (v2) + auto-researched codebase baseline.
 > Edit-in-place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
 
@@ -23,9 +23,10 @@ milestone_status: open
 **M-1: MVP core loop — od logowania do zapisanej okazji** — Status: open
 
 - **Intent:** Dostarczyć kompletną, działającą pętlę must-have z PRD: pełne logowanie (email+hasło oraz Google OAuth), profil kanału z kuratelowanymi konkurentami, analiza zwracająca ranking okazji contentowych (outlier_score + uzasadnienie), oraz trwały zapis i przegląd okazji — z twardą izolacją danych per-user przez cały czas.
-- **Source materials:** `context/foundation/prd.md` (v1)
-- **Done when:** F-01, F-02, S-01, S-02, S-03 mają `Status: done`.
-- **Scope anchors:** FR-001–FR-004, FR-006–FR-011 (must-have), US-01, Access Control, Guardrails (Success Criteria), NFR (powtarzalność, latencja, izolacja).
+- **Source materials:** `context/foundation/prd.md` (v2)
+- **Done when:** F-01, F-02, S-01, S-02, S-03, S-04, S-05 mają `Status: done`.
+- **Scope anchors:** FR-001–FR-004, FR-006–FR-011 (must-have), US-01, Access Control, Guardrails (Success Criteria), NFR (powtarzalność, latencja, izolacja); dodatkowo FR-013–FR-015 (nice-to-have) po rozszerzeniu zakresu.
+- **Rozszerzenie zakresu (2026-09-13):** milestone pozostaje otwarty, dołożone S-04 i S-05 z obserwacji UX zgłoszonych podczas implementacji S-02. Kotwiczą się w PRD v2 (FR-013–FR-015) — te same materiały źródłowe, zgodnie ze ścieżką „keep it open, add scope". **Ścieżka must-have jest nienaruszona i ma pierwszeństwo:** S-04 i S-05 są sekwencjonowane po S-03, więc nie opóźniają F-01/F-02/S-01–S-03.
 
 ## Vision recap
 
@@ -46,6 +47,8 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
 | S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | in-progress |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | proposed |
+| S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | proposed |
+| S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | proposed |
 
 ## Streams
 
@@ -55,6 +58,8 @@ Nawigacja pomocnicza — grupuje elementy dzielące ten sam łańcuch Prerequisi
 |--------|-------|-------|------|
 | A | Domknięcie must-have logowania | `F-01` | Niezależny od głównej pętli danych; można wykonać równolegle z resztą — domyka FR-001 przed końcem milestone'a. |
 | B | Główna pętla: profil → analiza → zapis | `F-02` → `S-01` → `S-02` → `S-03` | Ścieżka must-have prowadząca do gwiazdy przewodniej (S-02) i pełnej pętli zapisu (S-03); zgodna z `main_goal: speed`. |
+| C | Powłoka produktu i logowanie | `S-04` | Czysto prezentacyjny — zero zależności technicznych, ale świadomie sekwencjonowany po S-03, żeby polerka UX nie wyprzedziła ścieżki must-have. |
+| D | Tożsamość wizualna profilu | `S-05` | Jedyny rozszerzony element dotykający warstwy danych i sekretów; zależy od S-01 (profil), nie od S-04 — może iść równolegle do C. |
 
 ## Baseline
 
@@ -145,6 +150,40 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 - **Risk:** Nowa tabela `content_opportunities` + polityka RLS wprowadzana dopiero tutaj (progresywne ujawnianie — tylko ten slice jej potrzebuje, więc nie ma osobnego Foundation). Główne ryzyko to kolejna polityka RLS do poprawnego wdrożenia; mitygacja: powielić wzorzec już zweryfikowany w F-02.
 - **Status:** proposed
 
+### S-04: Strona główna mówi o produkcie, a logowanie dzieje się w dialogu
+
+- **Outcome:** niezalogowany odwiedzający rozumie ze strony głównej, czym jest produkt (kuratela konkurentów → ranking okazji contentowych) zamiast czytać treść szablonu startera; zalogowany i niezalogowany użytkownik loguje się, rejestruje i wylogowuje z dialogu w obrębie bieżącej strony, spójnie z istniejącym dialogiem profilu kanału.
+- **Change ID:** `landing-and-auth-shell`
+- **GitHub:** [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19)
+- **PRD refs:** FR-013, FR-014
+- **Prerequisites:** — (brak zależności technicznych; sekwencjonowany po S-03 decyzją zakresową, nie grafem zależności)
+- **Parallel with:** S-05
+- **Blockers:** —
+- **Unknowns:** —
+- **Rozstrzygnięcia (2026-09-13):**
+  - **Kierunek wizualny: zachować motyw „cosmic", wymienić treść.** `bg-cosmic`, szklane karty i gradient blue→purple są już użyte w `dashboard.astro`, `auth/signin.astro` i `ProfileDialog.tsx`; restyling całej powłoki zostaje poza zakresem — zmienia się copy, hero i karty funkcji.
+  - **FR-013 i FR-014 w jednym slice, nie w dwóch.** Obie zmiany przepisują `Topbar.astro` i `Welcome.astro`, więc rozdzielone kolidowałyby ze sobą; razem tworzą jeden spójny deliverable o wadze porównywalnej z S-01.
+- **Stan zastany (2026-09-13):** `src/components/Welcome.astro` i domyślny `title` w `src/layouts/Layout.astro` nadal reklamują „10x Astro Starter" (Supabase auth, ESLint, „Astro 5"); logowanie i rejestracja to osobne trasy (`src/pages/auth/{signin,signup}.astro`), a wylogowanie to goły `form method="POST"` w `Topbar.astro`.
+- **Risk:** Najlżejszy element milestone'a — czysty UI, zero migracji, zero nowych sekretów, zero integracji zewnętrznych. Główne ryzyko to regresja istniejących ścieżek auth przy przenoszeniu formularzy ze stron do dialogu (zwłaszcza obsługa błędu serwera, dziś przekazywanego przez `?error=` w URL, oraz redirect po Google OAuth). Sekwencjonowany po S-03, bo `main_goal: speed` stawia domknięcie ścieżki must-have przed polerką prezentacji.
+- **Status:** proposed
+
+### S-05: Profil kanału ma awatar — wgrany albo wygenerowany
+
+- **Outcome:** user wgrywa własny obraz jako awatar profilu kanału albo generuje go automatycznie na podstawie niszy i sub-niszy; awatar jest widoczny w powłoce aplikacji i dostępny wyłącznie dla właściciela.
+- **Change ID:** `channel-profile-avatar`
+- **GitHub:** [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20)
+- **PRD refs:** FR-015
+- **Prerequisites:** S-01 (potrzebny istniejący profil z niszą i sub-niszą jako wejście do generowania)
+- **Parallel with:** S-04
+- **Blockers:** —
+- **Unknowns:**
+  - Dostawca API generowania obrazów nie jest wybrany, a co za tym idzie koszt jednostkowy i latencja generowania są nieznane — Owner: user. Block: no (do rozstrzygnięcia w `/10x-plan`, wzorem `yt-library-research.md` z S-02).
+  - Nie ustalono, czy wygenerowany awatar ląduje w tym samym buckecie co wgrany, ani czy generowanie jest jednorazowe przy zapisie profilu, czy powtarzalne na żądanie — Owner: user. Block: no.
+- **Rozstrzygnięcia (2026-09-13):**
+  - **Tor automatyczny: generowanie obrazu przez API AI**, nie deterministyczny SVG z hasha niszy. Decyzja użytkownika — świadomie przyjęty koszt, latencja i nowy sekret w zamian za realny obraz zamiast geometrycznego zastępnika.
+- **Risk:** Jedyny rozszerzony element dotykający warstwy danych i sekretów, nie tylko widoku: nowy bucket Supabase Storage z RLS per-owner (drugi po `channel_profiles` zestaw polityk do poprawnego wdrożenia — mitygacja: powielić wzorzec z F-02), migracja dokładająca `avatar_url` do `channel_profiles` (dziś tylko `niche`, `sub_niche`, `competitors`), nowy dostawca obrazów wraz z sekretem w `.dev.vars`/Cloudflare oraz ścieżka błędu przy nieudanej generacji — przy braku klucza funkcja musi degradować się łagodnie do samego wgrywania, wzorem degradacji `/api/profile` bez klucza YouTube. Sekwencjonowany po S-03 z tego samego powodu co S-04, ale wymaga własnego `/10x-plan` — jest istotnie cięższy niż S-04.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | GitHub Issue | Ready for `/10x-plan` | Notes |
@@ -154,6 +193,8 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 | S-01 | `channel-profile-crud` | Channel profile create/edit UI | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) | — | done (impl-review 2026-09-12, F1–F8 zamknięte) |
 | S-02 | `analyze-and-rank-opportunities` | Analyze competitors → ranked content opportunities | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) | yes | Run `/10x-plan analyze-and-rank-opportunities`; north star — research (internal + external) gotowy |
 | S-03 | `save-and-view-opportunities` | Save and browse content opportunities | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) | no | Waiting on S-02 |
+| S-04 | `landing-and-auth-shell` | Product landing page + auth in a dialog | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) | no | Scope added 2026-09-13; sequenced after S-03 — no technical prerequisites |
+| S-05 | `channel-profile-avatar` | Channel profile avatar — upload or AI-generated | [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20) | no | Scope added 2026-09-13; sequenced after S-03; image-gen provider still to be chosen |
 
 All roadmap items are tracked as GitHub Issues in `Keitar6/10xDevs-YT-Niche-Adviser`, milestone [`M-1: MVP core loop`](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/milestone/1). Parked items and the open roadmap question are also mirrored as issues (see their sections below) — this table only lists active milestone work.
 
