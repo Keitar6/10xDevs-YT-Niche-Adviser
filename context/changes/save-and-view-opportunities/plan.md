@@ -605,19 +605,19 @@ so no additional index is created.
 
 #### Automated
 
-- [x] 3.1 Linting passes
-- [x] 3.2 Build passes
-- [x] 3.3 Unit tests pass
-- [x] 3.4 /dashboard server-renders the saved panel and its rows
-- [x] 3.5 Intl formatters moved to src/lib/format.ts and all three exported
+- [x] 3.1 Linting passes — d881c7d
+- [x] 3.2 Build passes — d881c7d
+- [x] 3.3 Unit tests pass — d881c7d
+- [x] 3.4 /dashboard server-renders the saved panel and its rows — d881c7d
+- [x] 3.5 Intl formatters moved to src/lib/format.ts and all three exported — d881c7d
 
 #### Manual
 
-- [ ] 3.6 Save from the ranking shows pending then saved, row appears, ranking retained
-- [ ] 3.7 Reload server-renders the saved row with unchanged score and date
-- [ ] 3.8 A second analysis renders the saved video's control as inert
-- [ ] 3.9 Snapshot holds — saved score unchanged after a later run scores it differently
-- [ ] 3.10 Remove drops the row, and a reload confirms it stayed gone
-- [ ] 3.11 Empty state renders an explanation, not a blank panel
-- [ ] 3.12 Server stopped mid-save returns the control to idle with an error toast
-- [ ] 3.13 A second account's saved panel is empty
+- [x] 3.6 Save from the ranking shows pending then saved, row appears, ranking retained
+- [x] 3.7 Reload server-renders the saved row with unchanged score and date
+- [x] 3.8 A second analysis renders the saved video's control as inert
+- [x] 3.9 Snapshot holds — saved score unchanged after a later run scores it differently
+- [x] 3.10 Remove drops the row, and a reload confirms it stayed gone
+- [x] 3.11 Empty state renders an explanation, not a blank panel
+- [x] 3.12 Server stopped mid-save returns the control to idle with an error toast
+- [x] 3.13 A second account's saved panel is empty
