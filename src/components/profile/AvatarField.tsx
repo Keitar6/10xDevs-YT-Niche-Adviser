@@ -173,68 +173,66 @@ export default function AvatarField({
         </Avatar>
 
         <div className="flex flex-col items-start gap-1">
-        <div className="flex flex-row items-start gap-1">
+          <div className="flex flex-row items-start gap-1">
+            <label
+              htmlFor={inputId}
+              aria-disabled={pending || !hasProfile}
+              title={disabledReason}
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-purple-500 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+            >
+              {busy === "upload" ? (
+                <>
+                  <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="size-4" />
+                  {avatarUrl ? "Change image" : "Upload image"}
+                </>
+              )}
+            </label>
+            <input
+              ref={inputRef}
+              id={inputId}
+              type="file"
+              accept={ALLOWED_AVATAR_TYPES.join(",")}
+              disabled={pending || !hasProfile}
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleFile(file);
+              }}
+            />
 
-        
-          <label
-            htmlFor={inputId}
-            aria-disabled={pending || !hasProfile}
-            title={disabledReason}
-            className="flex cursor-pointer items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-purple-500 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
-          >
-            {busy === "upload" ? (
-              <>
-                <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <ImagePlus className="size-4" />
-                {avatarUrl ? "Change image" : "Upload image"}
-              </>
-            )}
-          </label>
-          <input
-            ref={inputRef}
-            id={inputId}
-            type="file"
-            accept={ALLOWED_AVATAR_TYPES.join(",")}
-            disabled={pending || !hasProfile}
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleFile(file);
-            }}
-          />
-
-          {/*
+            {/*
             Rendered only when the binding is actually present, so the feature
             degrades to upload-only (FR-015) by disappearing rather than by
             failing on click. Still disabled without a profile: the prompt is
             derived from the saved niche.
           */}
-          {canGenerate ? (
-            <button
-              type="button"
-              onClick={() => void handleGenerate()}
-              disabled={pending || !hasProfile}
-              title={disabledReason}
-              className="flex items-center gap-2 rounded-lg border border-purple-400/30 bg-white/5 px-3 py-1.5 text-sm text-purple-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {busy === "generate" ? (
-                <>
-                  <span className="size-4 animate-spin rounded-full border-2 border-purple-200/30 border-t-purple-200" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="size-4" />
-                  Generate from niche
-                </>
-              )}
-            </button>
-          ) : null}
-</div>
+            {canGenerate ? (
+              <button
+                type="button"
+                onClick={() => void handleGenerate()}
+                disabled={pending || !hasProfile}
+                title={disabledReason}
+                className="flex items-center gap-2 rounded-lg border border-purple-400/30 bg-white/5 px-3 py-1.5 text-sm text-purple-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {busy === "generate" ? (
+                  <>
+                    <span className="size-4 animate-spin rounded-full border-2 border-purple-200/30 border-t-purple-200" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4" />
+                    Generate from niche
+                  </>
+                )}
+              </button>
+            ) : null}
+          </div>
           {avatarUrl ? (
             <button
               type="button"
