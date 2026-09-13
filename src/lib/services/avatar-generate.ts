@@ -78,13 +78,13 @@ export async function generateAvatar(ai: Ai, prompt: string): Promise<AvatarGene
   let output: { image?: string };
   try {
     output = await ai.run(AVATAR_MODEL, { prompt, steps: AVATAR_STEPS });
-  } catch (error) {
+  } catch {
     // Neuron exhaustion, a cold model, an upstream outage — all arrive here and
-    // all mean the same thing to the user: try again or upload instead.
-    return {
-      ok: false,
-      message: error instanceof Error ? `Image generation failed: ${error.message}` : "Image generation failed",
-    };
+    // all mean the same thing to the user: try again or upload instead. The raw
+    // error isn't forwarded — it's Workers AI's wording, not ours to promise as
+    // stable or safe to show, and this module has no logging convention to send
+    // it to instead (matching the other failure branches below).
+    return { ok: false, message: "Image generation failed. Try again, or upload an image instead." };
   }
 
   if (!output.image) {

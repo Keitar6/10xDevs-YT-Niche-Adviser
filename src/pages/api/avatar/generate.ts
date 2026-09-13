@@ -13,7 +13,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { createClient } from "@/lib/supabase";
 import { jsonError } from "@/lib/http";
-import { buildAvatarPrompt } from "@/lib/services/avatar";
+import { buildAvatarPrompt, getAvatarAiBinding } from "@/lib/services/avatar";
 import { generateAvatar } from "@/lib/services/avatar-generate";
 import { replaceAvatar } from "@/lib/services/avatar-storage";
 
@@ -40,12 +40,7 @@ export const POST: APIRoute = async (context) => {
   // Binding presence is a per-request fact, not a module-scope secret, which is
   // why this is not in src/lib/config-status.ts. The UI already hides the button
   // when the binding is absent; this is the backstop for a direct call.
-  //
-  // `wrangler types` generates `AI: Ai` as non-optional because the binding is
-  // in wrangler.jsonc today, so the compiler believes it can never be missing.
-  // At runtime it certainly can — dropping the `ai` block is exactly how FR-015's
-  // degraded, upload-only mode is reached — hence the widened read.
-  const ai = (env as { AI?: Ai }).AI;
+  const ai = getAvatarAiBinding(env);
   if (!ai) {
     return jsonError("Image generation is not configured on this deployment. You can still upload an image.", 503);
   }

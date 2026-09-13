@@ -1,7 +1,7 @@
 ---
 change_id: channel-profile-avatar
 title: Channel profile avatar
-status: implemented
+status: impl_reviewed
 created: 2026-09-13
 updated: 2026-09-13
 archived_at: null
@@ -71,3 +71,15 @@ are deliberately not claimed:
   `ANTHROPIC_API_KEY` are **not** set as Worker secrets, so on the deployed app profile
   saving accepts only full `UC…` IDs and `/api/analyze` returns 500 — neither affects
   avatar upload or generation.
+
+**`AvatarField` does not use `SubmitButton` (2026-09-13, accepted via impl-review F1):**
+Phase 3's contract said pending state would use `SubmitButton`'s `pending` prop,
+mirroring `ChannelProfileForm.tsx:186`. The shipped component instead tracks a local
+`busy: "upload" | "remove" | "generate" | null` state across three independent
+actions — upload, remove, generate — each with its own button. `SubmitButton` is
+built around one pending action per component instance and doesn't map cleanly onto
+three concurrently-available actions in the same dialog, so a local busy-state was
+used instead. All three handlers are independently verified to wrap their `fetch`
+calls in try/catch/finally (impl-review F2 from the prior slice's convention).
+Accepted as-is rather than refactored, since the code is already correct and the
+divergence is cosmetic-pattern, not functional.

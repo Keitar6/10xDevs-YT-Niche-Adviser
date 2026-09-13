@@ -397,7 +397,7 @@ One new migration, additive and nullable: existing profiles keep working with `a
 #### Manual
 
 - [x] 4.4 `env.AI.run` is reachable under `npm run dev` and the response shape is confirmed — 2f1ecd5
-- [x] 4.5 Generate produces a niche-derived 512×512 avatar within a few seconds — 2f1ecd5
+- [x] 4.5 Generate produces a niche-derived 1024×1024 avatar within a few seconds (see change.md deviation: model has no width/height param) — 2f1ecd5
 - [x] 4.6 A sixth generation inside a minute returns 429 — 2f1ecd5
 - [x] 4.7 With the `ai` binding removed, Generate is absent and upload still works — 2f1ecd5
 

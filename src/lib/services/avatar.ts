@@ -159,3 +159,18 @@ export function buildAvatarPrompt(niche: string | null, subNiche: string | null)
 export function avatarObjectPath(userId: string, extension: string): string {
   return `${userId}/${crypto.randomUUID()}.${extension}`;
 }
+
+/**
+ * Reads the Workers AI binding off an env-like object.
+ *
+ * `wrangler types` generates `AI: Ai` as non-optional because the binding is
+ * declared in `wrangler.jsonc` today, so the compiler believes it can never be
+ * missing. At runtime it certainly can — dropping the `ai` block is exactly how
+ * FR-015's degraded, upload-only mode is reached — hence the widened read. Both
+ * call sites (the generate route and `Topbar.astro`) shared a hand-duplicated
+ * version of this cast; centralizing it here keeps them from drifting apart, the
+ * same reason the validation bounds above are shared rather than mirrored.
+ */
+export function getAvatarAiBinding(env: { AI?: Ai }): Ai | undefined {
+  return env.AI;
+}
