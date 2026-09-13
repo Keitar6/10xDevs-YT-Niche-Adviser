@@ -20,7 +20,12 @@ export function safeNextPath(value: unknown, fallback = "/"): string {
  * Builds the URL an OAuth failure redirects to: the return path with
  * `?auth_error=` appended, which is the read point that reopens the auth
  * dialog with the message. `next` may already carry a query string.
+ *
+ * Re-validates `next` itself rather than trusting the caller already did —
+ * defense-in-depth so a future call site can't silently reopen the
+ * open-redirect this module exists to close.
  */
 export function authErrorUrl(next: string, message: string): string {
-  return `${next}${next.includes("?") ? "&" : "?"}auth_error=${encodeURIComponent(message)}`;
+  const safeNext = safeNextPath(next);
+  return `${safeNext}${safeNext.includes("?") ? "&" : "?"}auth_error=${encodeURIComponent(message)}`;
 }

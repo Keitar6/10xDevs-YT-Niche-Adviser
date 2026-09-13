@@ -1,7 +1,7 @@
 ---
 change_id: landing-and-auth-shell
 title: Landing and auth shell
-status: implemented
+status: impl_reviewed
 created: 2026-09-13
 updated: 2026-09-13
 archived_at: null
@@ -51,6 +51,10 @@ Recorded so `/10x-impl-review` reads these as decisions, not drift.
 8. **Topbar keeps a "Sign up" entry point.** The plan replaced both anonymous links with the dialog
    alone, which would have dropped the sign-up affordance. It is now a `data-auth-open="signup"`
    button picked up by the delegated listener the plan itself designed — no extra state.
+9. **`Layout.astro` also emits `<link rel="canonical">` and `og:site_name`.** Not named in the
+   Phase 4 metadata contract, which listed `description`, `og:title`, `og:description`, `og:type`,
+   `og:image`, `og:url`, and `twitter:card` + `twitter:*`. Accepted as a natural extension of the
+   same metadata task, flagged by `/10x-impl-review` (F1, 2026-09-13).
 
 ### Follow-up after first manual look (2026-09-13)
 
