@@ -173,6 +173,9 @@ export default function AvatarField({
         </Avatar>
 
         <div className="flex flex-col items-start gap-1">
+        <div className="flex flex-row items-start gap-1">
+
+        
           <label
             htmlFor={inputId}
             aria-disabled={pending || !hasProfile}
@@ -231,7 +234,7 @@ export default function AvatarField({
               )}
             </button>
           ) : null}
-
+</div>
           {avatarUrl ? (
             <button
               type="button"
