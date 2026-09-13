@@ -1,8 +1,8 @@
-# 10x Astro Starter
+# YT Niche Adviser
 
-![](./public/template.png)
+Curate the 3–5 YouTube channels you actually compete with and get a ranked list of content opportunities — each one scored against its own channel's median views, so a breakout ranks the same whether the channel is small or large, and each with a one-line reason it made the cut.
 
-A modern, opinionated starter template for building fast, accessible web applications.
+The insight the product is built on: the value is not in automatic "niche discovery" but in **curated competitors**. A narrow, hand-picked list beats a generic algorithm on both accuracy and trust.
 
 ## Tech Stack
 
@@ -20,38 +20,45 @@ A modern, opinionated starter template for building fast, accessible web applica
 
 ## Getting Started
 
-1. Clone the repository:
-
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
-
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
+2. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
 
-4. Create a `.dev.vars` file for local Cloudflare dev secrets:
+3. Create a `.dev.vars` file for local Cloudflare dev secrets:
 
 ```bash
 cp .env.example .dev.vars
 ```
 
-5. Run the development server:
+4. Run the development server:
 
 ```bash
 npm run dev
 ```
+
+## Environment Variables
+
+All secrets are declared in the `astro:env` schema in `astro.config.mjs` and are **server-only** — they are never exposed to the client. Put them in `.env` (Node tooling) and `.dev.vars` (Cloudflare local dev).
+
+| Variable            | Required | Purpose                                                               |
+| ------------------- | -------- | --------------------------------------------------------------------- |
+| `SUPABASE_URL`      | yes      | Authentication and data storage                                       |
+| `SUPABASE_KEY`      | yes      | Supabase `anon` public key                                            |
+| `YOUTUBE_API_KEY`   | yes      | Resolving channels and reading video stats; analysis fails without it |
+| `ANTHROPIC_API_KEY` | no       | One-line justifications; analyses still run without it                |
+
+A banner appears in the app for any of these that is missing.
 
 ## Available Scripts
 
 - `npm run dev` - Start development server (Cloudflare workerd runtime)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm run test` - Run unit tests (vitest)
 - `npm run lint` - Run ESLint with type-checked rules
 - `npm run lint:fix` - Auto-fix ESLint issues
 - `npm run format` - Run Prettier
@@ -61,10 +68,11 @@ npm run dev
 ```md
 .
 ├── src/
-│ ├── layouts/ # Astro layouts
+│ ├── layouts/ # Astro layouts (shell: cosmic ground + top bar)
 │ ├── pages/ # Astro pages
 │ │ └── api/ # API endpoints
 │ ├── components/ # UI components (Astro & React)
+│ ├── lib/ # Services and helpers
 │ └── assets/ # Static assets
 ├── public/ # Public assets
 ├── wrangler.jsonc # Cloudflare Workers config
@@ -111,8 +119,6 @@ npx supabase stop
 
 The local Studio UI is available at `http://localhost:54323`.
 
-No database tables or migrations are required — this project uses Supabase Auth's built-in `auth.users` table only.
-
 ### Using a cloud Supabase project instead
 
 If you prefer to use a hosted Supabase project, add these variables to your `.env` and `.dev.vars` files:
@@ -139,12 +145,20 @@ Users can then sign in immediately after sign-up without clicking a confirmation
 
 ### Auth routes
 
-| Route                 | Description                                                             |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/auth/signin`        | Email/password sign-in form                                             |
-| `/auth/signup`        | Email/password sign-up form                                             |
-| `/auth/confirm-email` | Post-signup "check your inbox" page                                     |
-| `/dashboard`          | Example protected page (redirects to `/auth/signin` if unauthenticated) |
+Sign-in and sign-up happen in a dialog on the current page rather than on their own pages. The dialog is mounted once, in the top bar.
+
+| Route                | Description                                                           |
+| -------------------- | --------------------------------------------------------------------- |
+| `/api/auth/signin`   | `POST` JSON `{ email, password }` → `{ ok: true }`                    |
+| `/api/auth/signup`   | `POST` JSON `{ email, password }` → `{ ok: true, needsConfirmation }` |
+| `/api/auth/signout`  | `POST`, redirects to `/`                                              |
+| `/api/auth/google`   | `POST`, starts the Google OAuth redirect                              |
+| `/api/auth/callback` | OAuth return point                                                    |
+| `/auth/signin`       | Redirect shim → `/?auth=signin` (kept for bookmarks)                  |
+| `/auth/signup`       | Redirect shim → `/?auth=signup` (kept for bookmarks)                  |
+| `/dashboard`         | Protected page (bounces to `/?auth=signin&next=…` if unauthenticated) |
+
+Any page can open the dialog: add `?auth=signin` / `?auth=signup` to the URL, or put `data-auth-open="signin"` on a button. `?auth_error=<message>` opens it showing an error — this is how OAuth failures get reported.
 
 Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
 
@@ -164,7 +178,7 @@ npm run build
 npx wrangler deploy
 ```
 
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
+Set the secrets listed under [Environment Variables](#environment-variables) in your Cloudflare dashboard or via `npx wrangler secret put`.
 
 ## CI
 

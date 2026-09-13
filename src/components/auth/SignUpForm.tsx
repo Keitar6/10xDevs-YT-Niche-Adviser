@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Mail, Lock, UserPlus } from "lucide-react";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
@@ -8,16 +8,19 @@ import { ServerError } from "@/components/auth/ServerError";
 const MIN_PASSWORD_LENGTH = 6;
 
 interface Props {
-  serverError?: string | null;
+  initialError?: string | null;
+  onSuccess: (needsConfirmation: boolean) => void;
 }
 
-export default function SignUpForm({ serverError }: Props) {
+export default function SignUpForm({ initialError = null, onSuccess }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [serverError, setServerError] = useState<string | null>(initialError);
+  const [submitting, setSubmitting] = useState(false);
 
   function validate() {
     const next: typeof errors = {};
@@ -48,9 +51,34 @@ export default function SignUpForm({ serverError }: Props) {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
-  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+    // Never a native submit: this form also runs inside a Radix dialog, where a
+    // navigation would destroy the dialog mid-flight.
+    e.preventDefault();
+    setServerError(null);
     if (!validate()) {
-      e.preventDefault();
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const json: { ok?: boolean; needsConfirmation?: boolean; error?: string } = await res.json();
+
+      if (!res.ok || !json.ok) {
+        setServerError(json.error ?? "Something went wrong");
+        return;
+      }
+
+      onSuccess(json.needsConfirmation ?? true);
+    } catch {
+      setServerError("Could not reach the server. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -63,7 +91,7 @@ export default function SignUpForm({ serverError }: Props) {
     ) : undefined;
 
   return (
-    <form method="POST" action="/api/auth/signup" className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
       <FormField
         id="email"
         type="email"
@@ -126,7 +154,7 @@ export default function SignUpForm({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText="Creating account..." icon={<UserPlus className="size-4" />}>
+      <SubmitButton pending={submitting} pendingText="Creating account..." icon={<UserPlus className="size-4" />}>
         Create account
       </SubmitButton>
     </form>

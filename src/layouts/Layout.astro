@@ -3,12 +3,23 @@ import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
 import { Toaster } from "@/components/ui/sonner";
+import Topbar from "@/components/Topbar.astro";
 
 interface Props {
   title?: string;
+  description?: string;
+  /** Set false for a page that wants the bare cosmic ground with no top bar. */
+  topbar?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const SITE_NAME = "YT Niche Adviser";
+const DEFAULT_DESCRIPTION =
+  "Curate the 3–5 YouTube channels you compete with and get a ranked list of content opportunities, each scored against its own channel's median and explained in one line.";
+
+const { title = SITE_NAME, description = DEFAULT_DESCRIPTION, topbar = true } = Astro.props;
+
+const ogImage = new URL("/og.png", Astro.url).href;
+const canonical = Astro.url.href;
 ---
 
 <!doctype html>
@@ -18,6 +29,20 @@ const { title = "10x Astro Starter" } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
   </head>
   <body>
     {
@@ -36,7 +61,10 @@ const { title = "10x Astro Starter" } = Astro.props;
         </Banner>
       ))
     }
-    <slot />
+    <div class="bg-cosmic relative flex min-h-screen flex-col p-4 sm:p-8">
+      {topbar && <Topbar />}
+      <slot />
+    </div>
     {
       /* `client:only`: sonner is pre-bundled for SSR with its own React copy, so
         rendering `Toaster` on the server throws an invalid-hook-call. The toast

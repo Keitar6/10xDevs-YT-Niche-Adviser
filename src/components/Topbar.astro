@@ -2,22 +2,21 @@
 // Bindings come off the module-level `env`; `Astro.locals.runtime` was removed
 // in @astrojs/cloudflare v13 / Astro 6 (see src/pages/api/analyze.ts:15).
 import { env } from "cloudflare:workers";
-import { createClient } from "@/lib/supabase";
-import { parseChannelProfile } from "@/lib/services/channel-profile";
+import { loadChannelProfile } from "@/lib/services/channel-profile-server";
 import { signAvatarUrl } from "@/lib/services/avatar-storage";
 import { getAvatarAiBinding } from "@/lib/services/avatar";
 import ProfileDialog from "@/components/profile/ProfileDialog";
+import AuthDialog from "@/components/auth/AuthDialog";
 
 const { user } = Astro.locals;
 
-const supabase = createClient(Astro.request.headers, Astro.cookies);
-const { data: profileRow, error: profileError } =
-  supabase && user
-    ? await supabase.from("channel_profiles").select("*").eq("user_id", user.id).maybeSingle()
-    : { data: null, error: null };
+// Where an in-dialog sign-in should land. A `next` query param (set by the
+// middleware bounce) wins over this once the island mounts.
+const next = `${Astro.url.pathname}${Astro.url.search}`;
 
-// `competitors` is generated as `Json`, so the row is validated before use.
-const profile = parseChannelProfile(profileRow);
+const { profile, loadFailed } = user
+  ? await loadChannelProfile(Astro.request.headers, Astro.cookies, user.id)
+  : { profile: null, loadFailed: false };
 
 // The bucket is private, so the row stores an object path and the readable URL
 // is minted here, per render. Its ~1h window is therefore spent on how long the
@@ -49,7 +48,7 @@ const canGenerate = !!getAvatarAiBinding(env);
           </a>
           <ProfileDialog
             initialProfile={profile}
-            loadFailed={!!profileError}
+            loadFailed={loadFailed}
             initialAvatarUrl={avatarUrl}
             avatarLoadFailed={avatarLoadFailed}
             canGenerate={canGenerate}
@@ -66,12 +65,14 @@ const canGenerate = !!getAvatarAiBinding(env);
       <>
         <span class="text-blue-100/70">Not signed in</span>
         <div class="flex gap-3">
-          <a href="/auth/signin" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
-            Sign in
-          </a>
-          <a href="/auth/signup" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
+          <AuthDialog next={next} client:load />
+          <button
+            type="button"
+            data-auth-open="signup"
+            class="text-purple-300 transition-colors hover:text-purple-100 hover:underline"
+          >
             Sign up
-          </a>
+          </button>
         </div>
       </>
     )
