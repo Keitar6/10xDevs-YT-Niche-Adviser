@@ -584,32 +584,32 @@ so no additional index is created.
 
 #### Automated
 
-- [x] 2.1 Linting passes
-- [x] 2.2 Build passes
-- [x] 2.3 Unit tests pass
-- [x] 2.4 Both handlers guard themselves with a locals.user check
-- [x] 2.5 Unauthenticated POST returns 401 in the JSON envelope
-- [x] 2.6 Unauthenticated DELETE with Origin header returns 401 in the JSON envelope
-- [x] 2.7 Authenticated POST persists the row and returns 200
-- [x] 2.8 Repeat POST returns the same row id and leaves one row
-- [x] 2.9 Invalid payloads return 400 naming the problem
-- [x] 2.10 DELETE removes the row; a second DELETE returns 404
-- [x] 2.11 DELETE with a non-uuid id returns 400
-- [x] 2.12 Two-account isolation protocol passes all five assertions
+- [x] 2.1 Linting passes — db0ce38
+- [x] 2.2 Build passes — db0ce38
+- [x] 2.3 Unit tests pass — db0ce38
+- [x] 2.4 Both handlers guard themselves with a locals.user check — db0ce38
+- [x] 2.5 Unauthenticated POST returns 401 in the JSON envelope — db0ce38
+- [x] 2.6 Unauthenticated DELETE with Origin header returns 401 in the JSON envelope — db0ce38
+- [x] 2.7 Authenticated POST persists the row and returns 200 — db0ce38
+- [x] 2.8 Repeat POST returns the same row id and leaves one row — db0ce38
+- [x] 2.9 Invalid payloads return 400 naming the problem — db0ce38
+- [x] 2.10 DELETE removes the row; a second DELETE returns 404 — db0ce38
+- [x] 2.11 DELETE with a non-uuid id returns 400 — db0ce38
+- [x] 2.12 Two-account isolation protocol passes all five assertions — db0ce38
 
 #### Manual
 
-- [x] 2.13 Isolation protocol transcript reviewed against two distinct sessions
+- [x] 2.13 Isolation protocol transcript reviewed against two distinct sessions — db0ce38
 
 ### Phase 3: Dashboard composition
 
 #### Automated
 
-- [ ] 3.1 Linting passes
-- [ ] 3.2 Build passes
-- [ ] 3.3 Unit tests pass
-- [ ] 3.4 /dashboard server-renders the saved panel and its rows
-- [ ] 3.5 Intl formatters moved to src/lib/format.ts and all three exported
+- [x] 3.1 Linting passes
+- [x] 3.2 Build passes
+- [x] 3.3 Unit tests pass
+- [x] 3.4 /dashboard server-renders the saved panel and its rows
+- [x] 3.5 Intl formatters moved to src/lib/format.ts and all three exported
 
 #### Manual
 

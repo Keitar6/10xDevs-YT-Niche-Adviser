@@ -4,7 +4,7 @@ import { CircleAlert, Info, Play, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import OpportunityList from "@/components/analyze/OpportunityList";
-import type { AnalyzeResponse } from "@/types";
+import type { AnalyzeOpportunity, AnalyzeResponse } from "@/types";
 
 const CONNECTION_ERROR = "Could not reach the server. Check your connection and try again.";
 
@@ -52,7 +52,13 @@ function RunningSkeleton() {
   );
 }
 
-export default function AnalyzePanel() {
+interface Props {
+  savedVideoIds: Set<string>;
+  pendingVideoIds: Set<string>;
+  onSave: (opportunity: AnalyzeOpportunity) => void;
+}
+
+export default function AnalyzePanel({ savedVideoIds, pendingVideoIds, onSave }: Props) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +161,12 @@ export default function AnalyzePanel() {
             ) : null}
 
             {result.opportunities.length > 0 ? (
-              <OpportunityList opportunities={result.opportunities} />
+              <OpportunityList
+                opportunities={result.opportunities}
+                savedVideoIds={savedVideoIds}
+                pendingVideoIds={pendingVideoIds}
+                onSave={onSave}
+              />
             ) : (
               // Never a bare "no results": an empty ranking always carries its reason.
               <Notice tone="info">{result.summary.empty_reason ?? "No opportunities were found for this run."}</Notice>

@@ -17,7 +17,7 @@ export const SAVED_LIST_LIMIT = 200;
  * the other so a future edit finds its counterpart. */
 export const OPPORTUNITY_STATUSES = ["new", "in_production", "done"] as const;
 
-/** Bounds keep garbage out of the table and out of `Intl.NumberFormat`. */
+/** Bounds keep garbage out of the table and out of the UI's number formatters. */
 export const saveOpportunitySchema = z.object({
   video_id: z.string().min(1).max(64),
   title: z.string().min(1).max(500),
