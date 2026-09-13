@@ -1,10 +1,10 @@
 ---
 change_id: analyze-and-rank-opportunities
 title: Analyze and rank opportunities
-status: impl_reviewed
+status: archived
 created: 2026-09-10
 updated: 2026-09-13
-archived_at: null
+archived_at: 2026-09-13T17:34:01Z
 ---
 
 ## Notes

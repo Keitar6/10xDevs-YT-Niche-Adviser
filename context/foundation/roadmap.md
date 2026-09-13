@@ -45,7 +45,7 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 | F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | done |
 | F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | done |
 | S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
-| S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | in-progress |
+| S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | done |
 | S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | done |
 | S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | done |
 | S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | in-progress |
@@ -135,7 +135,7 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
   - **Wartość bazowa: mediana, nie średnia** — PRD FR-008 poprawione; decyzja D2 w `context/changes/analyze-and-rank-opportunities/research.md`.
   - **Limit konkurentów: max 5, egzekwowany w profilu (S-01)** — profil jest źródłem prawdy dla analizy; przywraca zgodność z FR-003 („3–5"). Decyzja D1 tamże; wymaga domknięcia w S-01.
 - **Risk:** To jest gwiazda przewodnia — najbardziej ryzykowny i najbardziej wartościowy fragment (integracja z YouTube Data API + LLM-owe uzasadnienie + rdzeń logiki scoringu w jednym miejscu). Sekwencjonowany możliwie wcześnie (zaraz po S-01), zgodnie z `main_goal: speed` i zasadą, że gwiazdy przewodniej nie odkłada się dla symetrii.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: Użytkownik zapisuje i przegląda okazje contentowe
 
@@ -229,3 +229,4 @@ Wszystkie pozycje poniżej są też zamkniętymi issues (`state_reason: not_plan
 - **F-01: (foundation) Użytkownik może zalogować się przez Google OAuth, obok już działającego email+hasło; FR-001 w pełni spełniony.** — Archived 2026-09-10 → `context/archive/2026-09-08-google-oauth-login/`. Lesson: —.
 - **S-04: niezalogowany odwiedzający rozumie ze strony głównej, czym jest produkt (kuratela konkurentów → ranking okazji contentowych) zamiast czytać treść szablonu startera; zalogowany i niezalogowany użytkownik loguje się, rejestruje i wylogowuje z dialogu w obrębie bieżącej strony, spójnie z istniejącym dialogiem profilu kanału.** — Archived 2026-09-13 → `context/archive/2026-09-13-landing-and-auth-shell/`. Lesson: —.
 - **S-03: user zapisuje wybraną okazję z wyników analizy (temat, score, status) jako trwały rekord i później przegląda swoje zapisane okazje; zapisane okazje widoczne wyłącznie dla właściciela.** — Archived 2026-09-13 → `context/archive/2026-09-13-save-and-view-opportunities/`. Lesson: —.
+- **S-02: zalogowany użytkownik z istniejącym profilem klika „Analyze" i widzi ranking ≥3 (docelowo top 5) okazji contentowych, każda z liczbowym `outlier_score` i jednozdaniowym uzasadnieniem, posortowane malejąco; przy błędzie/limicie API użytkownik widzi czytelny komunikat zamiast pustego lub zepsutego ekranu.** — Archived 2026-09-13 → `context/archive/2026-09-10-analyze-and-rank-opportunities/`. Lesson: —.
