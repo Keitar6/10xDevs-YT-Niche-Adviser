@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
+import { Toaster } from "@/components/ui/sonner";
 
 interface Props {
   title?: string;
@@ -36,6 +37,12 @@ const { title = "10x Astro Starter" } = Astro.props;
       ))
     }
     <slot />
+    {
+      /* `client:only`: sonner is pre-bundled for SSR with its own React copy, so
+        rendering `Toaster` on the server throws an invalid-hook-call. The toast
+        container has no server output worth keeping, so skipping SSR costs nothing. */
+    }
+    <Toaster client:only="react" />
   </body>
 </html>
 

@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
+import AnalyzePanel from "@/components/analyze/AnalyzePanel";
 
 const { user } = Astro.locals;
 ---
@@ -8,7 +9,7 @@ const { user } = Astro.locals;
 <Layout title="Dashboard">
   <div class="bg-cosmic flex min-h-screen flex-col p-4">
     <Topbar />
-    <div class="flex flex-1 items-center justify-center">
+    <div class="mx-auto w-full max-w-3xl flex-1 py-4">
       <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
         <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
           Dashboard
@@ -18,6 +19,9 @@ const { user } = Astro.locals;
         </p>
         <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
       </div>
+
+      <!-- No props: the route's profile read happens inside /api/analyze. -->
+      <AnalyzePanel client:load />
     </div>
   </div>
 </Layout>

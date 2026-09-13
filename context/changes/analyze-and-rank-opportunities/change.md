@@ -3,7 +3,7 @@ change_id: analyze-and-rank-opportunities
 title: Analyze and rank opportunities
 status: implementing
 created: 2026-09-10
-updated: 2026-09-12
+updated: 2026-09-13
 archived_at: null
 ---
 
@@ -242,3 +242,152 @@ already at the ~10s line the plan set for escalating to streamed NDJSON — and
 that is at `effort: "low"` with `maxRetries: 0`. Measure a 5-competitor run
 (row 5.12) before assuming the blocking POST holds; if it does not, the lever is
 this call, not the YouTube paging.
+
+### Deviation from plan — Phase 5, `next-themes` dropped from the generated Toaster
+
+**Planned:** "`npx shadcn@latest add sonner`, then apply the fix recorded in
+`channel-profile-crud/plan.md`: repoint the generated `cn` import at
+`@/lib/utils` and remove the redundant `cn` npm package the CLI pulls in."
+
+**Implemented:** as planned, plus removal of a *second* unwanted dependency the
+CLI installs — `next-themes`.
+
+**Why.** The generated `sonner.tsx` reads the active theme via `useTheme()` from
+`next-themes`. This project has no theme provider and never puts `.dark` on the
+document, so `useTheme` would return the `"system"` default and
+`var(--popover)` would resolve to the **light** token — a white toast on the
+cosmic dark page. The theme is pinned to `"dark"` and the toast palette given as
+explicit values, which removes the dependency rather than shipping one that only
+returns a wrong answer.
+
+### Deviation from plan — Phase 5, the Toaster is `client:only`, not `client:load`
+
+**Planned:** "Mount the `Toaster` once in the layout."
+
+**Implemented:** mounted once in `src/layouts/Layout.astro`, but with
+`client:only="react"`.
+
+**Why.** Caught by a smoke run before the manual gate: with `client:load` every
+page rendering `Layout` threw during SSR —
+
+```
+Invalid hook call … Cannot read properties of null (reading 'useState')
+  at Toaster2 (node_modules/.vite/deps_ssr/sonner.js:929)
+```
+
+Vite pre-bundles `sonner` into `deps_ssr/sonner.js` against its own React copy,
+distinct from the one `react-dom/server` uses, so the hook dispatcher is null on
+the server. The alternative fix (forcing `sonner` through `ssr.noExternal` /
+`optimizeDeps.exclude`) buys nothing: a toast container renders no server output
+worth keeping, so skipping SSR is both the smaller change and the correct one.
+`/auth/signin` and `/dashboard` both render clean afterwards.
+
+### Deviation from plan — Phase 5, response shape guarded structurally, not with zod
+
+**Planned (implied by `types.ts`):** "Phase 5's island is the only consumer that
+reads it as untrusted input, and it can add a parse schema when it needs one."
+
+**Implemented:** `isAnalyzeResponse` in `AnalyzePanel.tsx` — an
+`Array.isArray(opportunities) && typeof summary === "object"` guard.
+
+**Why.** zod would follow the island into the browser bundle for a check whose
+only job is to catch "this is not our payload at all" (a proxy error page, a
+crash before the route ran). Field-level trust comes from `/api/analyze`
+constructing the body. The `.json()` call has its own `try/catch` so a non-JSON
+failure body reads as a server error rather than a lost connection — impl-review
+finding F2 from the previous slice, not repeated here.
+
+### Addition beyond plan — Phase 5, row affordances
+
+Each result row links its title to `youtube.com/watch?v=<id>` and shows compact
+view count, publish date, and the channel median the score is relative to. The
+plan's contract names rank, title, channel, score, and justification; these are
+display details over data the DTO already carries, not new requests.
+
+### Phase 5 pre-verification (live, before the manual gate)
+
+All four automated criteria pass (`lint`, `build`, `vitest` 22/22, no `cn` in
+`package.json`). Beyond those, run against local Supabase and the live APIs with
+the `p4-smoke@example.com` account:
+
+- `/dashboard` **server-renders** the panel (the "Content opportunities" heading
+  is in the SSR HTML and the island is registered for hydration); dev log clean.
+- One live `POST /api/analyze` returned **HTTP 200 in 13.4s** with 5
+  opportunities, `justifications_available: true`, and row keys exactly matching
+  what `OpportunityList` reads — the wire contract is confirmed end to end.
+
+**Latency flag for row 5.12.** That 13.4s was **3** competitors, not 5, and
+already exceeds the plan's ~10s escalation line (Phase 4 measured 9.3–10.2s on
+the same profile). Consistent with the Phase 4 note that the single Anthropic
+call is ~9s of it. Measure a real 5-competitor run in the browser before
+deciding; if it holds above ~10s, the follow-up lever is that call, not the
+YouTube paging.
+
+The remaining rows (5.5–5.13) need a browser, key-unset restarts, and the
+Workers Logs CPU reading — none reachable from here.
+
+### Phase 5 manual verification — what was driven from the harness
+
+The first browser pass reported "everything is good", but the dev-server log
+showed a single `ready in` line and both key files still populated, so rows
+requiring a **restart** (5.10), a **stopped server** (5.11), a **bogus
+competitor** (5.8), a **5-competitor profile** (5.12) and a **deploy** (5.13)
+could not have been exercised. The gap was closed here instead, against local
+Supabase and the live YouTube and Anthropic APIs using `p4-smoke@example.com`.
+
+**5.12 — p95 at 5 competitors: ~11.2s.** Four consecutive runs on a real
+5-competitor profile (@mkbhd, @kurzgesagt, @veritasium, @fireship,
+@linustechtips): **11.20 / 11.17 / 10.63 / 10.95s**; a later batch of six read
+9.69–11.72s. This is **over the plan's ~10s escalation line**, so the follow-up
+to stream progress (NDJSON) is now *triggered*, not hypothetical.
+
+**The LLM call is confirmed as ~85% of the latency.** The same 5-competitor
+profile with `ANTHROPIC_API_KEY` unset returned in **1.62s**. YouTube paging plus
+scoring is ~1.6s; the single batched Anthropic call is the other ~9.4s. The lever
+for the follow-up is that call — not the YouTube chain. This upgrades the Phase 4
+note from a 3-competitor estimate to a measurement at the contracted cap.
+
+**5.8** — with `UCzzzzzzzzzzzzzzzzzzzzzz` patched into the profile (5 entries, so
+the 3–5 CHECK still holds): HTTP 200, full 5-row ranking, `resolved: 4`,
+`requested: 5`, the bogus id named in `unresolved`. The panel's
+`resolved < requested` branch renders "Resolved 4 of 5 competitor channels. Not
+found on YouTube: UCzzzzzzzzzzzzzzzzzzzzzz." Profile restored afterwards.
+
+**5.10** — with the key commented out in **both** `.env` and `.dev.vars` and the
+server restarted: the config banner renders in the dashboard HTML, the ranking
+returns all 5 rows with scores intact, every `justification` is null,
+`justifications_available: false`, and `justifications_error` reads "Anthropic
+API is not configured, so justifications were skipped." Keys restored from backup.
+
+**5.9** — a fresh account with no profile: HTTP 400, `{"error":"Set up your
+channel profile with competitor channels before running an analysis"}`. The panel
+renders that through its inline-error branch. Throwaway account deleted.
+
+**5.11** — the server was killed 4s into a live request. The client saw
+`curl (52) Empty reply from server`, HTTP `000`, **no body**. That is a transport
+rejection, not a partial 200 that could slip past `res.ok`, so it lands in
+`AnalyzePanel`'s `catch` → `fail(CONNECTION_ERROR)` → inline error + toast, with
+`finally` clearing `running`. Verified at the transport layer; the on-screen
+render follows deterministically from that branch.
+
+**5.7 — the rate limit is effectively unreachable by clicking.** Six *sequential*
+runs all returned 200: at ~10s per run, six runs span ~64s and the oldest ages
+out of the 60s window before the sixth fires. Tripping it took **8 concurrent**
+requests, which then produced HTTP 429 and exactly "You can run at most 5 analyses
+per 60 seconds. Wait 60 seconds and try again." The limiter works and the message
+is right, but since the button is disabled in-flight, a single tab cannot trip it
+— which is fine (the binding exists for the multi-tab/scripted abuse vector), but
+it means the 429 toast will effectively never be seen in normal use.
+
+**Phase 3 rollup.** Rows 3.5 and 3.7, deferred at the Phase 3 boundary for want of
+a caller, are now closed through the real `/api/analyze` path: 3.5 by five
+channels all clearing the sample floor with zero skips, 3.7 by the 5.8 run above.
+They carry the Phase 5 sha because that is when they were confirmed.
+
+**Still open, and not closable from here:**
+- **3.6** — call ordering inside the paging loop is not observable from outside
+  the process; it was demonstrated by the Phase 3 scratch harness.
+- **3.8** — quota per run needs the Google Cloud console.
+- **5.13** — CPU time per invocation needs Workers Logs after the smoke deploy
+  (Migration Notes step 5). This is the row that matters most, since a 10ms
+  overrun surfaces as an intermittent Error 1102 with no clean error.
