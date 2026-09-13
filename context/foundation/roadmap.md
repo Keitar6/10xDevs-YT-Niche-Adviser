@@ -9,7 +9,7 @@ main_goal: speed
 top_blocker: time
 milestone_id: mvp-core-loop
 milestone_seq: 1
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: YT-Niche-Adviser
@@ -20,7 +20,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: MVP core loop — od logowania do zapisanej okazji** — Status: open
+**M-1: MVP core loop — od logowania do zapisanej okazji** — Status: done
 
 - **Intent:** Dostarczyć kompletną, działającą pętlę must-have z PRD: pełne logowanie (email+hasło oraz Google OAuth), profil kanału z kuratelowanymi konkurentami, analiza zwracająca ranking okazji contentowych (outlier_score + uzasadnienie), oraz trwały zapis i przegląd okazji — z twardą izolacją danych per-user przez cały czas.
 - **Source materials:** `context/foundation/prd.md` (v2)
@@ -222,7 +222,7 @@ Wszystkie pozycje poniżej są też zamkniętymi issues (`state_reason: not_plan
 
 ## Milestone History
 
-(brak — pierwszy milestone)
+- **M-1: MVP core loop — od logowania do zapisanej okazji** (`mvp-core-loop`) — closed 2026-09-13. Pełna pętla must-have działa end-to-end: logowanie (email+hasło oraz Google OAuth), profil kanału z 3–5 kuratelowanymi konkurentami, analiza zwracająca ranking okazji z `outlier_score` i uzasadnieniem, oraz trwały zapis i przegląd okazji — wszystko za RLS per-owner. Siedem elementów (F-01, F-02, S-01–S-05) zamkniętych i zarchiwizowanych; zakres rozszerzony w trakcie o S-04 i S-05 bez naruszenia ścieżki must-have.
 
 ## Done
 
