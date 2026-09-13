@@ -2,6 +2,7 @@
 // Bindings come off the module-level `env`; `Astro.locals.runtime` was removed
 // in @astrojs/cloudflare v13 / Astro 6 (see src/pages/api/analyze.ts:15).
 import { env } from "cloudflare:workers";
+import { createClient } from "@/lib/supabase";
 import { loadChannelProfile } from "@/lib/services/channel-profile-server";
 import { signAvatarUrl } from "@/lib/services/avatar-storage";
 import { getAvatarAiBinding } from "@/lib/services/avatar";
@@ -18,6 +19,9 @@ const { profile, loadFailed } = user
   ? await loadChannelProfile(Astro.request.headers, Astro.cookies, user.id)
   : { profile: null, loadFailed: false };
 
+// `loadChannelProfile` owns its own client internally, so a second one is
+// created here for the one thing it doesn't expose: signing the avatar URL.
+//
 // The bucket is private, so the row stores an object path and the readable URL
 // is minted here, per render. Its ~1h window is therefore spent on how long the
 // tab stays open, not on how long the image is displayed.
@@ -25,6 +29,7 @@ const { profile, loadFailed } = user
 // A failed signing is kept distinct from "no avatar": the write path replaces
 // objects, so letting a misread look like an empty slot would invite a
 // destructive overwrite (impl-review F4).
+const supabase = createClient(Astro.request.headers, Astro.cookies);
 const avatarUrl = supabase && profile?.avatar_path ? await signAvatarUrl(supabase, profile.avatar_path) : null;
 const avatarLoadFailed = !!profile?.avatar_path && avatarUrl === null;
 
