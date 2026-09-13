@@ -9,6 +9,14 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    # The `ai` binding in wrangler.jsonc has no local emulation, so the
+    # Cloudflare vite plugin opens a *remote* proxy session during both
+    # `astro sync` and `astro build`. That session authenticates from the
+    # environment, so these two must be visible job-wide rather than only on the
+    # deploy step — without them `astro sync` fails before lint ever runs.
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
