@@ -409,7 +409,7 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Manual
 
-- [x] 5.2 `npx supabase db push` applies all migrations; bucket and policies verified in the hosted project
+- [x] 5.2 `npx supabase db push` applies all migrations; bucket and policies verified in the hosted project — f18ef28
 - [ ] 5.3 Upload and generation both work against the deployed Worker
 - [ ] 5.4 Two-user isolation re-verified in production
 - [ ] 5.5 CPU time per avatar request is within the free-tier budget
