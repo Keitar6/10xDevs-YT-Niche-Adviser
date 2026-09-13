@@ -405,7 +405,7 @@ One new migration, additive and nullable: existing profiles keep working with `a
 
 #### Automated
 
-- [ ] 5.1 CI is green on push to `master`
+- [x] 5.1 CI is green on push to `master` — 99a63ea
 
 #### Manual
 

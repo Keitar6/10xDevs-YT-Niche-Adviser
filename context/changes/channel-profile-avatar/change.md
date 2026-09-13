@@ -83,3 +83,36 @@ used instead. All three handlers are independently verified to wrap their `fetch
 calls in try/catch/finally (impl-review F2 from the prior slice's convention).
 Accepted as-is rather than refactored, since the code is already correct and the
 divergence is cosmetic-pattern, not functional.
+
+### 5.1 closed — and CI's first run ever was broken by this slice
+
+`5.1 CI is green on push to `master`` was unverifiable until now: the repo is a
+**fork**, and GitHub disables workflows on forks until the owner explicitly
+enables them. `gh api .../actions/runs` reported `total_count: 0` — CI had never
+executed once in this project's history, so every "CI is green" criterion in
+every prior slice was assumed rather than observed.
+
+Once Actions was enabled and the six repository secrets provisioned (there were
+**zero** before), the first run failed at `npx astro sync`, before lint:
+
+```
+Failed to start the remote proxy session. Error reloading remote server: In a
+non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN
+environment variable for wrangler to work.
+```
+
+**Cause is this slice.** The `ai` binding added in `2f1ecd5` has no local
+emulation — as `wrangler.jsonc`'s own comment says, "inference always runs
+remotely, including under `astro dev`" — so `@cloudflare/vite-plugin` opens a
+*remote* proxy session during `astro sync` and `astro build`. `ci.yml` set its
+`env:` block only on the `npm run build` step, so `astro sync` ran with no
+credentials at all.
+
+Fixed in `99a63ea` by hoisting `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
+to job-level `env:`. Run `34773626094` is green end to end — sync, lint, test,
+build, and the project's first CI deploy:
+`https://yt-niche-adviser.statkiewicz-mateusz.workers.dev`, version
+`699e2547-ffb4-4f8c-bba8-29da4bbb7bc9`.
+
+Rows 5.3–5.5 remain open: production is now deployed, so they are finally
+*checkable*, but they need the deployed app exercised by hand.
