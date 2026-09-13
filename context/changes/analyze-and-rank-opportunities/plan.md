@@ -500,9 +500,9 @@ Out-of-band setup required before the feature works in production, in order:
 
 #### Manual
 
-- [x] 3.5 A scratch run against 3–5 real channel IDs returns the expected long-form counts
+- [x] 3.5 A scratch run against 3–5 real channel IDs returns the expected long-form counts — f77e8f4
 - [ ] 3.6 A Shorts-heavy channel terminates paging on the window or `MAX_PAGES` bound, with no `videos.list` call inside the paging loop
-- [x] 3.7 A well-formed but non-existent ID lands in the unresolved set rather than throwing
+- [x] 3.7 A well-formed but non-existent ID lands in the unresolved set rather than throwing — f77e8f4
 - [ ] 3.8 Observed quota for one run is ~15 units at 5 competitors (Google Cloud console)
 
 ### Phase 4: Analyze endpoint
@@ -527,19 +527,19 @@ Out-of-band setup required before the feature works in production, in order:
 
 #### Automated
 
-- [x] 5.1 Lint passes: `npm run lint`
-- [x] 5.2 Build passes: `npm run build`
-- [x] 5.3 Unit tests pass: `npm test`
-- [x] 5.4 No stray `cn` package: `grep '"cn"' package.json` returns nothing
+- [x] 5.1 Lint passes: `npm run lint` — f77e8f4
+- [x] 5.2 Build passes: `npm run build` — f77e8f4
+- [x] 5.3 Unit tests pass: `npm test` — f77e8f4
+- [x] 5.4 No stray `cn` package: `grep '"cn"' package.json` returns nothing — f77e8f4
 
 #### Manual
 
-- [x] 5.5 Clicking Analyze shows a loading state, then a ranked list with scores and justifications
-- [x] 5.6 The button is disabled while a run is in flight
-- [x] 5.7 Tripping the rate limit shows a toast naming the limit and retry window
-- [x] 5.8 A bogus competitor shows the ranking plus a visible resolved-N-of-M notice
-- [x] 5.9 With no profile saved, Analyze explains that a profile is needed
-- [x] 5.10 With `ANTHROPIC_API_KEY` unset, the ranking renders with a justifications-unavailable notice
-- [x] 5.11 Stopping the dev server mid-request surfaces a readable connection error, not a silent reset
-- [x] 5.12 Measured p95 for a 5-competitor run is recorded
+- [x] 5.5 Clicking Analyze shows a loading state, then a ranked list with scores and justifications — f77e8f4
+- [x] 5.6 The button is disabled while a run is in flight — f77e8f4
+- [x] 5.7 Tripping the rate limit shows a toast naming the limit and retry window — f77e8f4
+- [x] 5.8 A bogus competitor shows the ranking plus a visible resolved-N-of-M notice — f77e8f4
+- [x] 5.9 With no profile saved, Analyze explains that a profile is needed — f77e8f4
+- [x] 5.10 With `ANTHROPIC_API_KEY` unset, the ranking renders with a justifications-unavailable notice — f77e8f4
+- [x] 5.11 Stopping the dev server mid-request surfaces a readable connection error, not a silent reset — f77e8f4
+- [x] 5.12 Measured p95 for a 5-competitor run is recorded — f77e8f4
 - [ ] 5.13 CPU time per invocation is read from Workers Logs and recorded; escalate to Workers Paid if at/near 10ms
