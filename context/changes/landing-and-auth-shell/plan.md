@@ -402,11 +402,11 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [x] 1.1 `safeNextPath` unit tests pass (`npm run test`)
-- [x] 1.2 Lint and type check pass (`npm run lint`)
-- [x] 1.3 Production build succeeds (`npm run build`)
-- [x] 1.4 No auth route redirects with `?error=`
-- [x] 1.5 No auth form declares a native action
+- [x] 1.1 `safeNextPath` unit tests pass (`npm run test`) — 062c9ee
+- [x] 1.2 Lint and type check pass (`npm run lint`) — 062c9ee
+- [x] 1.3 Production build succeeds (`npm run build`) — 062c9ee
+- [x] 1.4 No auth route redirects with `?error=` — 062c9ee
+- [x] 1.5 No auth form declares a native action — 062c9ee
 
 #### Manual
 
@@ -422,9 +422,9 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Automated
 
-- [ ] 2.1 Lint and build pass
-- [ ] 2.2 Unit tests still pass
-- [ ] 2.3 Top bar has no direct `/auth/sign*` links
+- [x] 2.1 Lint and build pass
+- [x] 2.2 Unit tests still pass
+- [x] 2.3 Top bar has no direct `/auth/sign*` links
 
 #### Manual
 

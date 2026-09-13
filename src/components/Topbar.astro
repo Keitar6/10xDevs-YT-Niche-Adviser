@@ -2,8 +2,13 @@
 import { createClient } from "@/lib/supabase";
 import { parseChannelProfile } from "@/lib/services/channel-profile";
 import ProfileDialog from "@/components/profile/ProfileDialog";
+import AuthDialog from "@/components/auth/AuthDialog";
 
 const { user } = Astro.locals;
+
+// Where an in-dialog sign-in should land. A `next` query param (set by the
+// middleware bounce) wins over this once the island mounts.
+const next = `${Astro.url.pathname}${Astro.url.search}`;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 const { data: profileRow, error: profileError } =
@@ -38,12 +43,14 @@ const profile = parseChannelProfile(profileRow);
       <>
         <span class="text-blue-100/70">Not signed in</span>
         <div class="flex gap-3">
-          <a href="/auth/signin" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
-            Sign in
-          </a>
-          <a href="/auth/signup" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
+          <AuthDialog next={next} client:load />
+          <button
+            type="button"
+            data-auth-open="signup"
+            class="text-purple-300 transition-colors hover:text-purple-100 hover:underline"
+          >
             Sign up
-          </a>
+          </button>
         </div>
       </>
     )
