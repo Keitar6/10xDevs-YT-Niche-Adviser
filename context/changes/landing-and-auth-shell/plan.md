@@ -410,13 +410,13 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Manual
 
-- [ ] 1.6 Sign in with valid credentials works
-- [ ] 1.7 Wrong password shows inline error without navigating
-- [ ] 1.8 Sign up reaches confirmation; duplicate email errors inline
-- [ ] 1.9 Google sign-in completes and returns signed in
-- [ ] 1.10 Denying Google consent shows a cancellation message, not "Missing OAuth code"
-- [ ] 1.11 `/dashboard` signed out bounces with `next=%2Fdashboard`
-- [ ] 1.12 Server unreachable mid-submit renders the connection error
+- [x] 1.6 Sign in with valid credentials works
+- [x] 1.7 Wrong password shows inline error without navigating
+- [x] 1.8 Sign up reaches confirmation; duplicate email errors inline
+- [x] 1.9 Google sign-in completes and returns signed in
+- [x] 1.10 Denying Google consent shows a cancellation message, not "Missing OAuth code"
+- [x] 1.11 `/dashboard` signed out bounces with `next=%2Fdashboard`
+- [x] 1.12 Server unreachable mid-submit renders the connection error
 
 ### Phase 2: Auth dialog
 
@@ -428,14 +428,14 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Manual
 
-- [ ] 2.4 Dialog opens from the top bar; ESC, overlay, and X all close it
-- [ ] 2.5 Sign in / sign up mode switch does not navigate
-- [ ] 2.6 In-dialog sign-in re-renders the top bar on the same page
-- [ ] 2.7 In-dialog sign-up swaps to the confirmation state
-- [ ] 2.8 Google from the dialog returns to the originating page
-- [ ] 2.9 `?auth=signup` opens the right panel and the URL is cleaned
-- [ ] 2.10 `?auth_error=` shows the message in the dialog
-- [ ] 2.11 Refresh after either does not reopen the dialog
+- [x] 2.4 Dialog opens from the top bar; ESC, overlay, and X all close it
+- [x] 2.5 Sign in / sign up mode switch does not navigate
+- [x] 2.6 In-dialog sign-in re-renders the top bar on the same page
+- [x] 2.7 In-dialog sign-up swaps to the confirmation state
+- [x] 2.8 Google from the dialog returns to the originating page
+- [x] 2.9 `?auth=signup` opens the right panel and the URL is cleaned
+- [x] 2.10 `?auth_error=` shows the message in the dialog
+- [x] 2.11 Refresh after either does not reopen the dialog
 
 ### Phase 3: Centralize the shell
 
@@ -448,11 +448,11 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Manual
 
-- [ ] 3.5 One top bar on `/` and `/dashboard`, unbroken ground
-- [ ] 3.6 `/auth/signin` and `/auth/signup` redirect with the dialog open
-- [ ] 3.7 Protected-route bounce returns the user to `/dashboard` after sign-in
-- [ ] 3.8 Sign out still works and returns to `/`
-- [ ] 3.9 Config banner still renders above the shell
+- [x] 3.5 One top bar on `/` and `/dashboard`, unbroken ground
+- [x] 3.6 `/auth/signin` and `/auth/signup` redirect with the dialog open
+- [x] 3.7 Protected-route bounce returns the user to `/dashboard` after sign-in
+- [x] 3.8 Sign out still works and returns to `/`
+- [x] 3.9 Config banner still renders above the shell
 
 ### Phase 4: Landing content, metadata, and starter cleanup
 
@@ -465,9 +465,9 @@ No data migration — this slice touches no tables and adds no secrets. Two comp
 
 #### Manual
 
-- [ ] 4.5 Landing explains the product with no starter language
-- [ ] 4.6 Hero CTAs open the dialog on the correct panel
-- [ ] 4.7 Description, `og:*`, and `twitter:*` tags present in page source
-- [ ] 4.8 OG card renders with an image in a link preview
-- [ ] 4.9 Config banner is English and links to this repo
-- [ ] 4.10 Tab title is the product name on `/`, page-specific on `/dashboard`
+- [x] 4.5 Landing explains the product with no starter language
+- [x] 4.6 Hero CTAs open the dialog on the correct panel
+- [x] 4.7 Description, `og:*`, and `twitter:*` tags present in page source
+- [ ] 4.8 OG card renders with an image in a link preview — deferred: needs a publicly reachable URL, not verifiable against localhost
+- [x] 4.9 Config banner is English and links to this repo
+- [x] 4.10 Tab title is the product name on `/`, page-specific on `/dashboard`
