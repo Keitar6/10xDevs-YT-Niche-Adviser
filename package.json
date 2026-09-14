@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
+    "test:db": "supabase test db",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

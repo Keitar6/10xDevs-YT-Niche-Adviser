@@ -656,14 +656,14 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [ ] 1.1 `npm run test:db` exits 0 and reports `Result: PASS`
-- [ ] 1.2 The harness file reports its full planned assertion count, with no skipped tests
-- [ ] 1.3 `git status --porcelain` shows no stray files under `supabase/`
-- [ ] 1.4 `npm run lint` passes
+- [x] 1.1 `npm run test:db` exits 0 and reports `Result: PASS`
+- [x] 1.2 The harness file reports its full planned assertion count, with no skipped tests
+- [x] 1.3 `git status --porcelain` shows no stray files under `supabase/`
+- [x] 1.4 `npm run lint` passes
 
 #### Manual
 
-- [ ] 1.5 Changing the impersonated UUID makes the guard go red
+- [x] 1.5 Changing the impersonated UUID makes the guard go red
 
 ### Phase 2: Table isolation — `channel_profiles` and `content_opportunities`
 

@@ -49,7 +49,7 @@ Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience)
 
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |----|-----------|----------------------|----------------|----------|--------|
-| F-03 | `provable-user-isolation` | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | — | FR-002, MS-01, MS-03 | planning |
+| F-03 | `provable-user-isolation` | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | — | FR-002, MS-01, MS-03 | in-progress |
 | F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | — | FR-006, FR-009, MS-04 | ready |
 | F-05 | `testing-scoring-oracle` | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason | — | FR-007, FR-008, MS-05 | ready |
 | F-06 | `testing-quality-gates` | (foundation) the floor the earlier phases established is enforced on every change | F-03, F-04, F-05 | MS-06 | proposed |
@@ -91,7 +91,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Where policy tests that need a container runtime actually run — in CI or as a local-only gate. Owner: user. Block: no (`test-plan.md` §5 already defers the placement decision to its Phase 4, and a local gate is a valid end state).
 - **Risk:** Sequenced first, ahead of `test-plan.md` §3's own Phase 1, because `main_goal: speed` favours the strict must-have path and this is the only element discharging a written requirement. That divergence is deliberate and recorded here so a later `/10x-test-plan` run does not silently re-assert §3's order. The substantive risk is proving the wrong thing: `test-plan.md` §2 warns that "row-level security is enabled" is not the same as correct, since a policy can be missing for a single verb and roles carry different grants — and that a stranger's read returning nothing is not proof unless it is paired with a check that the targeted row is unchanged.
-- **Status:** planning
+- **Status:** in-progress
 
 ### F-04: Analyze-pipeline boundary resilience
 
