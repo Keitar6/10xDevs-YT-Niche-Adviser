@@ -91,7 +91,7 @@ rather than weakening the assertion. Both are written up in
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/ci.yml`), on every push and PR to master. One job, `ci`, running in order:
+GitHub Actions workflow (`.github/workflows/ci.yml`), on every push and PR to master. Three jobs: `changes` (plumbing — diffs the event to decide whether `db` runs), `db` (the pgTAP policy suite, conditional; see above), and `ci`, which runs in order:
 
 `npm ci` → `npm run format:check` → `npx astro sync` → `npm run lint` → `npm run typecheck` → `npm test` → `npm run build` → deploy (master pushes only)
 

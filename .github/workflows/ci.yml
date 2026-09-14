@@ -6,6 +6,21 @@ on:
   pull_request:
     branches: [master]
 
+# Least privilege, stated here rather than inherited from the repository
+# setting, which an admin can change without touching this file. Nothing in
+# this workflow writes to the repository; the deploy step authenticates to
+# Cloudflare with its own token.
+permissions:
+  contents: read
+
+# Supersede in-flight runs on a pull request branch, but never on master — a
+# cancelled run there could interrupt a deploy mid-flight, and a cancelled job
+# reports `cancelled` rather than success, which would block the required check
+# until re-run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Emits a boolean saying whether this event touched `supabase/**`, for the `db`
   # job below to condition on.
@@ -18,6 +33,7 @@ jobs:
   # `context/foundation/test-plan.md` §6.7.
   changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       supabase: ${{ steps.filter.outputs.supabase }}
     steps:
@@ -39,7 +55,22 @@ jobs:
             echo "No usable diff base ($BASE) — running the policy suite."
             exit 0
           fi
-          if git diff --name-only "$BASE" "$GITHUB_SHA" -- supabase/ | grep -q .; then
+          # Capture rather than pipe into `grep`: a piped `git diff` failure
+          # surfaces as an empty match and gets laundered into `supabase=false`
+          # — a green job silently disabling the gate. The default step shell is
+          # `bash -e` with no `pipefail`, so the pipeline would not have caught
+          # it either.
+          #
+          # `ci.yml` is in the pathspec alongside `supabase/` on purpose: this
+          # file defines the `db` job and its `-x` exclusion list, so a change
+          # to it is exactly the change most likely to break the gate. Watching
+          # only `supabase/` would let the gate be edited away unverified.
+          if ! changed=$(git diff --name-only "$BASE" "$GITHUB_SHA" -- supabase/ .github/workflows/ci.yml); then
+            echo "supabase=true" >> "$GITHUB_OUTPUT"
+            echo "git diff against $BASE failed — running the policy suite."
+            exit 0
+          fi
+          if [ -n "$changed" ]; then
             echo "supabase=true" >> "$GITHUB_OUTPUT"
           else
             echo "supabase=false" >> "$GITHUB_OUTPUT"
@@ -50,8 +81,15 @@ jobs:
   # is the only job that pays for a container runtime.
   db:
     needs: changes
-    if: needs.changes.outputs.supabase == 'true'
+    # `!cancelled()` rather than the implicit `success()`: a *failed* `changes`
+    # would otherwise skip this job, and a skipped required check reports
+    # Success — silently disabling the only gate on the policy suite. Erring
+    # towards running here matches the base-sha guards in `changes` above.
+    if: >-
+      !cancelled()
+      && (needs.changes.result != 'success' || needs.changes.outputs.supabase == 'true')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,9 +100,13 @@ jobs:
       # pgTAP touches the database and nothing else: `auth.uid()` is a SQL
       # function in the db image, and the `avatars` bucket row is inserted by
       # `20260913134159_add_channel_profile_avatar.sql`, not by storage-api at
-      # boot. Excluding the other thirteen containers turns a fourteen-image pull
-      # into one. If a test ever goes red under this, restore the container it
-      # needs — do not weaken the assertion.
+      # boot. Excluding the other thirteen leaves one container running — but
+      # measured, NOT one image: `-x` bounds what starts, not what is pulled,
+      # and a cold runner still pulled five (postgres, realtime, storage-api,
+      # gotrue, pg_prove). The `supabase/**` scoping, not the trimming, is what
+      # keeps this job affordable. See `test-plan.md` §6.7.
+      # If a test ever goes red under this, restore the container it needs — do
+      # not weaken the assertion.
       - run: >
           npx supabase start
           -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
@@ -72,6 +114,7 @@ jobs:
 
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # The `ai` binding in wrangler.jsonc has no local emulation, so the
     # Cloudflare vite plugin opens a *remote* proxy session during both
     # `astro sync` and `astro build`. That session authenticates from the
@@ -102,7 +145,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - name: Deploy to Cloudflare Workers
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-        uses: cloudflare/wrangler-action@v4
+        # Pinned to a commit rather than the mutable `v4` tag: this is the only
+        # third-party action here, and the only step handed the production
+        # deploy credential. Bump deliberately.
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
