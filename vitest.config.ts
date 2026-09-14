@@ -28,6 +28,11 @@ export default defineConfig({
     // widened to the access-control boundary — the route guards, the session
     // resolution in the middleware, and the source scan that pins the
     // no-service-role-client invariant the whole pgTAP suite rests on.
-    include: ["src/lib/**/*.test.ts", "src/pages/api/**/*.test.ts", "src/*.test.ts"],
+    // One glob over all of `src/` rather than a list of the directories that
+    // happen to hold tests today. An allowlist has the same failure mode this
+    // suite exists to eliminate: a test written outside it is silently never
+    // run — no error, no warning, green CI. Narrow this only with `exclude`,
+    // where the omission is deliberate and visible.
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 });

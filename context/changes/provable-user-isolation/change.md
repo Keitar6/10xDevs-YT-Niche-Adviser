@@ -1,7 +1,7 @@
 ---
 change_id: provable-user-isolation
 title: Provable user isolation
-status: implemented
+status: impl_reviewed
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
@@ -26,12 +26,27 @@ guard, not an access-control boundary) and adds a closing assertion that user A
 *can* delete their own object — which is what makes the strangers' zero-row
 deletes mean "RLS denied you" rather than "nobody can delete anything".
 
-**Phase 3 criterion 3.4 (`npx supabase db reset`) was run by the user, not by
-Claude.** Claude declined to run the reset itself: the local database holds real
-development data — a channel profile, its avatar object and saved opportunities
-— and a reset would have destroyed it. The user confirmed on 2026-09-14 that
-they had already run the reset and the suite clean against it, so 3.4 is
-verified evidence rather than an accepted assumption.
+**Phase 3 criterion 3.4 (`npx supabase db reset`) was deferred during
+implementation and settled at impl-review.** Claude declined to run the reset
+during Phase 3: the local database held real development data — a channel
+profile, its avatar object and saved opportunities — and a reset would have
+destroyed it. The user then reported having already run it, and 3.4 was recorded
+as user-verified on that basis.
+
+The impl-review on 2026-09-14 found that report was mistaken. Row timestamps
+showed the dev profile (`16:47:17`) and two leftover fixture users
+(`16:33`) all dated 2026-09-13, and `supabase/seed.sql` does not exist — so no
+reset could have run since then without destroying data that was still present.
+The user was shown this and chose to run the reset for real. After backing the
+dev data up, both deferred criteria were then genuinely performed:
+
+- **3.4** — reset ran, database confirmed empty (0 users / 0 profiles / 0
+  opportunities / 0 storage objects), suite passed 70/70 against it.
+- **2.4** — `alter policy channel_profiles_select_own … using (true)` turned the
+  suite red (`01` 1/16, `03` 1/12); `npx supabase db reset` restored it to green.
+
+Both are now evidence rather than attestation. The structural argument below
+still holds independently and is what made the gap low-risk in the meantime.
 
 Independently of that run, the property 3.4 establishes (no hidden dependency on
 accumulated local state) is also carried structurally by the suite's own shape:

@@ -18,7 +18,20 @@
  *
  * `/api/auth/*` is deliberately absent: those five handlers *establish* the
  * session rather than consume it, and share no contract with the seven below.
+ *
+ * **Scope is `/api/*` only.** SSR pages and components read user data too —
+ * `src/pages/dashboard.astro`, `src/components/Topbar.astro` and
+ * `src/components/Welcome.astro` all call a loader in frontmatter, and the last
+ * two render on `/`, which is not in `PROTECTED_ROUTES`. Their guard is a
+ * `user ? … : …` ternary rather than a 401, so they share no contract with the
+ * handlers below and nothing here pins them. The residual risk is small — the
+ * user id is session-derived and RLS backstops it — but "every data-touching
+ * handler" above means every *API* handler, and that limit is stated rather
+ * than left to be inferred.
  */
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join, relative } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { APIContext } from "astro";
 
@@ -109,6 +122,34 @@ beforeEach(() => {
   createClient.mockReset();
 });
 
+const API_DIR = fileURLToPath(new URL(".", import.meta.url));
+
+/**
+ * Every exported HTTP verb under `src/pages/api/`, as `"<VERB> /api/<path>"`.
+ *
+ * Read from the source text rather than imported: this runs before the table
+ * below and must not depend on any handler module loading successfully.
+ */
+function handlersOnDisk(): string[] {
+  const walk = (dir: string): string[] =>
+    readdirSync(dir).flatMap((entry) => {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) return walk(full);
+      return entry.endsWith(".ts") && !entry.endsWith(".test.ts") ? [full] : [];
+    });
+
+  return walk(API_DIR)
+    .map((full) => relative(API_DIR, full).replaceAll("\\", "/"))
+    .filter((path) => !path.startsWith("auth/"))
+    .flatMap((path) => {
+      const text = readFileSync(join(API_DIR, path), "utf8");
+      const verbs = [...text.matchAll(/^export const (GET|POST|PUT|PATCH|DELETE)\b/gm)].map((m) => m[1]);
+      const route = `/api/${path.replace(/\.ts$/, "").replace(/\/index$/, "")}`;
+      return verbs.map((verb) => `${verb} ${route}`);
+    })
+    .sort();
+}
+
 /**
  * Every handler under `/api/` that touches user data.
  *
@@ -130,10 +171,14 @@ const DATA_ROUTES: { name: string; handler: Handler; ownerField: string | null }
 ];
 
 describe("every data-touching route refuses a caller with no session", () => {
-  it("covers all seven handlers", () => {
-    // A guard against the table quietly shrinking. The inventory is fixed at
-    // seven by research.md §2; a new data-touching route must be added here.
-    expect(DATA_ROUTES).toHaveLength(7);
+  it("covers every data-touching handler that exists on disk", () => {
+    // Derived from the filesystem, not from a hardcoded count. A count guards
+    // the table against quietly shrinking, but only a walk guards the codebase
+    // against growing: a new `/api/*` route that forgets its 401 guard and is
+    // never added to `DATA_ROUTES` would otherwise produce no failure at all —
+    // which is precisely the "remember to write a test" trap this file claims
+    // to remove. `/api/auth/*` is excluded here for the reason given above.
+    expect(handlersOnDisk()).toEqual(DATA_ROUTES.map((route) => route.name).sort());
   });
 
   it.each(DATA_ROUTES)("$name answers 401 with no data", async ({ handler }) => {

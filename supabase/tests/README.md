@@ -54,6 +54,12 @@ Every file is wrapped in `begin` / `rollback` and creates its own fixtures
 in-transaction. Nothing persists, nothing depends on `supabase db reset`, and
 files do not have to run in any particular order relative to one another.
 
+The `rollback` is load-bearing, not tidiness. These files write to the shared
+`auth.users` and `storage.objects`. Running one in Studio or `psql` with the
+trailing `rollback;` dropped leaves the two `*@isolation.test` fixture users and
+an `avatars` object committed in your local database — harmless but confusing,
+and they will still be there the next time you go looking for real data.
+
 ```sql
 begin;
 create extension if not exists pgtap;

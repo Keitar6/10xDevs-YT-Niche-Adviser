@@ -91,10 +91,13 @@ select is(
 -- *statement*, not per row, so it fires even when RLS has already filtered the
 -- target away.
 --
--- It must be stood down here, and the reason is the whole thesis of this suite:
--- left up, every DELETE assertion below would pass because the statement throws
--- for *everyone* — the owner included — not because the policy denied anyone.
--- That is a vacuous pass wearing a green tick.
+-- It must be stood down here, because left up it makes the DELETE assertions
+-- below unmeasurable: the statement throws for *everyone* — the owner included
+-- — before RLS is ever consulted, so nothing below can distinguish "the policy
+-- denied you" from "nobody may delete at all". Concretely the file does not go
+-- quietly green; it dies loudly, with `42501 Direct deletion from storage
+-- tables is not allowed` followed by `current transaction is aborted` for every
+-- remaining assertion. The danger is a lost measurement, not a silent pass.
 --
 -- Nor is the trigger a security boundary: `authenticated` can set this GUC
 -- itself, exactly as the next line does. It guards against orphaned objects

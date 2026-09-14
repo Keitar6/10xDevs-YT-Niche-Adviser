@@ -19,7 +19,7 @@ begin;
 
 create extension if not exists pgtap;
 
-select plan(14);
+select plan(16);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures — created as `postgres`, before the first `set local role`
@@ -224,6 +224,41 @@ select throws_ok(
   '23505',
   null::text,
   'a second profile for the same user is rejected by the unique constraint'
+);
+
+-- ---------------------------------------------------------------------------
+-- Positive controls: the owner CAN write their own row
+-- ---------------------------------------------------------------------------
+
+-- Without these two, every "affects zero rows" assertion above would pass just
+-- as happily if the UPDATE and DELETE policies denied *everybody* — dropping
+-- both owner policies outright leaves the rest of this file green. These are
+-- what make the strangers' zero-row writes mean "RLS denied you" rather than
+-- "nobody can write at all". Twin of the closing assertion in
+-- `04-avatars-bucket.test.sql`, which makes the same argument for storage.
+
+with allowed as (
+  update public.channel_profiles
+  set niche = 'renamed-by-the-owner'
+  where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+  returning 1
+)
+select is(
+  (select count(*)::int from allowed),
+  1,
+  'user A CAN update their own profile — so the strangers'' zero-row updates were RLS, not a blanket block'
+);
+
+-- DELETE runs last: it removes the row every assertion above depends on.
+with allowed as (
+  delete from public.channel_profiles
+  where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+  returning 1
+)
+select is(
+  (select count(*)::int from allowed),
+  1,
+  'user A CAN delete their own profile — so the strangers'' zero-row deletes were RLS, not a blanket block'
 );
 
 select * from finish();

@@ -31,11 +31,23 @@ const CLIENT_FACTORY = "lib/supabase.ts";
 /**
  * Excluded because they are *about* the invariant rather than subject to it:
  * this file names the forbidden strings in order to search for them, and the
- * stub directory exists only under Vitest and reaches no database at all.
+ * stubs exist only under Vitest and reach no database at all.
+ *
+ * Listed as exact paths rather than as a `test/stubs/` prefix on purpose: a
+ * directory exemption is a permanently unscanned subtree inside `src/`, which
+ * is the one place a privileged client could hide from its own guard. Adding a
+ * fourth stub should require a deliberate edit here.
  */
-const EXEMPT = ["lib/no-privileged-client.test.ts", "test/stubs/"];
+const EXEMPT = [
+  "lib/no-privileged-client.test.ts",
+  "test/stubs/astro-env-server.ts",
+  "test/stubs/astro-middleware.ts",
+  "test/stubs/cloudflare-workers.ts",
+];
 
-const EXTENSIONS = [".ts", ".tsx", ".astro"];
+// `.js`/`.mjs`/`.cjs` are included even though `src/` has none today: a file the
+// walk does not read is a file the invariant does not cover.
+const EXTENSIONS = [".ts", ".tsx", ".astro", ".js", ".jsx", ".mjs", ".cjs"];
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -69,6 +81,15 @@ describe("no privileged Supabase client exists in src/", () => {
     // The admin API: `supabase.auth.admin.*` runs with the service key and can
     // read or mutate any user.
     ["auth.admin", /auth\s*\.\s*admin\b/],
+    // Supabase's current key scheme, which drops the `service_role` wording
+    // entirely: the local stack reports `sb_secret_…` / `SECRET_KEY` alongside
+    // `sb_publishable_…`. A privileged client built from those names trips none
+    // of the legacy patterns above, so they are listed separately rather than
+    // assumed to be covered.
+    ["sb_secret_", /sb_secret_/],
+    ["SECRET_KEY", /SECRET_KEY/],
+    ["SUPABASE_SERVICE", /SUPABASE_SERVICE/i],
+    ["supabaseAdmin", /supabaseAdmin/i],
   ])("no file mentions %s", (_label, pattern) => {
     const offenders = SCANNED.filter((file) => pattern.test(file.text)).map((f) => f.path);
     expect(offenders).toEqual([]);
@@ -97,5 +118,24 @@ describe("no privileged Supabase client exists in src/", () => {
     // client issues run as the signed-in user rather than as a superuser.
     expect(factory?.text).toMatch(/SUPABASE_KEY/);
     expect(factory?.text).toMatch(/cookies\s*:/);
+  });
+
+  it("the permitted factory builds exactly one client and exports exactly one thing", () => {
+    // The assertions above are existence checks, not exclusivity checks, and
+    // this file is deliberately exempt from the constructor-import rule — so
+    // without these two counts a *second* exported factory could be added right
+    // here, next to the legitimate one, and every other test in this file would
+    // still pass. That is the one place in `src/` a privileged client could
+    // hide from its own guard.
+    const factory = SCANNED.find((f) => f.path === CLIENT_FACTORY);
+
+    // Matches the `@supabase/*` constructors only. Plain `createClient` is this
+    // project's own factory name and would match its own declaration line.
+    const constructorCalls = factory?.text.match(/create(Server|Browser)Client\s*[<(]/g) ?? [];
+    expect(constructorCalls).toHaveLength(1);
+
+    const exports = factory?.text.match(/^export\s+/gm) ?? [];
+    expect(exports).toHaveLength(1);
+    expect(factory?.text).toMatch(/export function createClient\(/);
   });
 });

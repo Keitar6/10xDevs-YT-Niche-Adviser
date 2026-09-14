@@ -100,9 +100,9 @@ date so future readers can see which lines need re-verification.
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| unit + integration | Vitest | 5.0 | Configured. `include` in `vitest.config.ts` is currently scoped to `src/lib/services/**/*.test.ts` only; §3 Phase 1 widens it. Five test files exist, all in that one directory — test base profile: sparse |
+| unit + integration | Vitest | 5.0 | Configured. `include` is `src/**/*.test.{ts,tsx}` — one glob over the whole tree, deliberately not an allowlist of the directories that happen to hold tests (§3 Phase 2 widened it from `src/lib/services/**` and flattened it). Eight test files: five service tests plus the route, middleware and source-scan files from §6.4 |
 | network / boundary faking | none yet — see §3 Phase 1 | — | No mocking library installed. Phase 1 chooses between the runner's built-in fetch stubbing and a dedicated interceptor under the cost × signal rule |
-| database / policy tests | Supabase CLI (pgTAP, `supabase test db`) | 2.116 | CLI is already a devDependency; needs Docker locally. No tests written yet — see §3 Phase 2 |
+| database / policy tests | Supabase CLI (pgTAP, `supabase test db`) | 2.116 | CLI is already a devDependency; needs Docker locally. Five files under `supabase/tests/`, 77 assertions — the harness/oracle guard plus per-verb, per-role isolation across `channel_profiles`, `content_opportunities` and the `avatars` bucket, and the policy-shape file. Wired as a local gate (§5); pattern in §6.3 |
 | typecheck | `@astrojs/check` | 0.9.8 | Installed, but there is no script for it and CI never runs one — see §3 Phase 4 |
 | lint | ESLint, type-checked rules | 9.29 | Wired in three places: pre-commit via husky and lint-staged, and in CI |
 | Astro component rendering | Container API (experimental) | Astro 6.3 | Available but not planned. Astro 6 removed rendering of Astro components in client test environments — such tests must run in a `node` environment. §7 rules out UI look-and-feel testing, so this stays unused |
@@ -192,8 +192,11 @@ The shape, in order:
 6. **Route denied `INSERT`s through `throws_ok`.** They raise `42501` and
    **abort the transaction**, taking every later assertion in the file with
    them; `throws_ok`'s internal exception handler acts as a savepoint.
+7. **Close with a positive control: the owner CAN write.** As A, `update` and
+   then `delete` A's own rows and assert the affected count is what you seeded.
+   Put the `delete` last — it removes the rows the rest of the file reads.
 
-Three traps, each of which produces a green suite that proves nothing:
+Four traps, each of which produces a green suite that proves nothing:
 
 - **The oracle.** If `auth.uid()` is NULL for both actors, every "the stranger
   sees nothing" assertion passes vacuously. `00-harness.test.sql` exists solely
@@ -206,9 +209,17 @@ Three traps, each of which produces a green suite that proves nothing:
   `<user_id>/<filename>`. One at the bucket root belongs to nobody and makes
   every assertion about it vacuous — see `04-avatars-bucket.test.sql`, which
   asserts its own fixture paths for exactly this reason.
+- **A denial proves nothing without step 7.** "The stranger's UPDATE affected
+  zero rows" reads identically whether the policy denies *the stranger* or
+  denies *everybody* — drop the owner's UPDATE and DELETE policies outright and
+  a suite without the positive control stays fully green. This was found by
+  mutation testing during the `provable-user-isolation` impl-review, after two
+  of the three files had shipped without it.
 
 Before trusting a new file, **break the policy it covers**
-(`alter policy … using (true)`) and confirm the file goes red.
+(`alter policy … using (true)`) and confirm the file goes red. Then break it the
+other way — drop the owner's own policy — and confirm it goes red for that too.
+Only the second one catches a suite that proves denial without proving access.
 
 ### 6.4 Adding a test for a new API route
 
@@ -220,7 +231,9 @@ Before trusting a new file, **break the policy it covers**
 
 To cover a new data-touching route, **add a row to `DATA_ROUTES`**. The 401
 case, the empty-body-shape check and the no-client-constructed check all come
-for free from the table. The `ownerField` column is `null` only when the handler
+for free from the table. Forgetting the row is not silent: the file walks
+`src/pages/api/` and asserts the table matches the verbs actually exported on
+disk, so a new route fails the suite by name until it is listed. The `ownerField` column is `null` only when the handler
 reads no owner-shaped input at all, and the reason belongs in the comment above
 the table.
 

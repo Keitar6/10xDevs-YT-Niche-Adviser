@@ -15,7 +15,7 @@ begin;
 
 create extension if not exists pgtap;
 
-select plan(16);
+select plan(18);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures — created as `postgres`, before the first `set local role`
@@ -253,6 +253,41 @@ select is(
   (select count(*)::int from public.content_opportunities),
   2,
   'user B''s save did not appear in user A''s library'
+);
+
+-- ---------------------------------------------------------------------------
+-- Positive controls: the owner CAN write their own rows
+-- ---------------------------------------------------------------------------
+
+-- Without these two, every "affects zero rows" assertion above would pass just
+-- as happily if the UPDATE and DELETE policies denied *everybody* — dropping
+-- both owner policies outright leaves the rest of this file green. They are
+-- also the other half of the S-06 pre-proof above: that assertion shows a
+-- stranger's UPDATE is refused, this one shows the owner's is not, which is
+-- what S-06's write path will actually depend on.
+
+with allowed as (
+  update public.content_opportunities
+  set status = 'in_production'
+  where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+  returning 1
+)
+select is(
+  (select count(*)::int from allowed),
+  2,
+  'user A CAN update their own saved rows — so the strangers'' zero-row updates were RLS, not a blanket block'
+);
+
+-- DELETE runs last: it removes the rows every assertion above depends on.
+with allowed as (
+  delete from public.content_opportunities
+  where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+  returning 1
+)
+select is(
+  (select count(*)::int from allowed),
+  2,
+  'user A CAN delete their own saved rows — so the strangers'' zero-row deletes were RLS, not a blanket block'
 );
 
 select * from finish();

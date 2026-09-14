@@ -21,5 +21,11 @@
  */
 export const SUPABASE_URL = "";
 export const SUPABASE_KEY = "";
+// Worth knowing when reading `routes.test.ts`: an empty key sends the one
+// `POST /api/profile` happy-path case down the fallback branch at
+// `src/pages/api/profile.ts:77-89` (ids only), so the branch above it that
+// rebuilds `competitors` via `resolveChannelRefs` is never exercised here. The
+// ownership assertion is unaffected — `user_id` is taken from the session on
+// both branches — but it is not the production path.
 export const YOUTUBE_API_KEY = "";
 export const ANTHROPIC_API_KEY = "";
