@@ -601,16 +601,16 @@ re-enabling it afterwards is a single `gh api` call rather than a re-derivation.
 
 #### Automated
 
-- [ ] 4.1 Ruleset exists with `"bypass_actors": []`
-- [ ] 4.2 Required check names exactly match the names emitted by a real run
-- [ ] 4.3 A direct `git push` to `master` is rejected by the remote
-- [ ] 4.4 All four gates green on the final PR
-- [ ] 4.5 `ruleset.json` exists in the change folder
+- [x] 4.1 Ruleset exists with `"bypass_actors": []` — d9c9e54
+- [x] 4.2 Required check names exactly match the names emitted by a real run — d9c9e54
+- [x] 4.3 A direct `git push` to `master` is rejected by the remote — d9c9e54
+- [x] 4.4 All four gates green on the final PR — d9c9e54
+- [x] 4.5 `ruleset.json` exists in the change folder — d9c9e54
 
 #### Manual
 
 - [ ] 4.6 PR with a deliberate type error is blocked from merging
 - [ ] 4.7 Docs-only PR is mergeable with `db` reported as skipped
-- [ ] 4.8 Direct push to `master` rejected for you personally (no bypass)
+- [x] 4.8 Direct push to `master` rejected for you personally (no bypass) — d9c9e54
 - [ ] 4.9 `test-plan.md` §5 describes only gates that exist; §3 Phase 4 reads `complete`
 - [ ] 4.10 §6.7 is sufficient for a stranger to add a fifth gate without rediscovering the Pending-check deadlock
