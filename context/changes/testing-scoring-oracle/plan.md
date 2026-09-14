@@ -612,17 +612,17 @@ constraint has always forbidden it.
 #### Manual
 
 - [ ] 3.5 Real analysis produces plausible sample sizes and medians
-- [ ] 3.6 Mutation ledger re-run against the extracted module, result recorded
+- [x] 3.6 Mutation ledger re-run against the extracted module, result recorded
 
 ### Phase 4: Reconcile the documents
 
 #### Automated
 
-- [x] 4.1 Prettier passes: `npm run format`
-- [x] 4.2 `test-plan.md` §6.5 no longer reads `TBD`
-- [x] 4.3 `prd.md` no longer contains the struck window clause
+- [x] 4.1 Prettier passes: `npm run format` — 6aabb4e
+- [x] 4.2 `test-plan.md` §6.5 no longer reads `TBD` — 6aabb4e
+- [x] 4.3 `prd.md` no longer contains the struck window clause — 6aabb4e
 
 #### Manual
 
-- [ ] 4.4 §6.5 is sufficient on its own for someone changing the scoring rule
-- [ ] 4.5 FR-008's wording matches what Phase 3 computes
+- [x] 4.4 §6.5 is sufficient on its own for someone changing the scoring rule
+- [x] 4.5 FR-008's wording matches what Phase 3 computes

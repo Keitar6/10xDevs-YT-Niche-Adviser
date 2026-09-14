@@ -21,8 +21,8 @@ last_updated_by: Mateusz
 
 ## Research Question
 
-Test-plan §3 Phase 3 — *"Prove the number means what the PRD says it means, and that
-the existing suite is able to fail for the right reason"* (Risk #5). Scope agreed at
+Test-plan §3 Phase 3 — _"Prove the number means what the PRD says it means, and that
+the existing suite is able to fail for the right reason"_ (Risk #5). Scope agreed at
 the start of this research: include the upstream shaping in `youtube.ts` that decides
 which videos reach the median, and produce a **full conformance ledger** tracing every
 rule and constant to a PRD line, a recorded decision, or an undocumented invention.
@@ -34,10 +34,10 @@ Three findings, in descending order of consequence.
 **1. The PRD's "median over the time window" is not what the code computes.** FR-008
 defines `outlier_score = views / median of the channel's views from the time window`.
 There is **no per-video window filter anywhere in the codebase**. `MAX_WINDOW_DAYS`
-(180) is used exactly once, as a *paging stop condition* — the walk accepts uploads
+(180) is used exactly once, as a _paging stop condition_ — the walk accepts uploads
 until it meets the first one it can prove is older than the cutoff, then breaks. What
-the median is actually computed over is: *the first ≤20 long-form survivors, in
-uploads-playlist order, drawn from at most 100 candidate IDs (2 pages × 50)*. For a
+the median is actually computed over is: _the first ≤20 long-form survivors, in
+uploads-playlist order, drawn from at most 100 candidate IDs (2 pages × 50)_. For a
 channel uploading weekly the 20-video cap binds long before 180 days, so the PRD's
 single "okno czasowe" maps onto two different constants with different semantics. This
 is a genuine spec divergence, not a naming quibble — and the PRD goes further: it lists
@@ -51,7 +51,7 @@ are no snapshot assertions, the expected values are hand-computed with counterfa
 written into the comments, and **25 of 32 behaviour-changing mutations go red**. §6.1's
 standing caveat can be lifted. The bad news: mutating `median()` to return the
 **arithmetic mean** — the exact regression the recorded 2026-09-11 średnia→mediana
-correction forbids — is *not* caught by either test named for the median rule. Both
+correction forbids — is _not_ caught by either test named for the median rule. Both
 fixtures are degenerate: `median([1,2,3]) === 2` and `median([1,2,3,4]) === 2.5` are
 **also the mean** of those sets. M2 goes red only via the lexicographic-sort test and
 two unrelated `scoreChannel` fixtures. A contributor simplifying `median` to a mean and
@@ -60,7 +60,7 @@ refreshing the now-"obsolete" sort fixture would ship the regression green.
 **3. The scoring constants are stable but largely unauthored.** `scoring.ts` has
 **exactly one commit in its entire history** and zero diff since — nothing was silently
 tuned, which removes a whole class of suspicion. But of the nine rules audited, only one
-(`limit = 5`) traces cleanly to a PRD line. `SHORTS_MAX_SECONDS = 300` sits *above both*
+(`limit = 5`) traces cleanly to a PRD line. `SHORTS_MAX_SECONDS = 300` sits _above both_
 figures its own research offered (60s, 180s), and `MIN_SAMPLE_SIZE = 5` was set at
 **half** the research's recommended 10–20 floor without the divergence being noted
 anywhere.
@@ -69,29 +69,29 @@ anywhere.
 
 ### 1. Spec-conformance ledger
 
-| Rule / constant | Value | Provenance | Verdict |
-|---|---|---|---|
-| `rankOpportunities(…, limit)` | 5 | `prd.md:109` FR-009 "top 5"; restated `prd.md:74,146` | **PRD-mandated** |
-| Shorts exclusion (the rule) | — | `prd.md:104` FR-007 "wykluczając Shorts"; `prd.md:181` Non-Goal | **PRD-mandated** |
-| `SHORTS_MAX_SECONDS` (the value) | 300 | Research left it **unresolved** (`yt-library-research.md:233`, Q4 — the only Q in that file never annotated `RESOLVED`; offered ≤60s historical, ≤180s newer). First literal at `plan.md:171`. `plan-brief.md:29` attributes it to "User's call" with no quote, no date, no D-number | **Undocumented** — and `plan-brief.md:75` flags the exposure itself: a channel whose normal format is 3–5 min videos has its *entire catalogue* classified as Shorts |
-| Deterministic ordering (the property) | — | `prd.md:131-134` NFR "tę samą kolejność rankingu"; `prd.md:78` sorted desc | **PRD-mandated** |
-| Tie-break keys (score desc → `published_at` desc → `video_id` asc) | — | `plan.md:177`. The `localeCompare` avoidance appears in **no** document | **Decision-recorded** (plan); any deterministic pair would satisfy the NFR |
-| `MIN_SAMPLE_SIZE` | 5 | Need raised `yt-api-docs.md:82` + `research.md:284`; answered `plan-brief.md:32` | **Decision-recorded, contradicts its own research** — `yt-library-research.md:208` recommends "~10-20 comparable videos … below that the median itself is volatile". Plan set 5. Divergence never acknowledged |
-| `MIN_RANKABLE_AGE_DAYS` | 7 | **Absent from the PRD entirely.** From `yt-library-research.md:207` (launch-week spikes read as 4x, settle to ~1.2x by day ten; range 7–14). Adopted `plan-brief.md:31`; withhold-but-still-count split specified `plan.md:70` | **Decision-recorded** (plan only, no user decision). Bottom of the research range, no stated reason |
-| `TARGET_LONGFORM_PER_CHANNEL` | 20 | `plan-brief.md:26`; semantics pinned `plan.md:74` ("a cap on the sample, not a paging stop"). Research favoured count-over-date windows at 20–50 (`yt-library-research.md:232`) | **Decision-recorded** (plan). Bottom of range, no rationale for 20 over 50 |
-| `MAX_WINDOW_DAYS` | 180 | PRD never quantifies "okno czasowe"; `roadmap.md:318` logs it as an **open Unknown, Owner: user**, deferred to `/10x-plan`. The S-02 `Rozstrzygnięcia` block closes only D1 and D2 — **the window was never closed** | **Undocumented (value).** Delegation documented, number is not. Nothing anywhere derives 180 |
-| `MAX_PAGES` | 2 | `reviews/plan-review.md:60-76` finding F3 → "FIXED via Fix A". Exists to protect the quota budget | **Decision-recorded (review-driven)** — strongest provenance in the file |
-| `zero_median` skip | — | `reviews/plan-review.md:48-58` finding F2 (CRITICAL): without it every score is `Infinity`/`NaN`, breaking the ordering NFR. Anchors to `prd.md:131-132` + guardrail `prd.md:63-64` | **Decision-recorded**, defensive, PRD-anchored |
-| `insufficient_sample` skip | — | Behaviour (explain, don't silently drop) from guardrail `prd.md:63-64`; threshold is the `MIN_SAMPLE_SIZE` row above | **Decision-recorded** + PRD-anchored behaviour |
-| `median([]) → 0` | — | `plan.md:175` left it explicitly open: "Returns `0` (or throws, documented either way)" | Implementer's pick within a sanctioned range |
+| Rule / constant                                                    | Value | Provenance                                                                                                                                                                                                                                                                           | Verdict                                                                                                                                                                                                        |
+| ------------------------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rankOpportunities(…, limit)`                                      | 5     | `prd.md:109` FR-009 "top 5"; restated `prd.md:74,146`                                                                                                                                                                                                                                | **PRD-mandated**                                                                                                                                                                                               |
+| Shorts exclusion (the rule)                                        | —     | `prd.md:104` FR-007 "wykluczając Shorts"; `prd.md:181` Non-Goal                                                                                                                                                                                                                      | **PRD-mandated**                                                                                                                                                                                               |
+| `SHORTS_MAX_SECONDS` (the value)                                   | 300   | Research left it **unresolved** (`yt-library-research.md:233`, Q4 — the only Q in that file never annotated `RESOLVED`; offered ≤60s historical, ≤180s newer). First literal at `plan.md:171`. `plan-brief.md:29` attributes it to "User's call" with no quote, no date, no D-number | **Undocumented** — and `plan-brief.md:75` flags the exposure itself: a channel whose normal format is 3–5 min videos has its _entire catalogue_ classified as Shorts                                           |
+| Deterministic ordering (the property)                              | —     | `prd.md:131-134` NFR "tę samą kolejność rankingu"; `prd.md:78` sorted desc                                                                                                                                                                                                           | **PRD-mandated**                                                                                                                                                                                               |
+| Tie-break keys (score desc → `published_at` desc → `video_id` asc) | —     | `plan.md:177`. The `localeCompare` avoidance appears in **no** document                                                                                                                                                                                                              | **Decision-recorded** (plan); any deterministic pair would satisfy the NFR                                                                                                                                     |
+| `MIN_SAMPLE_SIZE`                                                  | 5     | Need raised `yt-api-docs.md:82` + `research.md:284`; answered `plan-brief.md:32`                                                                                                                                                                                                     | **Decision-recorded, contradicts its own research** — `yt-library-research.md:208` recommends "~10-20 comparable videos … below that the median itself is volatile". Plan set 5. Divergence never acknowledged |
+| `MIN_RANKABLE_AGE_DAYS`                                            | 7     | **Absent from the PRD entirely.** From `yt-library-research.md:207` (launch-week spikes read as 4x, settle to ~1.2x by day ten; range 7–14). Adopted `plan-brief.md:31`; withhold-but-still-count split specified `plan.md:70`                                                       | **Decision-recorded** (plan only, no user decision). Bottom of the research range, no stated reason                                                                                                            |
+| `TARGET_LONGFORM_PER_CHANNEL`                                      | 20    | `plan-brief.md:26`; semantics pinned `plan.md:74` ("a cap on the sample, not a paging stop"). Research favoured count-over-date windows at 20–50 (`yt-library-research.md:232`)                                                                                                      | **Decision-recorded** (plan). Bottom of range, no rationale for 20 over 50                                                                                                                                     |
+| `MAX_WINDOW_DAYS`                                                  | 180   | PRD never quantifies "okno czasowe"; `roadmap.md:318` logs it as an **open Unknown, Owner: user**, deferred to `/10x-plan`. The S-02 `Rozstrzygnięcia` block closes only D1 and D2 — **the window was never closed**                                                                 | **Undocumented (value).** Delegation documented, number is not. Nothing anywhere derives 180                                                                                                                   |
+| `MAX_PAGES`                                                        | 2     | `reviews/plan-review.md:60-76` finding F3 → "FIXED via Fix A". Exists to protect the quota budget                                                                                                                                                                                    | **Decision-recorded (review-driven)** — strongest provenance in the file                                                                                                                                       |
+| `zero_median` skip                                                 | —     | `reviews/plan-review.md:48-58` finding F2 (CRITICAL): without it every score is `Infinity`/`NaN`, breaking the ordering NFR. Anchors to `prd.md:131-132` + guardrail `prd.md:63-64`                                                                                                  | **Decision-recorded**, defensive, PRD-anchored                                                                                                                                                                 |
+| `insufficient_sample` skip                                         | —     | Behaviour (explain, don't silently drop) from guardrail `prd.md:63-64`; threshold is the `MIN_SAMPLE_SIZE` row above                                                                                                                                                                 | **Decision-recorded** + PRD-anchored behaviour                                                                                                                                                                 |
+| `median([]) → 0`                                                   | —     | `plan.md:175` left it explicitly open: "Returns `0` (or throws, documented either way)"                                                                                                                                                                                              | Implementer's pick within a sanctioned range                                                                                                                                                                   |
 
 **Git-drift check: none.** `git log --all --oneline -- 'src/lib/services/scoring*'` returns a
 single commit, `bba4bd7` (2026-09-12); `git diff bba4bd7 HEAD -- src/lib/services/scoring.ts`
 is empty. Every constant was born at its current value.
 
 **One unimplemented piece of D2**, recorded for completeness rather than as a defect:
-`research.md:282` says *"Compute both, score on the median … The scoring helper should
-return mean and median from the same sorted array."* `scoreChannel` returns
+`research.md:282` says _"Compute both, score on the median … The scoring helper should
+return mean and median from the same sorted array."_ `scoreChannel` returns
 `channel_median` only. PRD line 108 marks the mean as explicitly post-MVP.
 
 ### 2. The window — what FR-008 says vs. what runs
@@ -99,7 +99,10 @@ return mean and median from the same sorted array."* `scoreChannel` returns
 The whole mechanism, [`youtube.ts:386-403`](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/blob/ad3dc41f5cff8ed6d40432d2a9ddab2fcf36b2de/src/lib/services/youtube.ts#L386-L403):
 
 ```ts
-if (!Number.isNaN(publishedMs) && publishedMs < cutoff) { reachedWindowEdge = true; break; }
+if (!Number.isNaN(publishedMs) && publishedMs < cutoff) {
+  reachedWindowEdge = true;
+  break;
+}
 ids.push(videoId);
 ```
 
@@ -117,30 +120,30 @@ Prefix-take semantics, with four consequences that are all reachable:
 3. **A non-monotonic playlist truncates the sample early** — one old item near the front
    ends the walk and every newer item behind it is lost.
 4. **Two independent clocks per request.** `fetchCompetitorVideos` takes an injectable
-   `now` (`youtube.ts:478-482`, documented at `:476` as existing *"so the
-   `MAX_WINDOW_DAYS` cutoff is testable"*) — but the production caller never uses the
+   `now` (`youtube.ts:478-482`, documented at `:476` as existing _"so the
+   `MAX_WINDOW_DAYS` cutoff is testable"_) — but the production caller never uses the
    seam (`analyze.ts:158`), so the default `new Date()` fires, and `analyze.ts:189`
-   constructs a *second, different* `new Date()` for scoring.
+   constructs a _second, different_ `new Date()` for scoring.
 
 **The cap** ([`youtube.ts:461-467`](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/blob/ad3dc41f5cff8ed6d40432d2a9ddab2fcf36b2de/src/lib/services/youtube.ts#L461-L467))
 takes the first 20 long-form survivors in playlist order; Shorts and missing records skip
 without consuming a slot. It iterates the `candidates` **array**, not the `byId` map's
 keys — so a video ID appearing twice across the two pages is pushed twice, double-counting
-it in the median and inflating `sample_size`. Contrast `youtube.ts:483`, which *does*
+it in the median and inflating `sample_size`. Contrast `youtube.ts:483`, which _does_
 dedupe channel IDs via `new Set`.
 
 ### 3. Where each guarantee actually lives
 
-| Guarantee | Decided in |
-|---|---|
-| Shorts exclusion before the baseline | pure (`scoring.ts:163`); **also** a pre-filter at `youtube.ts:465`, so the pure filter is a no-op in production |
-| Sample floor, zero-median guard, skip messages | pure (`scoring.ts:166-192`) — the user-facing sentence originates in the pure function |
-| 7-day withholding | pure (`scoring.ts:194-199`) |
-| Deterministic ordering + tie-breaks | pure (`scoring.ts:229-234`) |
-| Top-5 limit | caller literal `analyze.ts:35,215` **and** a pure default `scoring.ts:223` — redundantly encoded twice |
-| "Never empty without a reason" | caller (`analyze.ts:44-47,179-224`) + UI (`AnalyzePanel.tsx:190-193`) |
-| Score precision on the wire | nothing rounds — the raw float survives to JSON |
-| Score precision on screen | UI only (`format.ts:5-16`, 2 dp via `Intl.NumberFormat`) |
+| Guarantee                                      | Decided in                                                                                                      |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Shorts exclusion before the baseline           | pure (`scoring.ts:163`); **also** a pre-filter at `youtube.ts:465`, so the pure filter is a no-op in production |
+| Sample floor, zero-median guard, skip messages | pure (`scoring.ts:166-192`) — the user-facing sentence originates in the pure function                          |
+| 7-day withholding                              | pure (`scoring.ts:194-199`)                                                                                     |
+| Deterministic ordering + tie-breaks            | pure (`scoring.ts:229-234`)                                                                                     |
+| Top-5 limit                                    | caller literal `analyze.ts:35,215` **and** a pure default `scoring.ts:223` — redundantly encoded twice          |
+| "Never empty without a reason"                 | caller (`analyze.ts:44-47,179-224`) + UI (`AnalyzePanel.tsx:190-193`)                                           |
+| Score precision on the wire                    | nothing rounds — the raw float survives to JSON                                                                 |
+| Score precision on screen                      | UI only (`format.ts:5-16`, 2 dp via `Intl.NumberFormat`)                                                        |
 
 The PRD guardrail holds: an Analyze click ends in one of four visible states — ranking,
 ranking + warnings, explained-empty notice, or error — never bare emptiness. All four
@@ -164,7 +167,7 @@ The four that need repair before this file is copied as a template:
   the suite, so score precision is effectively unasserted (confirmed: rounding
   `outlier_score` to 2 dp leaves the suite green).
 - **`scoring.test.ts:52`** — `median([1,2,3,4]) === 2.5` is degenerate: 2.5 is
-  simultaneously the median *and* the mean. So is line 48 (`[1,2,3] → 2`).
+  simultaneously the median _and_ the mean. So is line 48 (`[1,2,3] → 2`).
 - **`scoring.test.ts:121`** — `sample_size < MIN_SAMPLE_SIZE` re-asserts the branch
   condition the implementation used to arrive there. Tautological but harmless.
 
@@ -180,7 +183,7 @@ Empirically executed against `scoring.ts` and reverted; baseline 20/20 green.
 **25 of 32 behaviour-changing mutations go RED. 12 survive.**
 
 **The headline survivor is not in the list of survivors — it is a near-miss.** M2
-(`median` → arithmetic mean) *does* go red, but only via `scoring.test.ts:61` (the
+(`median` → arithmetic mean) _does_ go red, but only via `scoring.test.ts:61` (the
 lexicographic-sort fixture) and two `scoreChannel` fixtures. **Neither test named for the
 median rule catches it.** One fixture change closes this permanently:
 `expect(median([1, 2, 3, 100])).toBe(2.5)` — mean 26.5 — kills M1, M2 and M4 in a single
@@ -188,16 +191,16 @@ assertion.
 
 The 12 survivors cluster in four areas:
 
-| Survivor | What it proves is untested |
-|---|---|
-| M21–M25 | **The entire emitted `ScoredOpportunity` payload.** `title`, `channel_title`, `view_count`, `channel_median`, `sample_size` can each be nulled/zeroed on a *scored* opportunity with the suite green. No assertion inspects a scored opportunity beyond `video_id` and `outlier_score`. These fields cross the wire and become `content_opportunities` rows — the widest uncovered surface in the module |
-| M34 | **Even-count median through the real `scoreChannel` path.** All five `scoreChannel` fixtures use exactly 5 long-form videos; the even branch is never reached except via the degenerate direct test |
-| M35, M37 | **Sub-median scores and absurd inputs.** Every scored fixture yields 1, 3, 9 or 4/3 — all ≥ 1. No fixture has a video below its channel median, or a negative view count |
-| M38, M39, M40, M36, M20 | Single-rankable-video channel; unparseable `published_at` (documented at `scoring.ts:197-199`, untested); empty-sample channel reporting the wrong skip reason; `limit = 0`; score precision |
+| Survivor                | What it proves is untested                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M21–M25                 | **The entire emitted `ScoredOpportunity` payload.** `title`, `channel_title`, `view_count`, `channel_median`, `sample_size` can each be nulled/zeroed on a _scored_ opportunity with the suite green. No assertion inspects a scored opportunity beyond `video_id` and `outlier_score`. These fields cross the wire and become `content_opportunities` rows — the widest uncovered surface in the module |
+| M34                     | **Even-count median through the real `scoreChannel` path.** All five `scoreChannel` fixtures use exactly 5 long-form videos; the even branch is never reached except via the degenerate direct test                                                                                                                                                                                                      |
+| M35, M37                | **Sub-median scores and absurd inputs.** Every scored fixture yields 1, 3, 9 or 4/3 — all ≥ 1. No fixture has a video below its channel median, or a negative view count                                                                                                                                                                                                                                 |
+| M38, M39, M40, M36, M20 | Single-rankable-video channel; unparseable `published_at` (documented at `scoring.ts:197-199`, untested); empty-sample channel reporting the wrong skip reason; `limit = 0`; score precision                                                                                                                                                                                                             |
 
 ### 6. Upstream coverage: `youtube.test.ts` is an error-classification suite
 
-It pins error *classification* well (quota vs auth vs transport vs malformed, and the
+It pins error _classification_ well (quota vs auth vs transport vs malformed, and the
 fatal/local split). It covers **none** of the selection pipeline: no window cutoff test
 (every fixture is hard-coded to `daysBefore(30)`), no pagination at all (no fixture ever
 emits `nextPageToken`, so `MAX_PAGES` never runs more than one iteration), no 20-cap test
@@ -243,16 +246,16 @@ duplicate of the `kind: "skipped"` arm of `ChannelScoreResult`, copied field-by-
 - **The pure/impure split is well drawn but the guarantees are unevenly placed.** Every
   rule the PRD names lives in the pure module except the two that matter most for FR-007
   and FR-008 — the window and the sample cap — which live in the untestable fetch layer.
-  Phase 3 at the unit layer can prove the *formula* but not the *domain the formula runs
-  over*; proving the latter needs either an extraction or the multi-page fixture work
+  Phase 3 at the unit layer can prove the _formula_ but not the _domain the formula runs
+  over_; proving the latter needs either an extraction or the multi-page fixture work
   described in §6.
 - **`sample_size` is a lossy signal.** Because the 20-cap and the 100-candidate bound
   apply upstream, `scoreChannel` cannot distinguish "this channel has 3 long-form videos"
   from "the cap left 3". The number the user is shown in a skip message conflates them.
 - **Defensive constants have better provenance than product constants.** The two rules
   with the cleanest paper trail (`MAX_PAGES`, the `zero_median` guard) both came from the
-  plan review, not from product decisions. The rules that shape the *number the product
-  exists to compute* were adopted unilaterally at plan time, two of them below the range
+  plan review, not from product decisions. The rules that shape the _number the product
+  exists to compute_ were adopted unilaterally at plan time, two of them below the range
   their own research recommended.
 - **`isShort` runs twice** (`youtube.ts:465`, `scoring.ts:163`). The second is a no-op in
   production and exists to keep `scoreChannel` total for hand-built samples — worth
@@ -262,13 +265,13 @@ duplicate of the `kind: "skipped"` arm of `ChannelScoreResult`, copied field-by-
 ## Historical Context (from prior changes)
 
 - `context/archive/2026-09-10-analyze-and-rank-opportunities/research.md:264-268` — **D2**,
-  the mean→median decision, quoting the user: *"for an analysis lets go with median"*.
+  the mean→median decision, quoting the user: _"for an analysis lets go with median"_.
   Its tail at `:282` also asked for both statistics to be returned; only the median ships.
 - `context/archive/2026-09-10-analyze-and-rank-opportunities/reviews/plan-review.md:48-58`
   — **F2 (CRITICAL)**, the origin of the `zero_median` guard; `:60-76` — **F3**, the origin
   of `MAX_PAGES = 2`.
 - `context/archive/2026-09-10-analyze-and-rank-opportunities/yt-library-research.md:207-208`
-  — the 7-day recency rule and the *10–20* minimum-sample recommendation that the plan
+  — the 7-day recency rule and the _10–20_ minimum-sample recommendation that the plan
   reduced to 5; `:232-233` — the time-window and Shorts-threshold questions, both left
   open, the latter never resolved.
 - `context/foundation/roadmap.md:318` — the window length logged as an open Unknown owned

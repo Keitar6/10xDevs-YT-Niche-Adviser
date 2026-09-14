@@ -374,27 +374,40 @@ and it is the only evidence that an assertion can fail for the right reason:
 Include a deliberate no-op edit as a control. If it goes red, the harness is
 broken, not the code.
 
-**The ledger, as re-run on 2026-09-14 against the repaired suite.** Reproduce
-it before trusting a change to either module:
+**The ledger, re-run 2026-09-14 against the final state of both modules.**
+24 behaviour-changing mutations, all killed, plus a no-op control. Reproduce it
+before trusting a change to either module:
 
-| Mutation                                                                                             | Result                                         |
-| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `median` → arithmetic mean                                                                           | red, in _both_ tests named for the median rule |
-| `median` even branch → lower middle                                                                  | red                                            |
-| `median` sorts lexicographically                                                                     | red                                            |
-| `outlier_score` rounded to 2 dp                                                                      | red                                            |
-| `limit` falsy-defaults to 5                                                                          | red                                            |
-| emitted `title` / `channel_title` / `view_count` / `channel_median` / `sample_size` nulled or zeroed | red (five separate mutations)                  |
-| `outlier_score` floored at 1                                                                         | red                                            |
-| empty sample reported as `zero_median`                                                               | red                                            |
-| NaN `published_at` admitted to the ranking                                                           | red                                            |
-| staleness filter → early `break`                                                                     | red                                            |
-| unreadable / absent timestamp admitted                                                               | red                                            |
-| candidate dedupe removed                                                                             | red                                            |
-| cap `>=` → `>`                                                                                       | red                                            |
-| pager stops after page one                                                                           | red                                            |
-| `selectChannelSample` bypassed                                                                       | red                                            |
-| _(control)_ no-op edit                                                                               | green, as intended                             |
+| #       | Mutation                                                                                             | Module               | Result                                         |
+| ------- | ---------------------------------------------------------------------------------------------------- | -------------------- | ---------------------------------------------- |
+| M1      | `median` even branch → lower middle                                                                  | `scoring.ts`         | red                                            |
+| M2      | `median` → arithmetic mean                                                                           | `scoring.ts`         | red, in _both_ tests named for the median rule |
+| M4      | `median` sorts lexicographically                                                                     | `scoring.ts`         | red                                            |
+| M20a    | `outlier_score` rounded to 2 dp                                                                      | `scoring.ts`         | red                                            |
+| M20b    | `limit` falsy-defaults to 5                                                                          | `scoring.ts`         | red                                            |
+| M21–M25 | emitted `title` / `channel_title` / `view_count` / `channel_median` / `sample_size` nulled or zeroed | `scoring.ts`         | red (five separate mutations)                  |
+| M35     | `outlier_score` floored at 1                                                                         | `scoring.ts`         | red                                            |
+| M36     | empty sample reported as `zero_median`                                                               | `scoring.ts`         | red                                            |
+| M39     | NaN `published_at` admitted to the ranking                                                           | `scoring.ts`         | red                                            |
+| M41     | zero-view withholding removed                                                                        | `scoring.ts`         | red                                            |
+| M42     | zero-view guard `<= 0` → `< 0`                                                                       | `scoring.ts`         | red                                            |
+| M43     | zero-view video also dropped from the _baseline_                                                     | `scoring.ts`         | red                                            |
+| D1      | staleness filter → early `break`                                                                     | `video-selection.ts` | red                                            |
+| D2      | unreadable / absent timestamp admitted                                                               | `video-selection.ts` | red                                            |
+| D3      | candidate dedupe removed                                                                             | `video-selection.ts` | red                                            |
+| D4      | cap `>=` → `>`                                                                                       | `video-selection.ts` | red                                            |
+| D5      | cutoff boundary `<` → `<=`                                                                           | `video-selection.ts` | red                                            |
+| D6      | Shorts drop removed                                                                                  | `video-selection.ts` | red                                            |
+| W1      | pager stops after page one                                                                           | `youtube.ts`         | red                                            |
+| W2      | `selectChannelSample` bypassed                                                                       | `youtube.ts`         | red                                            |
+| —       | _(control)_ no-op comment insertion                                                                  | `scoring.ts`         | green, as intended                             |
+
+**One thing the ledger cannot reach.** The single-clock fix lives in
+`analyze.ts`, which has no unit tests by design (§6.6 Phase 1: the route needs
+`astro:env/server` _and_ `cloudflare:workers` mocked; the testable logic is
+extracted instead). Passing one `now` to both `fetchCompetitorVideos` and
+`scoreChannel` is held by code review and the seam's doc comment, not by an
+assertion.
 
 ### 6.6 Per-rollout-phase notes
 
