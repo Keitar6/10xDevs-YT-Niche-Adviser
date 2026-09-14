@@ -1,7 +1,7 @@
 ---
 change_id: testing-analyze-boundary-resilience
 title: Testing analyze boundary resilience
-status: implemented
+status: impl_reviewed
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
@@ -52,3 +52,16 @@ archived_at: null
   expected symptom of a missing file, not a code fault; Astro reads
   `astro:env/server` at startup, so the dev server needs a full restart after
   the copy rather than a hot reload.
+
+- **Manual verification confirmed by the user (2026-09-14), post-review.** Items
+  2.6, 2.7, 3.6 and 4.5-4.8 were re-confirmed by hand after the implementation
+  review's fixes landed, closing the evidence gap the review noted: only 1.5 had
+  a written record before this. The boxes in `plan.md` were already `[x]`; this
+  note is the evidence behind them, not a status change.
+
+- **The all-competitors-fail path was checked too (2026-09-14).** The case F1's
+  gate newly affects — every competitor transport-failing, so there is no ranking
+  at all — was confirmed by hand after the fix: the run shows only the
+  `empty_reason` notice naming the failed ids, and no longer claims "the ranking
+  below covers the remaining competitors". No automated test covers this path
+  (test-plan.md §7 rules out UI tests), so this note is its only record.

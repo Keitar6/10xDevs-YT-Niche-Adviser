@@ -155,8 +155,12 @@ export default function AnalyzePanel({ savedVideoIds, pendingVideoIds, onSave }:
               Kept separate from the notice above on purpose. These channels
               exist — their data just failed to load this run — and folding them
               into "not found" would tell the user to fix an id that is fine.
+
+              Gated on there being a ranking at all: when every competitor
+              failed, `empty_reason` below already names them, and "the ranking
+              below" would be pointing at nothing.
             */}
-            {failedToLoad.length > 0 ? (
+            {failedToLoad.length > 0 && result.opportunities.length > 0 ? (
               <Notice tone="warning">
                 Could not load data for {failedToLoad.join(", ")} this run, so the ranking below covers the remaining
                 competitors. Try again shortly.

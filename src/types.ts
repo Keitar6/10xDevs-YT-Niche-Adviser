@@ -48,7 +48,12 @@ export interface SkippedChannel {
 export interface AnalyzeSummary {
   /** Competitors read off the profile. */
   requested: number;
-  /** Of those, the ones `channels.list` returned a usable channel for. */
+  /**
+   * Of those, the ones `channels.list` returned a usable channel for *and*
+   * whose uploads were then fetched successfully. A channel that resolved and
+   * then failed mid-fetch is missing here and present in `unresolved` with
+   * `reason: "transport"`.
+   */
   resolved: number;
   /**
    * Competitors that produced no usable sample, each carrying why. A channel

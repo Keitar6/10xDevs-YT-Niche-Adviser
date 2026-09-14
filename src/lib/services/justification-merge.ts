@@ -13,6 +13,9 @@
  */
 import type { JustifyResult } from "./justify";
 import type { ScoredOpportunity } from "./scoring";
+// Type-only on purpose, and it has to stay that way: `vitest.config.ts`
+// declares no alias resolution, so this import survives only because it is
+// erased before the runner sees it. A value import via `@/` would not resolve.
 import type { AnalyzeOpportunity } from "@/types";
 
 export interface JustificationMerge {

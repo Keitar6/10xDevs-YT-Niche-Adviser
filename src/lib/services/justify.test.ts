@@ -247,14 +247,38 @@ describe("justifyOpportunities", () => {
       expect(result).toEqual({ ok: false, message: "The justification service returned an error (HTTP 500)." });
     });
 
-    it("degrades rather than throwing when the failure is not one the SDK models", async () => {
-      // The contract this module exists to keep: whatever comes back, the
-      // caller gets a value it can degrade on, never an exception.
+    it("treats a rejection the SDK cannot model as a connection failure", async () => {
+      // A bare string still arrives wrapped: the SDK normalises every `fetch`
+      // rejection into `APIConnectionError`, so this lands on the same branch
+      // as the TypeError case above and not on the generic fallback below.
       stubFetchRejecting("not even an error object");
 
       const result = await justifyOpportunities(RANKED, "test-key", NOW);
 
-      expect(result.ok).toBe(false);
+      expect(result).toEqual({ ok: false, message: "The justification service could not be reached." });
+    });
+
+    it("degrades rather than throwing when the failure is not one the SDK models", async () => {
+      // The generic fallback, and the only way to reach it: `buildPrompt` runs
+      // *inside* the try, so a row missing a numeric field throws a TypeError
+      // before the transport is touched. `AnthropicError` never wraps this one.
+      // The contract this module exists to keep is that the caller still gets a
+      // value it can degrade on, never an exception.
+      const malformed = [
+        { ...opportunity({ video_id: "vid1" }), outlier_score: undefined },
+      ] as unknown as ScoredOpportunity[];
+      const fake = stubFetch(
+        message({
+          content: [
+            textBlock(JSON.stringify({ justifications: [{ video_id: "vid1", justification: "Unreachable." }] })),
+          ],
+        }),
+      );
+
+      const result = await justifyOpportunities(malformed, "test-key", NOW);
+
+      expect(result).toEqual({ ok: false, message: "Justifications could not be generated." });
+      expect(fake.calls()).toBe(0);
     });
   });
 });

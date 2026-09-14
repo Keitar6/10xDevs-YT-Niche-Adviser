@@ -535,6 +535,9 @@ export async function fetchCompetitorVideos(
     // them* rather than *they do not exist*. A rejection that is not a
     // `YouTubeError` never reached the classification in `getJson`, so
     // `transport` is the honest floor: something between here and YouTube broke.
+    // Every call in this fan-out funnels through `getJson`, so that arm is a
+    // defensive floor rather than a case seen in practice — which is why no test
+    // covers it.
     const reason: UnresolvedReason =
       failure instanceof YouTubeError && failure.failure.kind === "malformed" ? "malformed" : "transport";
     unresolved.push({ channel_id: targets[index].channelId, reason });

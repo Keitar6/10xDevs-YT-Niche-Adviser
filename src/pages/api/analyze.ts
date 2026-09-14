@@ -90,8 +90,10 @@ export const POST: APIRoute = async (context) => {
   } catch (error) {
     // The raw error can name internals, so it stays server-side. `observability`
     // is enabled on the Worker, so this reaches Workers Logs — the only
-    // diagnostic channel the project has. Same handling as the profile read
-    // failure below.
+    // diagnostic channel the project has. Same shape as the profile read failure
+    // below, with one deliberate difference: that branch logs `error.message`
+    // because it knows what it caught, and this one logs the whole error because
+    // it does not — the stack is the only clue an unexpected throw leaves.
     // eslint-disable-next-line no-console -- deliberate: no logger exists yet
     console.error("analyze run failed", error);
     return jsonError("The analysis could not be completed. Try again.", 500);

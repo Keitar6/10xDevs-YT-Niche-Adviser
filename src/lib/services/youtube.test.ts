@@ -139,6 +139,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/**
+ * Narrows a caught value to `YouTubeError`, asserting the type on the way.
+ *
+ * Without the assertion a test that stopped rejecting would fail on an opaque
+ * "cannot read properties of undefined" instead of naming what went wrong.
+ */
+function expectYouTubeError(error: unknown): YouTubeError {
+  expect(error).toBeInstanceOf(YouTubeError);
+  return error as YouTubeError;
+}
+
 describe("fetchCompetitorVideos", () => {
   describe("error classification", () => {
     it("names quota exhaustion as its own failure kind", async () => {
@@ -151,8 +162,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect(error).toBeInstanceOf(YouTubeError);
-      expect((error as YouTubeError).failure.kind).toBe("quota");
+      expect(expectYouTubeError(error).failure.kind).toBe("quota");
     });
 
     it("treats a 403 without the quota reason as an auth failure", async () => {
@@ -163,7 +173,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("auth");
+      expect(expectYouTubeError(error).failure.kind).toBe("auth");
     });
 
     it.each([400, 401])("treats HTTP %i as an auth failure", async (status) => {
@@ -171,7 +181,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("auth");
+      expect(expectYouTubeError(error).failure.kind).toBe("auth");
     });
 
     it("names the status on an unexpected server error", async () => {
@@ -179,8 +189,8 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("transport");
-      expect((error as YouTubeError).message).toContain("500");
+      expect(expectYouTubeError(error).failure.kind).toBe("transport");
+      expect(expectYouTubeError(error).message).toContain("500");
     });
 
     it("distinguishes a timeout from a generic transport failure", async () => {
@@ -188,8 +198,8 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("transport");
-      expect((error as YouTubeError).message).toContain("did not respond in time");
+      expect(expectYouTubeError(error).failure.kind).toBe("transport");
+      expect(expectYouTubeError(error).message).toContain("did not respond in time");
     });
 
     it("reports an unreachable API when the connection fails outright", async () => {
@@ -197,8 +207,8 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("transport");
-      expect((error as YouTubeError).message).toContain("Could not reach");
+      expect(expectYouTubeError(error).failure.kind).toBe("transport");
+      expect(expectYouTubeError(error).message).toContain("Could not reach");
     });
 
     it("classifies a 200 whose body is not JSON as malformed", async () => {
@@ -206,7 +216,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("malformed");
+      expect(expectYouTubeError(error).failure.kind).toBe("malformed");
     });
 
     it("classifies a 200 that fails the schema as malformed", async () => {
@@ -214,7 +224,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("malformed");
+      expect(expectYouTubeError(error).failure.kind).toBe("malformed");
     });
 
     it("treats a 200 with no items as a legitimate empty answer, not a failure", async () => {
@@ -249,8 +259,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A, CHANNEL_B, CHANNEL_C], KEY, NOW).catch((e: unknown) => e);
 
-      expect(error).toBeInstanceOf(YouTubeError);
-      expect((error as YouTubeError).failure.kind).toBe("quota");
+      expect(expectYouTubeError(error).failure.kind).toBe("quota");
     });
 
     it("fails the whole run when one competitor hits an auth error", async () => {
@@ -263,7 +272,7 @@ describe("fetchCompetitorVideos", () => {
 
       const error = await fetchCompetitorVideos([CHANNEL_A, CHANNEL_B], KEY, NOW).catch((e: unknown) => e);
 
-      expect((error as YouTubeError).failure.kind).toBe("auth");
+      expect(expectYouTubeError(error).failure.kind).toBe("auth");
     });
 
     it("keeps the survivors and reason-codes the competitor whose fetch failed", async () => {

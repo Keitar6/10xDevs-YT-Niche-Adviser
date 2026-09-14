@@ -100,8 +100,8 @@ date so future readers can see which lines need re-verification.
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| unit + integration | Vitest | 5.0 | Configured. `include` in `vitest.config.ts` is currently scoped to `src/lib/services/**/*.test.ts` only; §3 Phase 1 widens it. Five test files exist, all in that one directory — test base profile: sparse |
-| network / boundary faking | none yet — see §3 Phase 1 | — | No mocking library installed. Phase 1 chooses between the runner's built-in fetch stubbing and a dedicated interceptor under the cost × signal rule |
+| unit + integration | Vitest | 5.0 | Configured. `include` in `vitest.config.ts` is scoped to `src/lib/services/**/*.test.ts` only, and §3 Phase 1 deliberately left it that way — the boundary suites and the extracted merge helper were placed in that directory so no config change was needed. Eight test files now exist, all in that one directory |
+| network / boundary faking | Vitest built-in (`vi.stubGlobal`) | 5.0 | Settled by §3 Phase 1 under the cost × signal rule: no mocking library installed. The pattern — a real `Response` built fresh per call, `vi.unstubAllGlobals()` in `afterEach` — is written up in §6.2 |
 | database / policy tests | Supabase CLI (pgTAP, `supabase test db`) | 2.116 | CLI is already a devDependency; needs Docker locally. No tests written yet — see §3 Phase 2 |
 | typecheck | `@astrojs/check` | 0.9.8 | Installed, but there is no script for it and CI never runs one — see §3 Phase 4 |
 | lint | ESLint, type-checked rules | 9.29 | Wired in three places: pre-commit via husky and lint-staged, and in CI |
@@ -125,7 +125,7 @@ phase lands; before that, the gate is planned.
 |---|---|---|---|
 | lint | local pre-commit + CI | required (wired) | syntactic and type-rule drift |
 | typecheck | CI | required after §3 Phase 4 | type drift across the SSR and island boundary |
-| unit + integration | local + CI | required (wired); scope expands after §3 Phase 1 | logic regressions, and from Phase 1 onward boundary-failure regressions |
+| unit + integration | local + CI | required (wired) | logic regressions, and from §3 Phase 1 onward boundary-failure regressions |
 | database policy tests | local; CI placement decided in §3 Phase 4 | required after §3 Phase 2 | cross-account data exposure |
 | build | CI | required (wired) | runtime build breakage before deploy |
 | e2e on critical flows | not wired | deliberately deferred — see §7 | broken critical user paths end to end |
