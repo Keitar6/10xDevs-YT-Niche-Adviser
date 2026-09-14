@@ -592,22 +592,22 @@ constraint has always forbidden it.
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm test`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Zero-view video stays in the baseline and out of `rankable`
+- [x] 2.1 Unit tests pass: `npm test` — a311db4
+- [x] 2.2 Linting passes: `npm run lint` — a311db4
+- [x] 2.3 Zero-view video stays in the baseline and out of `rankable` — a311db4
 
 #### Manual
 
-- [x] 2.4 Real analysis renders correctly, empty-state message reads correctly
+- [x] 2.4 Real analysis renders correctly, empty-state message reads correctly — a311db4
 
 ### Phase 3: Extract and test the selection step
 
 #### Automated
 
-- [ ] 3.1 Unit tests pass: `npm test`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build succeeds: `npm run build`
-- [ ] 3.4 Wiring test observes two `playlistItems` calls across a paged chain
+- [x] 3.1 Unit tests pass: `npm test`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build succeeds: `npm run build`
+- [x] 3.4 Wiring test observes two `playlistItems` calls across a paged chain
 
 #### Manual
 

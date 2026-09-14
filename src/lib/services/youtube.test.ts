@@ -13,6 +13,7 @@
  * properties of the run, everything else is local to one competitor.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { MAX_WINDOW_DAYS, TARGET_LONGFORM_PER_CHANNEL } from "./scoring";
 import { YouTubeError, fetchCompetitorVideos } from "./youtube";
 
 const NOW = new Date("2026-09-12T12:00:00Z");
@@ -349,6 +350,95 @@ describe("fetchCompetitorVideos", () => {
 
       expect(result.channels).toHaveLength(1);
       expect(fake.calls().filter((path) => path === "channels")).toHaveLength(1);
+    });
+  });
+
+  /**
+   * The selection rules themselves are proved in `video-selection.test.ts`;
+   * this proves `youtube.ts` is actually wired to them. Until now no fixture in
+   * this file ever emitted a `nextPageToken`, so `MAX_PAGES` never ran more
+   * than one iteration and the cap, the dedupe and the Shorts drop had never
+   * executed under test at all.
+   */
+  describe("selection through the real chain", () => {
+    /** A `playlistItems` entry with an explicit publish time. */
+    function entry(videoId: string, days = 30) {
+      return { contentDetails: { videoId, videoPublishedAt: daysBefore(days) } };
+    }
+
+    /** A `videos.list` record with an explicit duration. */
+    function record(videoId: string) {
+      return {
+        id: videoId,
+        snippet: {
+          title: `Video ${videoId}`,
+          channelId: CHANNEL_A,
+          channelTitle: "Channel A",
+          publishedAt: daysBefore(30),
+        },
+        statistics: { viewCount: "1000" },
+        contentDetails: { duration: videoId === "short-1" ? "PT30S" : "PT10M" },
+      };
+    }
+
+    it("pages, de-duplicates across the page boundary, drops stale and short entries, and caps the sample", async () => {
+      // Five more uploads than the cap allows, so the cap is what truncates.
+      const unique = Array.from({ length: TARGET_LONGFORM_PER_CHANNEL + 5 }, (_, i) => `v${i}`);
+      const firstPageCount = TARGET_LONGFORM_PER_CHANNEL - 5;
+      const boundary = unique[firstPageCount - 1];
+
+      const pageOne = unique.slice(0, firstPageCount).map((id) => entry(id));
+      const pageTwo = [
+        // The last id of page one, returned again: a concurrent upload shifts
+        // the playlist between calls. It used to be collected twice and
+        // double-counted in both the median and `sample_size`.
+        entry(boundary),
+        // Both of these sit inside the cap's reach, which is the point — a
+        // skipped entry must not consume a slot.
+        entry("short-1"),
+        entry("stale-1", MAX_WINDOW_DAYS + 1),
+        ...unique.slice(firstPageCount).map((id) => entry(id)),
+      ];
+
+      const fake = stubFetch((path, params) => {
+        if (path === "channels") return { body: channelsPayload([CHANNEL_A]) };
+        if (path === "playlistItems") {
+          return params.get("pageToken") === null
+            ? { body: { items: pageOne, nextPageToken: "page-2" } }
+            : { body: { items: pageTwo } };
+        }
+        return { body: { items: (params.get("id") ?? "").split(",").map(record) } };
+      });
+
+      const result = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW);
+
+      expect(fake.calls().filter((path) => path === "playlistItems")).toHaveLength(2);
+
+      const ids = result.channels[0].videos.map((video) => video.video_id);
+      // Exactly the cap: a slot consumed by the Short or by the duplicate would
+      // leave this one or two short.
+      expect(ids).toHaveLength(TARGET_LONGFORM_PER_CHANNEL);
+      // Playlist order is newest first, so the cap keeps the leading run.
+      expect(ids).toEqual(unique.slice(0, TARGET_LONGFORM_PER_CHANNEL));
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(ids).not.toContain("short-1");
+      expect(ids).not.toContain("stale-1");
+    });
+
+    it("skips a stale entry mid-playlist without truncating the rest of the page", async () => {
+      // A non-monotonic playlist: one old upload sits between two fresh ones.
+      // The walk used to `break` here and lose everything behind it.
+      const items = [entry("fresh-1", 10), entry("misplaced", MAX_WINDOW_DAYS + 30), entry("fresh-2", 20)];
+
+      stubFetch((path, params) => {
+        if (path === "channels") return { body: channelsPayload([CHANNEL_A]) };
+        if (path === "playlistItems") return { body: { items } };
+        return { body: { items: (params.get("id") ?? "").split(",").map(record) } };
+      });
+
+      const result = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW);
+
+      expect(result.channels[0].videos.map((video) => video.video_id)).toEqual(["fresh-1", "fresh-2"]);
     });
   });
 });

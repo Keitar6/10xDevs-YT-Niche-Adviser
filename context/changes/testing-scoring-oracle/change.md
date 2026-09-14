@@ -35,3 +35,12 @@ archived_at: null
   `zero_median`), M39 (NaN `published_at` admitted to the ranking). The headline
   result: with M2 applied, `describe("median")` alone goes red on **both** tests
   named for the rule — the near-miss research recorded is closed.
+- 2026-09-14 — Phase 3 extraction ledger. Each fix reverted in turn against the
+  new suite: **D1** early break restored → red (mid-list survivor test);
+  **D2** unreadable/absent timestamp admitted → red (both timestamp tests);
+  **D3** dedupe removed → red (cross-page duplicate, first-occurrence order);
+  **D4** cap `>=` → `>` → red. A deliberate no-op control stayed green, so the
+  harness is discriminating rather than failing everything. Wiring: **pager
+  stops after page one** → red, **`selectChannelSample` bypassed** → red.
+  Ordering held — extraction landed behaviour-preserving and green before any
+  fix was applied.

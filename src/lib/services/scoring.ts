@@ -36,7 +36,13 @@ export const MIN_SAMPLE_SIZE = 5;
 /** Cap on a channel's sample, applied after durations are known. */
 export const TARGET_LONGFORM_PER_CHANNEL = 20;
 
-/** Paging stops once `playlistItems` reaches an upload older than this. */
+/**
+ * A `playlistItems` entry older than this is dropped from the candidate set.
+ *
+ * A per-item staleness bound, not a paging stop: `MAX_PAGES` alone bounds the
+ * walk. For any channel uploading regularly `TARGET_LONGFORM_PER_CHANNEL`
+ * binds long before this does. Applied in `./video-selection.ts`.
+ */
 export const MAX_WINDOW_DAYS = 180;
 
 /** Hard cap on `playlistItems` pages per channel (50 items each). */

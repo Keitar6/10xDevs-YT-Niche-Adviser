@@ -1,13 +1,6 @@
 import { z } from "zod";
-import {
-  MAX_PAGES,
-  MAX_WINDOW_DAYS,
-  TARGET_LONGFORM_PER_CHANNEL,
-  type ChannelSample,
-  type ScorableVideo,
-  isShort,
-  parseIsoDuration,
-} from "./scoring";
+import { MAX_PAGES, type ChannelSample, type ScorableVideo, parseIsoDuration } from "./scoring";
+import { type PlaylistCandidate, selectCandidateIds, selectChannelSample } from "./video-selection";
 import { type ChannelRef, parseChannelRef } from "./youtube-ids";
 
 const API_BASE = "https://www.googleapis.com/youtube/v3";
@@ -305,8 +298,6 @@ const videoListSchema = z.object({
 /** `videos.list` accepts up to 50 comma-joined ids for the same single unit. */
 const VIDEOS_PER_CALL = 50;
 
-const MS_PER_DAY = 86_400_000;
-
 /**
  * Why a competitor produced no usable sample.
  *
@@ -357,20 +348,21 @@ function parseVideoList(payload: unknown): z.infer<typeof videoListSchema> {
 }
 
 /**
- * Walk an uploads playlist for candidate video ids.
+ * Page an uploads playlist and hand the accumulated items to the selector.
  *
- * The loop bounds on the only two signals `playlistItems` actually carries —
- * an upload older than `MAX_WINDOW_DAYS`, or `MAX_PAGES` pages — plus the
- * absence of a `nextPageToken`. It deliberately does **not** stop on a
- * confirmed long-form count: duration is unknown at this step, and checking it
- * would mean calling `videos.list` inside the loop, turning the three-call
- * chain into an interleaved one and breaking the quota budget. A channel that
- * posts nothing but Shorts therefore terminates on the page cap rather than
- * paging forever; the Shorts it paid for are discarded once durations arrive.
+ * Paging bounds on `MAX_PAGES` and the absence of a `nextPageToken` — the
+ * staleness cutoff is a per-item filter in `./video-selection.ts`, not a stop
+ * condition, so one out-of-window upload no longer truncates the walk. Every
+ * decision about *which* items survive belongs to that module. It
+ * deliberately does **not** stop on a confirmed long-form count: duration is
+ * unknown at this step, and checking it would mean calling `videos.list`
+ * inside the loop, turning the three-call chain into an interleaved one and
+ * breaking the quota budget. A channel that posts nothing but Shorts therefore
+ * terminates on the page cap rather than paging forever; the Shorts it paid
+ * for are discarded once durations arrive.
  */
 async function collectCandidateIds(playlistId: string, apiKey: string, now: Date): Promise<string[]> {
-  const cutoff = now.getTime() - MAX_WINDOW_DAYS * MS_PER_DAY;
-  const ids: string[] = [];
+  const candidates: PlaylistCandidate[] = [];
   let pageToken: string | undefined;
 
   for (let page = 0; page < MAX_PAGES; page++) {
@@ -383,29 +375,20 @@ async function collectCandidateIds(playlistId: string, apiKey: string, now: Date
 
     const parsed = parsePlaylistItems(await getJson("playlistItems", params, apiKey));
 
-    let reachedWindowEdge = false;
     for (const item of parsed.items ?? []) {
       const videoId = item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId;
       if (videoId === undefined) continue;
-
-      const publishedAt = item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt;
-      const publishedMs = publishedAt === undefined ? NaN : Date.parse(publishedAt);
-      // An uploads playlist is ordered newest first, so the first item outside
-      // the window ends the walk. An unreadable timestamp is kept rather than
-      // treated as a stop signal — one bad record must not truncate the sample.
-      if (!Number.isNaN(publishedMs) && publishedMs < cutoff) {
-        reachedWindowEdge = true;
-        break;
-      }
-      ids.push(videoId);
+      candidates.push({
+        video_id: videoId,
+        published_at: item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt,
+      });
     }
 
-    if (reachedWindowEdge) break;
     pageToken = parsed.nextPageToken;
     if (pageToken === undefined) break;
   }
 
-  return ids;
+  return selectCandidateIds(candidates, now);
 }
 
 /**
@@ -455,18 +438,11 @@ async function collectChannelSample(target: ChannelTarget, apiKey: string, now: 
   const candidates = await collectCandidateIds(target.uploadsPlaylistId, apiKey, now);
   const byId = await fetchVideoDetails(candidates, target.title, apiKey);
 
-  // Durations are only known now, so this is where Shorts are dropped and where
-  // `TARGET_LONGFORM_PER_CHANNEL` applies — it caps the sample, it never bounds
-  // the paging above. Playlist order is preserved, so the cap keeps the newest.
-  const videos: ScorableVideo[] = [];
-  for (const videoId of candidates) {
-    if (videos.length >= TARGET_LONGFORM_PER_CHANNEL) break;
-    const video = byId.get(videoId);
-    if (video === undefined || isShort(video.duration_seconds)) continue;
-    videos.push(video);
-  }
-
-  return { channel_id: target.channelId, channel_title: target.title, videos };
+  return {
+    channel_id: target.channelId,
+    channel_title: target.title,
+    videos: selectChannelSample(candidates, byId),
+  };
 }
 
 /**
