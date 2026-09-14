@@ -17,6 +17,7 @@ import { jsonError } from "@/lib/http";
 import { createClient } from "@/lib/supabase";
 import { parseChannelProfile } from "@/lib/services/channel-profile";
 import { justifyOpportunities } from "@/lib/services/justify";
+import { mergeJustifications } from "@/lib/services/justification-merge";
 import { MIN_RANKABLE_AGE_DAYS, rankOpportunities, scoreChannel } from "@/lib/services/scoring";
 import { fetchCompetitorVideos, YouTubeError } from "@/lib/services/youtube";
 import type {
@@ -193,26 +194,19 @@ export const POST: APIRoute = async (context) => {
     });
   }
 
+  // The scores are already final here. Whatever the justification step does
+  // next, it cannot take them away — which is why the ranking is materialized
+  // before the LLM is ever called.
   let opportunities: AnalyzeOpportunity[] = ranked.map((opportunity) => ({ ...opportunity, justification: null }));
 
   if (ANTHROPIC_API_KEY) {
-    const result = await justifyOpportunities(ranked, ANTHROPIC_API_KEY, now);
-    if (result.ok) {
-      const byVideoId = new Map(result.justifications.map((j) => [j.video_id, j.justification]));
-      opportunities = opportunities.map((opportunity) => ({
-        ...opportunity,
-        justification: byVideoId.get(opportunity.video_id) ?? null,
-      }));
-      // Only a claim we can back: a partial answer leaves some rows null, and
-      // the UI would otherwise promise justifications it does not have.
-      summary.justifications_available = opportunities.every((o) => o.justification !== null);
-      if (!summary.justifications_available) {
-        summary.justifications_error = "Justifications were only available for some of the ranked videos.";
-      }
-    } else {
-      summary.justifications_error = result.message;
-    }
+    const merged = mergeJustifications(ranked, await justifyOpportunities(ranked, ANTHROPIC_API_KEY, now));
+    opportunities = merged.opportunities;
+    summary.justifications_available = merged.justifications_available;
+    summary.justifications_error = merged.justifications_error;
   } else {
+    // A configuration decision rather than a merge one, so it stays here: there
+    // was no answer to merge.
     summary.justifications_error = "Anthropic API is not configured, so justifications were skipped.";
   }
 
