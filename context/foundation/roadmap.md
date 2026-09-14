@@ -51,7 +51,7 @@ Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience)
 |----|-----------|----------------------|----------------|----------|--------|
 | F-03 | `provable-user-isolation` | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | — | FR-002, MS-01, MS-03 | done |
 | F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | — | FR-006, FR-009, MS-04 | done |
-| F-05 | `testing-scoring-oracle` | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason | — | FR-007, FR-008, MS-05 | ready |
+| F-05 | `testing-scoring-oracle` | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason | — | FR-007, FR-008, MS-05 | planning |
 | F-06 | `testing-quality-gates` | (foundation) the floor the earlier phases established is enforced on every change | F-03, F-04, F-05 | MS-06 | proposed |
 | S-06 | `opportunity-status-transitions` | user moves a saved opportunity through new → in production → done, and the change persists | F-03 | FR-012, MS-02 | proposed |
 
@@ -119,7 +119,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Whether any existing expected value was captured from the implementation's own output rather than derived from the PRD formula. Owner: TBD (resolved by this element's own research). Block: no.
 - **Risk:** This is an audit and extension, not a bootstrap — a partial suite already passes, which is exactly what makes it dangerous: `test-plan.md` §2 names the oracle problem as this element's central threat, since assertions captured from a run can never fail for the right reason. Snapshot assertions over the ranking output are called out as the purest form of that failure and must not be introduced.
-- **Status:** ready
+- **Status:** planning
 
 ### F-06: Quality-gates wiring
 
