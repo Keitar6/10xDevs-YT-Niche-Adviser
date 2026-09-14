@@ -687,7 +687,7 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Manual
 
-- [ ] 3.4 Suite runs clean after `npx supabase db reset`
+- [x] 3.4 Suite runs clean after `npx supabase db reset` — accepted by the user
 
 ### Phase 4: Route-layer guards and the no-bypass scan
 
@@ -707,11 +707,11 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [x] 5.1 `npm test` and `npm run test:db` both exit 0
-- [x] 5.2 `npm run lint` and `npm run build` pass
-- [x] 5.3 No `TBD — see §3 Phase 2` string remains in `context/foundation/test-plan.md`
+- [x] 5.1 `npm test` and `npm run test:db` both exit 0 — 630d2b3
+- [x] 5.2 `npm run lint` and `npm run build` pass — 630d2b3
+- [x] 5.3 No `TBD — see §3 Phase 2` string remains in `context/foundation/test-plan.md` — 630d2b3
 
 #### Manual
 
-- [ ] 5.4 §6.3 is followable standalone for a hypothetical new table
-- [ ] 5.5 F-03 reads as discharged and its Unknowns entry reads as evidenced
+- [x] 5.4 §6.3 is followable standalone for a hypothetical new table — accepted by the user
+- [x] 5.5 F-03 reads as discharged and its Unknowns entry reads as evidenced — accepted by the user

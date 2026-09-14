@@ -1,7 +1,7 @@
 ---
 change_id: provable-user-isolation
 title: Provable user isolation
-status: implementing
+status: implemented
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
@@ -35,5 +35,5 @@ state) is carried instead by the suite's own shape: every file creates its
 fixtures in-transaction under two fixture user ids, and every assertion reads
 back through RLS as one of those users, so pre-existing rows belonging to anyone
 else are structurally unreachable. The row-count assertions in `01` and `02`
-would fail loudly if that stopped being true. 3.4 stays unchecked until it can be
-run against an expendable database.
+would fail loudly if that stopped being true. 3.4 was ticked on 2026-09-14 as accepted by the user without the reset
+being run — the record should read that way rather than as evidence.
