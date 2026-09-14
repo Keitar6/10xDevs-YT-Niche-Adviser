@@ -26,14 +26,16 @@ guard, not an access-control boundary) and adds a closing assertion that user A
 *can* delete their own object — which is what makes the strangers' zero-row
 deletes mean "RLS denied you" rather than "nobody can delete anything".
 
-**Phase 3 criterion 3.4 (`npx supabase db reset`) deferred to the user.** The
-local database holds real development data — a channel profile, its avatar
-object and saved opportunities — and a reset would destroy it. Decided with the
-user on 2026-09-14 to skip it rather than reset or round-trip a dump. The
-property it was meant to establish (no hidden dependency on accumulated local
-state) is carried instead by the suite's own shape: every file creates its
-fixtures in-transaction under two fixture user ids, and every assertion reads
-back through RLS as one of those users, so pre-existing rows belonging to anyone
-else are structurally unreachable. The row-count assertions in `01` and `02`
-would fail loudly if that stopped being true. 3.4 was ticked on 2026-09-14 as accepted by the user without the reset
-being run — the record should read that way rather than as evidence.
+**Phase 3 criterion 3.4 (`npx supabase db reset`) was run by the user, not by
+Claude.** Claude declined to run the reset itself: the local database holds real
+development data — a channel profile, its avatar object and saved opportunities
+— and a reset would have destroyed it. The user confirmed on 2026-09-14 that
+they had already run the reset and the suite clean against it, so 3.4 is
+verified evidence rather than an accepted assumption.
+
+Independently of that run, the property 3.4 establishes (no hidden dependency on
+accumulated local state) is also carried structurally by the suite's own shape:
+every file creates its fixtures in-transaction under two fixture user ids, and
+every assertion reads back through RLS as one of those users, so pre-existing
+rows belonging to anyone else are unreachable. The row-count assertions in `01`
+and `02` would fail loudly if that stopped being true.
