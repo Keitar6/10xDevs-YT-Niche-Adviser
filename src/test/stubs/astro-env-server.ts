@@ -7,7 +7,7 @@
  * and every data-touching handler imports `src/lib/supabase.ts`, so without
  * this alias the route suite cannot even load.
  *
- * The four exports mirror the `env.schema` block in `astro.config.mjs:19-22`.
+ * The five exports mirror the `env.schema` block in `astro.config.mjs`.
  * **That correspondence is maintained by hand and nothing checks it**: adding a
  * secret to the schema and forgetting it here produces an import-time failure in
  * whichever test first touches the module that reads it.
@@ -29,3 +29,7 @@ export const SUPABASE_KEY = "";
 // both branches — but it is not the production path.
 export const YOUTUBE_API_KEY = "";
 export const ANTHROPIC_API_KEY = "";
+// Empty, so `youtube.ts` falls through to the real googleapis literal — which
+// is what the unit suite wants: it stubs `fetch` itself and asserts on the URL
+// that reaches it.
+export const YOUTUBE_API_BASE = "";

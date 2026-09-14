@@ -14,8 +14,15 @@ interface Props {
 
 export default function SavedOpportunitiesPanel({ opportunities, removingIds, onRemove, loadFailed }: Props) {
   return (
-    <section className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur-xl">
-      <h2 className="text-xl font-semibold text-white">Saved opportunities</h2>
+    // See the note in AnalyzePanel: naming the section is what makes it a
+    // distinguishable landmark rather than a plain div to assistive technology.
+    <section
+      aria-labelledby="saved-panel-heading"
+      className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur-xl"
+    >
+      <h2 id="saved-panel-heading" className="text-xl font-semibold text-white">
+        Saved opportunities
+      </h2>
 
       <div className="mt-5 space-y-3">
         {loadFailed ? (

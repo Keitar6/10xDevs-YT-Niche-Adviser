@@ -113,10 +113,19 @@ export default function AnalyzePanel({ savedVideoIds, pendingVideoIds, onSave }:
   const failedToLoad = unresolved.filter((u) => u.reason !== "not_found").map((u) => u.channel_id);
 
   return (
-    <section className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur-xl">
+    // Named so the two dashboard panels are distinguishable landmarks: an
+    // unnamed <section> is not exposed as a region at all, which left a screen
+    // reader — and any role-based locator — unable to tell this panel's list of
+    // opportunities from the saved one below it.
+    <section
+      aria-labelledby="analyze-panel-heading"
+      className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur-xl"
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-white">Content opportunities</h2>
+          <h2 id="analyze-panel-heading" className="text-xl font-semibold text-white">
+            Content opportunities
+          </h2>
           <p className="mt-1 text-sm text-blue-100/60">
             Ranks recent videos from your competitor channels against each channel&apos;s own median views.
           </p>

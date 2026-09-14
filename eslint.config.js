@@ -68,6 +68,27 @@ const astroConfig = tseslint.config({
   },
 });
 
+/**
+ * The e2e harness's plain-Node modules.
+ *
+ * `e2e/stubs/*.mjs` are run directly by `node`, never built and never imported
+ * by the app, so they sit outside the TypeScript project. Type-checked rules
+ * degrade to noise there — every value reads as `any`, and the strict `no-unsafe-*`
+ * family fires on ordinary `URL` and `searchParams` use. They are disabled for
+ * these files only; the TypeScript specs alongside them stay fully type-checked.
+ *
+ * `console` is the harness's only diagnostic channel — Playwright folds it into
+ * the `[WebServer]` stream on a failing run — so `no-console` is off here too.
+ */
+const e2eNodeConfig = tseslint.config({
+  files: ["e2e/**/*.mjs"],
+  extends: [tseslint.configs.disableTypeChecked],
+  languageOptions: {
+    globals: { Buffer: "readonly", console: "readonly", process: "readonly", URL: "readonly" },
+  },
+  rules: { "no-console": "off" },
+});
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   // Both are generated: `wrangler types` emits 15k lines of runtime typings,
@@ -78,5 +99,6 @@ export default tseslint.config(
   eslintPluginAstro.configs["flat/recommended"],
   ...eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
   astroConfig,
+  e2eNodeConfig,
   eslintPluginPrettier,
 );
