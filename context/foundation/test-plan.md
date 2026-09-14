@@ -79,12 +79,12 @@ Each row is a discrete rollout phase that will open its own change folder
 via `/10x-new`. Status moves left-to-right through the values below; the
 orchestrator updates Status as artifacts appear on disk.
 
-| #   | Phase name                           | Goal (one line)                                                                                                                                            | Risks covered | Test types                                | Status      | Change folder                         |
-| --- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------- | ----------- | ------------------------------------- |
-| 1   | Analyze-pipeline boundary resilience | Prove a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                             | #1, #2        | integration                               | complete    | `testing-analyze-boundary-resilience` |
-| 2   | Provable per-user isolation          | Discharge the PRD requirement that isolation be verifiable by test, across both tables and the storage bucket, and close the unauthenticated-route surface | #3, #4        | database policy tests + route integration | complete    | `provable-user-isolation`             |
-| 3   | Scoring oracle and spec conformance  | Prove the number means what the PRD says it means, and that the existing suite is able to fail for the right reason                                        | #5            | unit                                      | complete    | `testing-scoring-oracle`              |
-| 4   | Quality-gates wiring                 | Lock the floor the first three phases established                                                                                                          | cross-cutting | gates                                     | not started | —                                     |
+| #   | Phase name                           | Goal (one line)                                                                                                                                            | Risks covered | Test types                                | Status   | Change folder                         |
+| --- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------- | -------- | ------------------------------------- |
+| 1   | Analyze-pipeline boundary resilience | Prove a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                             | #1, #2        | integration                               | complete | `testing-analyze-boundary-resilience` |
+| 2   | Provable per-user isolation          | Discharge the PRD requirement that isolation be verifiable by test, across both tables and the storage bucket, and close the unauthenticated-route surface | #3, #4        | database policy tests + route integration | complete | `provable-user-isolation`             |
+| 3   | Scoring oracle and spec conformance  | Prove the number means what the PRD says it means, and that the existing suite is able to fail for the right reason                                        | #5            | unit                                      | complete | `testing-scoring-oracle`              |
+| 4   | Quality-gates wiring                 | Lock the floor the first three phases established                                                                                                          | cross-cutting | gates                                     | complete | `testing-quality-gates`               |
 
 Order rationale: Phase 1 defends the stated top worry on the highest-churn
 value chain. Phase 2 follows because it discharges a written non-functional
@@ -102,8 +102,8 @@ date so future readers can see which lines need re-verification.
 | ------------------------------------------------------------ | ---------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | unit + integration                                           | Vitest                                   | 5.0       | Configured. `include` is `src/**/*.test.{ts,tsx}` — one glob over the whole tree, deliberately not an allowlist of the directories that happen to hold tests (§3 Phase 2 widened it from `src/lib/services/**` and flattened it). Eight test files: five service tests plus the route, middleware and source-scan files from §6.4                                                                                                                                                  |
 | network / boundary faking                                    | Vitest built-in (`vi.stubGlobal`)        | 5.0       | Settled by §3 Phase 1 under the cost × signal rule: no mocking library installed. The pattern — a real `Response` built fresh per call, `vi.unstubAllGlobals()` in `afterEach` — is written up in §6.2                                                                                                                                                                                                                                                                             |
-| database / policy tests                                      | Supabase CLI (pgTAP, `supabase test db`) | 2.116     | CLI is already a devDependency; needs Docker locally. Five files under `supabase/tests/`, 77 assertions — the harness/oracle guard plus per-verb, per-role isolation across `channel_profiles`, `content_opportunities` and the `avatars` bucket, and the policy-shape file. Wired as a local gate (§5); pattern in §6.3                                                                                                                                                           |
-| typecheck                                                    | `@astrojs/check`                         | 0.9.8     | Installed, but there is no script for it and CI never runs one — see §3 Phase 4                                                                                                                                                                                                                                                                                                                                                                                                    |
+| database / policy tests                                      | Supabase CLI (pgTAP, `supabase test db`) | 2.116     | CLI is already a devDependency; needs Docker locally. Five files under `supabase/tests/`, 77 assertions — the harness/oracle guard plus per-verb, per-role isolation across `channel_profiles`, `content_opportunities` and the `avatars` bucket, and the policy-shape file. Wired locally **and** as the `supabase/**`-scoped `db` job in CI (§5); pattern in §6.3, gate mechanics in §6.7                                                                                        |
+| typecheck                                                    | `@astrojs/check`                         | 0.9.8     | `npm run typecheck`, wired into CI by §3 Phase 4. Runs over the whole tree, tests included, in ~14s; must follow `astro sync`. Fails on severity `error` only, so the `ts(6387)` deprecation hints from `eslint.config.js` do not block                                                                                                                                                                                                                                            |
 | lint                                                         | ESLint, type-checked rules               | 9.29      | Wired in three places: pre-commit via husky and lint-staged, and in CI                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Astro component rendering                                    | Container API (experimental)             | Astro 6.3 | Available but not planned. Astro 6 removed rendering of Astro components in client test environments — such tests must run in a `node` environment. §7 rules out UI look-and-feel testing, so this stays unused                                                                                                                                                                                                                                                                    |
 | e2e                                                          | none — deliberately out of scope         | —         | No browser automation available in the current session, and §7 plus cost × signal keep e2e out unless a top risk is shown to be unreachable at a cheaper layer. See §5 for the standing trade                                                                                                                                                                                                                                                                                      |
@@ -122,24 +122,38 @@ The full set of gates that must pass before a change reaches production.
 "Required after §3 Phase N" means the gate is enforced once that rollout
 phase lands; before that, the gate is planned.
 
-| Gate                  | Where                                                                          | Required?                                                                   | Catches                                                                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| lint                  | local pre-commit + CI                                                          | required (wired)                                                            | syntactic and type-rule drift                                                                                                                 |
-| typecheck             | CI                                                                             | required after §3 Phase 4                                                   | type drift across the SSR and island boundary                                                                                                 |
-| unit + integration    | local + CI                                                                     | required (wired)                                                            | logic regressions, and from §3 Phase 1 onward boundary-failure regressions                                                                    |
-| database policy tests | **local, wired** (`npm run test:db`); CI placement still decided in §3 Phase 4 | required (wired) — run before any change under `supabase/migrations/` lands | cross-account data exposure                                                                                                                   |
-| build                 | CI                                                                             | required (wired)                                                            | runtime build breakage before deploy                                                                                                          |
-| e2e on critical flows | not wired                                                                      | deliberately deferred — see §7                                              | broken critical user paths end to end                                                                                                         |
-| pre-prod smoke        | between merge and production                                                   | optional                                                                    | runtime-only failures that local development on Node cannot reproduce, flagged as a real divergence in `context/foundation/infrastructure.md` |
+| Gate                  | Where                                                                         | Required?                                                                | Catches                                                                                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| lint                  | local pre-commit + CI                                                         | required (wired)                                                         | syntactic and type-rule drift                                                                                                                 |
+| typecheck             | CI (`npm run typecheck`, after `astro sync`)                                  | required (wired)                                                         | type drift across the SSR and island boundary                                                                                                 |
+| unit + integration    | local + CI                                                                    | required (wired)                                                         | logic regressions, and from §3 Phase 1 onward boundary-failure regressions                                                                    |
+| format                | CI (`npm run format:check`), first step in the job                            | required (wired)                                                         | Prettier drift in `*.md` / `*.json` / `*.css` edited outside a hooked commit — lint-staged misses these                                       |
+| database policy tests | local (`npm run test:db`) **and** the `db` job in CI, scoped to `supabase/**` | required (wired) — run locally before any change under `supabase/` lands | cross-account data exposure                                                                                                                   |
+| build                 | CI                                                                            | required (wired)                                                         | runtime build breakage before deploy                                                                                                          |
+| e2e on critical flows | not wired                                                                     | deliberately deferred — see §7                                           | broken critical user paths end to end                                                                                                         |
+| pre-prod smoke        | between merge and production                                                  | optional                                                                 | runtime-only failures that local development on Node cannot reproduce, flagged as a real divergence in `context/foundation/infrastructure.md` |
 
-Two standing trades are recorded here rather than hidden. First, e2e is a
-normally-required gate that this rollout does not wire: the interview ruled
-out infrastructure over-investment, and Phases 1 through 3 attack every top
-risk at a cheaper layer. Revisit if a top risk is shown to be unreachable
-below the browser, or if a regression reaches users through a path no
-cheaper test could have covered. Second, database policy tests need Docker,
-so whether they run in CI or remain a local gate is an explicit decision
-deferred to Phase 4 rather than assumed now.
+**How "required" is enforced.** Since §3 Phase 4 a ruleset on `master` requires
+a pull request and requires the `ci` and `db` checks to pass, with **no bypass
+actors** — the author included. A red gate is now a blocked merge rather than a
+red X next to a merged commit. §6.7 covers adding or changing a gate, including
+the two ways to deadlock the repository while doing it.
+
+One standing trade remains, and one is now resolved. **Still standing: e2e** is a
+normally-required gate that this rollout does not wire. The interview ruled out
+infrastructure over-investment, and Phases 1 through 3 attack every top risk at a
+cheaper layer. Re-affirmed 2026-09-14 at gate-wiring time with nothing changed on
+either side of the trade. Revisit if a top risk is shown to be unreachable below
+the browser, or if a regression reaches users through a path no cheaper test
+could have covered.
+
+**Resolved: where the Docker-bearing policy tests run.** They run in CI, as their
+own `db` job, conditioned on the change touching `supabase/**`. Measured cost on
+a cold runner: **111s**, of which ~83s is `supabase start` and ~4s is the suite.
+The scoping is what makes that affordable — four migrations exist in total, so
+the great majority of changes never pay it. Note the measured surprise recorded
+in §6.7: `supabase start -x` bounds which containers _run_, not which images get
+_pulled_, so the saving is real but smaller than a container count suggests.
 
 ## 6. Cookbook Patterns
 
@@ -518,6 +532,82 @@ Recorded rather than fixed:
   long-form videos" from "the cap left 3", and it is shown to the user in skip
   messages.
 
+### 6.7 Adding or changing a quality gate
+
+**Location.** `.github/workflows/ci.yml` — three jobs: `changes` (plumbing),
+`db` (conditional), `ci` (everything else, sequential steps). The enforced
+configuration lives in a GitHub ruleset on `master`, kept as a reviewable
+artifact at `context/changes/testing-quality-gates/ruleset.json`.
+
+**Run locally first.** Every gate has a script, and the script is what CI calls:
+
+```bash
+npm run format:check   # ~2s
+npm run lint
+npm run typecheck      # ~14s, needs `npx astro sync` first on a clean checkout
+npm test               # 12 files / 166 tests, <1s
+npm run build
+npm run test:db        # needs Docker; 5 files / 77 assertions
+```
+
+**Order the work: green → wired → required.** Make the gate pass locally, then
+add it to CI, then add it to the ruleset. Inverting any pair locks the
+repository against its own author, because the ruleset has no bypass actors.
+Phase 4 fixed four live `astro check` errors _before_ writing the `typecheck`
+step, for exactly this reason.
+
+Five traps, all of them load-bearing:
+
+- **A workflow-level `paths:` filter deadlocks every merge.** GitHub's docs are
+  explicit: a workflow skipped by path, branch or commit-message filtering leaves
+  its checks **Pending**, and a Pending required check blocks the pull request
+  forever. A job skipped by a job-level **`if:`** reports **Success** instead.
+  This is why the `db` gate is a job inside `ci.yml` conditioned on a `changes`
+  output, and not a separate paths-filtered workflow. With no bypass actor,
+  getting this wrong is unrecoverable from the CLI — you fix it in the GitHub UI.
+  Verified on a real docs-only PR: `db` reported `skipped` and the run was green.
+- **Required checks are matched by name string, so read the names off a real
+  run.** For a job with no `name:`, the check name is the job id. Do not infer
+  them:
+
+  ```bash
+  gh api repos/Keitar6/10xDevs-YT-Niche-Adviser/commits/master/check-runs --jq '.check_runs[].name'
+  ```
+
+  A ruleset naming a check that never reports blocks every merge, with the same
+  UI-only recovery.
+
+- **Don't require the `changes` job.** It is plumbing. Requiring it adds a name
+  to keep in sync and guarantees nothing.
+- **The deploy step stays inside `ci`.** Splitting it into a job with
+  `needs: [ci, db]` would break deploys the moment `db` skips — a skipped
+  dependency skips its dependent. The ruleset gates deploy transitively, because
+  every path to `master` now goes through a PR whose checks passed.
+- **`typecheck` must follow `astro sync`.** `astro check` reads the types `sync`
+  generates; put it earlier and it fails on missing generated types rather than
+  on your code. `format:check` goes first because it is the cheapest.
+
+**The measured cost of the `db` job, and one wrong prediction.** 111s on a cold
+runner: ~83s `supabase start`, ~4s for the suite. The start is trimmed with
+`supabase start -x <13 services>` so only the database container runs — which is
+all pgTAP touches, since `auth.uid()` is a SQL function in the db image and the
+`avatars` bucket row comes from a migration rather than from storage-api at boot.
+
+The prediction that did not survive measurement: **`-x` bounds which containers
+start, not which images are pulled.** The runner still pulled five images
+(`postgres`, `realtime`, `storage-api`, `gotrue`, and `pg_prove` at test time),
+not the one the container count implies. Cutting further means disabling services
+in `config.toml`, which changes local development too, and has not been done. The
+`supabase/**` scoping — not the trimming — is what keeps this gate affordable.
+
+**Prove a new gate by breaking it.** This is §6.3's discipline applied one level
+up: a gate you have never seen fail is a gate you are trusting on faith. Each of
+the four was proven red on a real run before being required — a stray unformatted
+line, a `const x: number = body`, an `alter policy … using (true)`, and a PR
+carrying one of them against the ruleset. The policy break is the most
+instructive: `ci` stayed green throughout, which is the whole argument for the
+`db` job existing separately.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future
@@ -560,10 +650,23 @@ contributors should respect these unless the underlying assumption changes.
   is already tracked as a parked roadmap item with a diagnosed lever. This
   belongs to observability, not to the suite. (Source:
   `context/foundation/roadmap.md`, Parked.)
+- **Test volume and coverage thresholds** — no coverage percentage, no
+  test-count floor, no gate that notices if half of `scoring.test.ts` is deleted.
+  Declined rather than overlooked. No risk in §2 is "someone deletes the tests",
+  and a coverage number rewards precisely the assert-nothing tests §6.5 spent
+  Phase 3 removing: it counts lines executed, not claims made. The oracle guard
+  is §6.5's mutation ledger, which is deliberately manual because a machine
+  cannot tell a load-bearing assertion from a tautological one. Re-evaluate if a
+  coverage regression reaches users, or if a second contributor joins — the
+  ledger's cost is a single reviewer holding the whole suite in their head.
+  (Source: §3 Phase 4.)
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-09-13
+- Strategy (§1–§5) last reviewed: 2026-09-14 — §5 re-reviewed at gate-wiring
+  time (§3 Phase 4): every gate the table calls required now exists and runs, the
+  Docker-placement trade is resolved, and the e2e deferral was re-affirmed rather
+  than carried forward unexamined
 - Stack versions last verified: 2026-09-13
 - AI-native tool references last verified: 2026-09-13
 
