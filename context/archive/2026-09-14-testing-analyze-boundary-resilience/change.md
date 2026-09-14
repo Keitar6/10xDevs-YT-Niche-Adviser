@@ -1,10 +1,10 @@
 ---
 change_id: testing-analyze-boundary-resilience
 title: Testing analyze boundary resilience
-status: impl_reviewed
+status: archived
 created: 2026-09-14
 updated: 2026-09-14
-archived_at: null
+archived_at: 2026-09-14T06:25:57Z
 ---
 
 ## Notes
