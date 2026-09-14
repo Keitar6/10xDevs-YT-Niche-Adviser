@@ -52,7 +52,7 @@ Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience)
 | F-03 | `provable-user-isolation`             | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | —                | FR-002, MS-01, MS-03  | done        |
 | F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                                  | —                | FR-006, FR-009, MS-04 | done        |
 | F-05 | `testing-scoring-oracle`              | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason                                                 | —                | FR-007, FR-008, MS-05 | done        |
-| F-06 | `testing-quality-gates`               | (foundation) the floor the earlier phases established is enforced on every change                                                                                      | F-03, F-04, F-05 | MS-06                 | proposed    |
+| F-06 | `testing-quality-gates`               | (foundation) the floor the earlier phases established is enforced on every change                                                                                      | F-03, F-04, F-05 | MS-06                 | planning    |
 | S-06 | `opportunity-status-transitions`      | user moves a saved opportunity through new → in production → done, and the change persists                                                                             | F-03             | FR-012, MS-02         | proposed    |
 | S-07 | `user-selectable-analysis-window`     | user chooses the time window an analysis draws its videos from                                                                                                         | F-05             | FR-007, FR-008        | backlog     |
 
@@ -134,7 +134,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Whether the policy-test gate runs in CI (needs a container runtime in the pipeline) or stays a local gate. Owner: user. Block: no — this element is where the decision is made, not something it waits on.
 - **Risk:** Deliberately thin and deliberately last: a gate can only lock a floor the earlier elements have actually built, so wiring it early would enforce a floor that does not exist yet. Sequenced after all three preceding elements for that reason, and the only element in M-2 whose Prerequisites are non-empty.
-- **Status:** proposed
+- **Status:** planning
 
 ## Slices
 
