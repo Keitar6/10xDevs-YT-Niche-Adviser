@@ -24,8 +24,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Cheapest gate first: a stray blank line should not wait on a typecheck.
+      - run: npm run format:check
       - run: npx astro sync
       - run: npm run lint
+      # Must follow `astro sync` — `astro check` reads the types it generates.
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
         env:

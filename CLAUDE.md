@@ -7,9 +7,11 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run dev` — start dev server (Cloudflare workerd runtime)
 - `npm run build` — production build (SSR via `@astrojs/cloudflare`)
 - `npm run preview` — preview production build
+- `npm run typecheck` — `astro check` over the whole tree, tests included (~14s)
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm run format:check` — Prettier in check mode; this is the CI gate
 - `npm test` — Vitest (services, route guards, middleware, source scans); no database needed
 - `npm run test:db` — pgTAP policy suite under `supabase/tests/`; needs Docker + `npx supabase start`
 
@@ -76,7 +78,13 @@ rather than folded into the existing one. That placement decision is owned by
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to master. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+GitHub Actions workflow (`.github/workflows/ci.yml`), on every push and PR to master. One job, `ci`, running in order:
+
+`npm ci` → `npm run format:check` → `npx astro sync` → `npm run lint` → `npm run typecheck` → `npm test` → `npm run build` → deploy (master pushes only)
+
+Two orderings are load-bearing rather than cosmetic. `format:check` runs first because it is the cheapest gate (~2s) and should not queue behind a typecheck. `typecheck` must run **after** `astro sync`, because `astro check` reads the types `sync` generates — put it earlier and it fails on missing generated types rather than on your code.
+
+The build step needs the `SUPABASE_URL`, `SUPABASE_KEY`, `YOUTUBE_API_KEY` and `ANTHROPIC_API_KEY` repository secrets; `astro sync` and `astro build` additionally open a remote Cloudflare proxy session using `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`, which is why those two are set job-wide rather than on the deploy step.
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
