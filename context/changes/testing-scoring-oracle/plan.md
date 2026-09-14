@@ -611,8 +611,8 @@ constraint has always forbidden it.
 
 #### Manual
 
-- [ ] 3.5 Real analysis produces plausible sample sizes and medians
-- [x] 3.6 Mutation ledger re-run against the extracted module, result recorded
+- [x] 3.5 Real analysis produces plausible sample sizes and medians — 9a5d8ca
+- [x] 3.6 Mutation ledger re-run against the extracted module, result recorded — 2aa8b53
 
 ### Phase 4: Reconcile the documents
 
@@ -624,5 +624,5 @@ constraint has always forbidden it.
 
 #### Manual
 
-- [x] 4.4 §6.5 is sufficient on its own for someone changing the scoring rule
-- [x] 4.5 FR-008's wording matches what Phase 3 computes
+- [x] 4.4 §6.5 is sufficient on its own for someone changing the scoring rule — 2aa8b53
+- [x] 4.5 FR-008's wording matches what Phase 3 computes — 2aa8b53
