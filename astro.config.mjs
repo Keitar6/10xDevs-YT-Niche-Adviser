@@ -12,6 +12,31 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    // Resolve dependencies the way the Worker runtime actually is — a
+    // browser-like environment — rather than as Node.
+    //
+    // Without this, Vite's SSR resolver hands `@anthropic-ai/sdk` its Node
+    // entry, which pulls in `internal/node.mjs`: a module whose only job is to
+    // re-export `node:child_process`, `node:crypto`, `node:os` and friends.
+    // workerd has no `node:child_process` at all, and the bundler dropped the
+    // import while keeping the reference, shipping a chunk that threw
+    // `ReferenceError: cp is not defined` on module evaluation. Rollup had
+    // merged `src/lib/http.ts` into that same chunk, so every route importing
+    // `jsonError` — profile, signin, analyze, avatar, opportunities — 500'd
+    // with an empty body before its handler ever ran, while `/api/auth/signout`
+    // (the one route that does not import it) kept working.
+    //
+    // The SDK already ships the fix in its own `browser` field, which maps
+    // those Node shims to browser-safe twins; `mainFields` is what makes Vite
+    // honour that field on the server build. Guard: a production build must
+    // emit no `node:child_process` import — `grep -r "node:child_process" dist/`
+    // comes back empty.
+    ssr: {
+      resolve: {
+        mainFields: ["browser", "module", "jsnext:main", "jsnext"],
+        conditions: ["workerd", "worker", "browser", "module", "import", "default"],
+      },
+    },
   },
   adapter: cloudflare(),
   env: {

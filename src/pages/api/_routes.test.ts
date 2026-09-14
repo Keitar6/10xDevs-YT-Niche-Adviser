@@ -28,6 +28,16 @@
  * user id is session-derived and RLS backstops it — but "every data-touching
  * handler" above means every *API* handler, and that limit is stated rather
  * than left to be inferred.
+ *
+ * **The leading underscore is load-bearing.** This file has to live inside
+ * `src/pages/api/` — `handlersOnDisk()` below walks its own directory, which is
+ * what makes the coverage assertion exhaustive rather than a list somebody has
+ * to remember to update. But every `.ts` under `src/pages/` is a route to
+ * Astro, and without the `_` prefix this one was built and deployed as a live
+ * `/api/routes.test` endpoint, dragging Vitest's internals into the production
+ * Worker bundle with it. The prefix is Astro's documented opt-out from routing;
+ * it is invisible to the Vitest glob (`src/**\/*.test.ts`) and to the walk,
+ * which skips `.test.ts` either way.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
