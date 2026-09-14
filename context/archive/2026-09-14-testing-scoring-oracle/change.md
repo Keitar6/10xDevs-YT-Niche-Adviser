@@ -1,10 +1,10 @@
 ---
 change_id: testing-scoring-oracle
 title: Testing scoring oracle
-status: impl_reviewed
+status: archived
 created: 2026-09-14
 updated: 2026-09-14
-archived_at: null
+archived_at: 2026-09-14T09:58:28Z
 ---
 
 ## Notes

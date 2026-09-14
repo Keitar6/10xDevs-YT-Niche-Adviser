@@ -51,7 +51,7 @@ Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience)
 | ---- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------- | ----------- |
 | F-03 | `provable-user-isolation`             | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | —                | FR-002, MS-01, MS-03  | done        |
 | F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                                  | —                | FR-006, FR-009, MS-04 | done        |
-| F-05 | `testing-scoring-oracle`              | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason                                                 | —                | FR-007, FR-008, MS-05 | in-progress |
+| F-05 | `testing-scoring-oracle`              | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason                                                 | —                | FR-007, FR-008, MS-05 | done        |
 | F-06 | `testing-quality-gates`               | (foundation) the floor the earlier phases established is enforced on every change                                                                                      | F-03, F-04, F-05 | MS-06                 | proposed    |
 | S-06 | `opportunity-status-transitions`      | user moves a saved opportunity through new → in production → done, and the change persists                                                                             | F-03             | FR-012, MS-02         | proposed    |
 | S-07 | `user-selectable-analysis-window`     | user chooses the time window an analysis draws its videos from                                                                                                         | F-05             | FR-007, FR-008        | backlog     |
@@ -120,7 +120,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Whether any existing expected value was captured from the implementation's own output rather than derived from the PRD formula. Owner: TBD (resolved by this element's own research). Block: no.
 - **Risk:** This is an audit and extension, not a bootstrap — a partial suite already passes, which is exactly what makes it dangerous: `test-plan.md` §2 names the oracle problem as this element's central threat, since assertions captured from a run can never fail for the right reason. Snapshot assertions over the ranking output are called out as the purest form of that failure and must not be introduced.
-- **Status:** in-progress
+- **Status:** done
 
 ### F-06: Quality-gates wiring
 
@@ -413,3 +413,4 @@ All roadmap items are tracked as GitHub Issues in `Keitar6/10xDevs-YT-Niche-Advi
 - **F-02: (foundation) Tabela `channel_profiles` istnieje w Supabase Postgres z politykami RLS ograniczonymi do właściciela (select/insert/update/delete), migracja w `supabase/migrations/`.** — Archived 2026-09-13 → `context/archive/2026-09-09-channel-profile-data-model/`. Lesson: —.
 - **F-03: (foundation) Access control is provable rather than asserted: per-user isolation holds across channel profiles, saved opportunities and the avatar objects — per verb and per role — and every data-touching route refuses a caller with no session.** — Archived 2026-09-14 → `context/archive/2026-09-14-provable-user-isolation/`. Lesson: —.
 - **F-04: (foundation) A hostile, malformed or failing external response degrades into a ranking plus an explicit account of what is missing — never an error page, never a blank screen, never a fabricated sentence.** — Archived 2026-09-14 → `context/archive/2026-09-14-testing-analyze-boundary-resilience/`. Lesson: —.
+- **F-05: (foundation) The score provably means what the PRD says it means — views over the channel's own median across the window, short-form excluded, sorted descending, with identical input yielding identical output and identical order — and the pre-existing assertions are shown to be capable of failing for the right reason.** — Archived 2026-09-14 → `context/archive/2026-09-14-testing-scoring-oracle/`. Lesson: —.
