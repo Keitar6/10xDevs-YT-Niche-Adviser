@@ -1,7 +1,7 @@
 ---
 change_id: testing-analyze-boundary-resilience
 title: Testing analyze boundary resilience
-status: implementing
+status: implemented
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
@@ -42,3 +42,13 @@ archived_at: null
   `.astro/types.d.ts`, `npm run lint` reports 23 pre-existing
   `no-unsafe-*` errors across `middleware.ts`, `supabase.ts`, `analyze.ts` and
   `profile.ts` that have nothing to do with this change.
+
+- **Worktree setup, full list.** A fresh worktree on this repo needs three
+  things before the app runs, none of which git carries: `npm ci` (no
+  `node_modules`), `npx astro sync` (no `.astro/types.d.ts`), and a copy of
+  `.dev.vars` / `.env` from the main checkout — both are gitignored
+  (`.gitignore:17,21`), so their absence makes `config-status.ts` report
+  Supabase, YouTube *and* Anthropic as unconfigured. That banner is the
+  expected symptom of a missing file, not a code fault; Astro reads
+  `astro:env/server` at startup, so the dev server needs a full restart after
+  the copy rather than a hot reload.

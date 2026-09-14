@@ -690,8 +690,8 @@ as one unit satisfies this.
 
 #### Manual
 
-- [ ] 2.6 Nonexistent competitor id yields an `unresolved` entry with `reason: "not_found"`
-- [ ] 2.7 `/api/profile.ts` still saves a profile with a competitor handle
+- [x] 2.6 Nonexistent competitor id yields an `unresolved` entry with `reason: "not_found"` — 76ab311
+- [x] 2.7 `/api/profile.ts` still saves a profile with a competitor handle — 76ab311
 
 ### Phase 3: G1 — extract and fix the justification merge
 
@@ -705,20 +705,20 @@ as one unit satisfies this.
 
 #### Manual
 
-- [ ] 3.6 Real analysis with a valid key still renders justifications and reports `justifications_available: true`
+- [x] 3.6 Real analysis with a valid key still renders justifications and reports `justifications_available: true` — 68a5f7b
 
 ### Phase 4: Close the user-visible chain
 
 #### Automated
 
-- [x] 4.1 Full suite passes: `npm test`
-- [x] 4.2 Type checking passes: `npx astro check`
-- [x] 4.3 Linting passes: `npm run lint`
-- [x] 4.4 Production build succeeds: `npm run build`
+- [x] 4.1 Full suite passes: `npm test` — fbf5847
+- [x] 4.2 Type checking passes: `npx astro check` — fbf5847
+- [x] 4.3 Linting passes: `npm run lint` — fbf5847
+- [x] 4.4 Production build succeeds: `npm run build` — fbf5847
 
 #### Manual
 
-- [ ] 4.5 With `ANTHROPIC_API_KEY` unset, the ranking renders with scores and an explanatory notice, no blank cards
-- [ ] 4.6 A forced unexpected throw returns readable `{ error }` JSON, not the generic HTTP 500 text (then reverted)
-- [ ] 4.7 Mixed profile shows two distinct warning notices, neither calling the failed competitor "not found"
-- [ ] 4.8 The ranking renders and stays usable throughout
+- [x] 4.5 With `ANTHROPIC_API_KEY` unset, the ranking renders with scores and an explanatory notice, no blank cards — fbf5847
+- [x] 4.6 A forced unexpected throw returns readable `{ error }` JSON, not the generic HTTP 500 text (then reverted) — fbf5847
+- [x] 4.7 Mixed profile shows two distinct warning notices, neither calling the failed competitor "not found" — fbf5847
+- [x] 4.8 The ranking renders and stays usable throughout — fbf5847
