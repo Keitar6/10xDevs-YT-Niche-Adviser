@@ -669,14 +669,14 @@ as one unit satisfies this.
 
 #### Automated
 
-- [ ] 1.1 Dependencies installed in this worktree: `npm ci`
-- [ ] 1.2 New suite passes: `npm test`
-- [ ] 1.3 All five pre-existing suites still pass: `npm test`
-- [ ] 1.4 Linting passes: `npm run lint`
+- [x] 1.1 Dependencies installed in this worktree: `npm ci`
+- [x] 1.2 New suite passes: `npm test`
+- [x] 1.3 All five pre-existing suites still pass: `npm test`
+- [x] 1.4 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 1.5 Confirm the truncated-JSON and wrong-key-JSON tests fail with the old message before the G5 branch is added
+- [x] 1.5 Confirm the truncated-JSON and wrong-key-JSON tests fail with the old message before the G5 branch is added
 
 ### Phase 2: The YouTube boundary and reason-coded failures
 

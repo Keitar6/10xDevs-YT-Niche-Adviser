@@ -135,7 +135,8 @@ export async function justifyOpportunities(
   } catch (error) {
     // Most specific first. Note that `APIConnectionError` *extends* `APIError`
     // in this SDK, so it has to be tested before it — the reverse order would
-    // collapse every transport failure into the generic branch.
+    // collapse every transport failure into the generic branch. `AnthropicError`
+    // is the base of all three and so must come last of the four.
     if (error instanceof Anthropic.RateLimitError) {
       return { ok: false, message: "The justification service is rate limited." };
     }
@@ -144,6 +145,16 @@ export async function justifyOpportunities(
     }
     if (error instanceof Anthropic.APIError) {
       return { ok: false, message: `The justification service returned an error (HTTP ${error.status ?? "unknown"}).` };
+    }
+    // A decode failure, not a transport one. `messages.parse()` is
+    // `create().then(parseMessage)`, so the structured-output parse runs before
+    // this function ever sees `stop_reason` — and it *throws* on malformed or
+    // off-schema JSON rather than leaving `parsed_output` null. Truncated
+    // output and a wrong-shape answer both arrive here, so they get the same
+    // sentence as the null check above: from the user's side it is the same
+    // failure.
+    if (error instanceof Anthropic.AnthropicError) {
+      return { ok: false, message: "The justification service returned an unreadable response." };
     }
     return { ok: false, message: "Justifications could not be generated." };
   }
