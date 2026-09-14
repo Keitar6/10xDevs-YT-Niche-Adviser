@@ -71,7 +71,34 @@ function describeUnresolved(unresolved: UnresolvedCompetitor[], requested: numbe
   return sentences.join(" ");
 }
 
+/**
+ * Guarantees the `{ error }` JSON contract the client already assumes.
+ *
+ * Without this, an unexpected throw anywhere below — `parseChannelProfile`,
+ * `scoreChannel`, `rankOpportunities`, or the re-throw of a non-`YouTubeError`
+ * from the fetch step — escapes into Astro's generic SSR handling and returns a
+ * 500 *HTML* page. The island's `.json()` then fails and it falls back to
+ * "The analysis failed (HTTP 500)", which is the closest thing this codebase
+ * has to the error page the guardrail forbids.
+ *
+ * The narrow `YouTubeError` catch inside `runAnalysis` stays where it is: its
+ * 429/502 mapping is the specific case and must not be swallowed here.
+ */
 export const POST: APIRoute = async (context) => {
+  try {
+    return await runAnalysis(context);
+  } catch (error) {
+    // The raw error can name internals, so it stays server-side. `observability`
+    // is enabled on the Worker, so this reaches Workers Logs — the only
+    // diagnostic channel the project has. Same handling as the profile read
+    // failure below.
+    // eslint-disable-next-line no-console -- deliberate: no logger exists yet
+    console.error("analyze run failed", error);
+    return jsonError("The analysis could not be completed. Try again.", 500);
+  }
+};
+
+const runAnalysis = async (context: Parameters<APIRoute>[0]): Promise<Response> => {
   // No request body is read: the run is defined entirely by the caller's saved
   // profile, so there is nothing to parse and nothing to guard.
   if (!context.locals.user) {

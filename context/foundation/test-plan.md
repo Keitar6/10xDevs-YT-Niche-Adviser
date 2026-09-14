@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-09-13
+> Last updated: 2026-09-14
 
 ## 1. Strategy
 
@@ -81,7 +81,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Analyze-pipeline boundary resilience | Prove a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | #1, #2 | integration | change opened | `testing-analyze-boundary-resilience` |
+| 1 | Analyze-pipeline boundary resilience | Prove a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | #1, #2 | integration | complete | `testing-analyze-boundary-resilience` |
 | 2 | Provable per-user isolation | Discharge the PRD requirement that isolation be verifiable by test, across both tables and the storage bucket, and close the unauthenticated-route surface | #3, #4 | database policy tests + route integration | not started | — |
 | 3 | Scoring oracle and spec conformance | Prove the number means what the PRD says it means, and that the existing suite is able to fail for the right reason | #5 | unit | not started | — |
 | 4 | Quality-gates wiring | Lock the floor the first three phases established | cross-cutting | gates | not started | — |
@@ -158,8 +158,43 @@ relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.2 Adding a boundary test around an external provider
 
-- TBD — see §3 Phase 1, for the pattern that proves a malformed or
-  error response degrades into a readable state rather than a failed run.
+- **Location**: `src/lib/services/`, beside the module under test.
+- **Naming**: `<module>.test.ts`.
+- **Reference tests**: `src/lib/services/youtube.test.ts` (raw `fetch`),
+  `src/lib/services/justify.test.ts` (through the Anthropic SDK).
+- **Run locally**: `npm test`.
+- **No mocking library.** `vi.stubGlobal("fetch", …)` reaches both boundaries;
+  nothing needs installing. Do not add msw, nock, or sinon for this.
+
+**The rule: fake the transport, never the parsing.** The stub returns a
+genuine `new Response(body, { status, headers })`, so the real `res.json()`,
+the real zod schemas, the real status/reason classification, and (for the SDK)
+the real decoder all stay in the exercised path. A test that fakes the parsed
+result instead never exercises the code that decides what the user sees, which
+is the one thing worth testing at a boundary.
+
+Four hazards, each of which cost time the first time:
+
+1. **`unstubGlobals` defaults to `false`.** Stubs do *not* reset between tests.
+   Add `afterEach(() => vi.unstubAllGlobals())` — do not assume the config does
+   it.
+2. **A `Response` body is single-use.** Build a fresh `Response` *inside* the
+   stub handler on each call. A pre-built instance reused across the chain
+   fails the second read with "body already used". `youtube.ts` issues three
+   sequential calls per channel, so this bites immediately.
+3. **Set `content-type: application/json`.** The Anthropic SDK decides between
+   JSON and text on that header alone; without it the body arrives as a string
+   and the failure is confusing rather than informative.
+4. **A duck-typed `{ ok, status, json }` will not do.** Both boundaries read
+   `headers` and call real `Response` methods.
+
+Assert the **state class, not the message text** wherever one exists — for
+YouTube that is `YouTubeError.failure.kind` and the `reason` on each
+`unresolved` entry. Where the only signal is prose, that is a design gap to
+close rather than a string to assert.
+
+And assert that *the good data survived*: a boundary test that only proves
+nothing threw would pass even if the scores had been dropped on the way out.
 
 ### 6.3 Adding a per-owner isolation test for a table or bucket
 
@@ -179,7 +214,50 @@ relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.6 Per-rollout-phase notes
 
-(Filled in as phases land.)
+**Phase 1 — Analyze-pipeline boundary resilience (landed 2026-09-14).**
+
+The phase found both risks already largely defended in production code and
+none of it tested, so it ran as characterization plus gap-closing rather than
+as a bootstrap. 43 tests added across three new files; the suite went from 67
+to 110.
+
+Two SDK facts are recorded here because they are expensive to re-derive and
+neither is in the SDK's own documentation:
+
+- **The Anthropic SDK resolves `fetch` in the client *constructor***
+  (`client.ts` → `Shims.getDefaultFetch()`), not at module import. Because
+  `justify.ts` constructs its client per call, `vi.stubGlobal` reaches it with
+  no production seam. This is why §4's "network / boundary faking" row needs no
+  tool.
+- **`messages.parse()` decodes *before* the caller sees `stop_reason`**, and
+  the structured-output parse *throws* `AnthropicError` on malformed or
+  off-schema JSON rather than returning `parsed_output: null`. Since
+  `AnthropicError` is the *parent* of `APIError`, such a failure matches none
+  of the typed error branches. `justify.ts` gained an explicit branch for it.
+  A corollary: a refusal carrying prose is pre-empted by the parse throw, so
+  the `stop_reason === "refusal"` check fires only when there is no parseable
+  text block.
+
+Three live defects were fixed rather than pinned, on the principle that a test
+asserting current behaviour would have pinned a defect:
+
+- An empty or whitespace-only justification was reported as *available* and
+  rendered as nothing. Presence is now decided on the trimmed value, in an
+  extracted `justification-merge.ts` that is testable without the route's
+  virtual modules.
+- Per-competitor transport and malformed failures folded into a bare
+  `unresolved: string[]`, and the interface then told the user those channels
+  were "Not found on YouTube" — a confident, wrong statement about a channel
+  that exists. Entries now carry a `reason` discriminant and the interface
+  renders the two cases separately.
+- The route had no top-level try/catch, so an unexpected throw returned a 500
+  *HTML* page that the island could not read as `{ error }`.
+
+Deliberately not done: no route-level tests (the route needs `astro:env/server`
+*and* `cloudflare:workers` mocked plus alias config; the testable logic was
+extracted instead), and no `stop_reason: "max_tokens"` guard — with the parse
+throwing on truncated output, the silent-short-array case is near-unreachable
+and is characterized rather than defended.
 
 ## 7. What We Deliberately Don't Test
 

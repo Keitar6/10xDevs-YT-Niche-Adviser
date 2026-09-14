@@ -697,11 +697,11 @@ as one unit satisfies this.
 
 #### Automated
 
-- [x] 3.1 New suite passes: `npm test`
-- [x] 3.2 Full suite passes: `npm test`
-- [x] 3.3 Type checking passes: `npx astro check`
-- [x] 3.4 Linting passes: `npm run lint`
-- [x] 3.5 Production build succeeds: `npm run build`
+- [x] 3.1 New suite passes: `npm test` — 68a5f7b
+- [x] 3.2 Full suite passes: `npm test` — 68a5f7b
+- [x] 3.3 Type checking passes: `npx astro check` — 68a5f7b
+- [x] 3.4 Linting passes: `npm run lint` — 68a5f7b
+- [x] 3.5 Production build succeeds: `npm run build` — 68a5f7b
 
 #### Manual
 
@@ -711,10 +711,10 @@ as one unit satisfies this.
 
 #### Automated
 
-- [ ] 4.1 Full suite passes: `npm test`
-- [ ] 4.2 Type checking passes: `npx astro check`
-- [ ] 4.3 Linting passes: `npm run lint`
-- [ ] 4.4 Production build succeeds: `npm run build`
+- [x] 4.1 Full suite passes: `npm test`
+- [x] 4.2 Type checking passes: `npx astro check`
+- [x] 4.3 Linting passes: `npm run lint`
+- [x] 4.4 Production build succeeds: `npm run build`
 
 #### Manual
 
