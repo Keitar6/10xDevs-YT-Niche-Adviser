@@ -1,4 +1,5 @@
 <!-- PLAN-REVIEW-REPORT -->
+
 # Plan Review: Save and View Opportunities
 
 - **Plan**: `context/changes/save-and-view-opportunities/plan.md`
@@ -9,13 +10,13 @@
 
 ## Verdicts
 
-| Dimension | Verdict (at review) | After fixes |
-|-----------|---------------------|-------------|
-| End-State Alignment | WARNING | PASS |
-| Lean Execution | PASS | PASS |
-| Architectural Fitness | WARNING | PASS |
-| Blind Spots | WARNING | PASS |
-| Plan Completeness | WARNING | PASS |
+| Dimension             | Verdict (at review) | After fixes |
+| --------------------- | ------------------- | ----------- |
+| End-State Alignment   | WARNING             | PASS        |
+| Lean Execution        | PASS                | PASS        |
+| Architectural Fitness | WARNING             | PASS        |
+| Blind Spots           | WARNING             | PASS        |
+| Plan Completeness     | WARNING             | PASS        |
 
 ## Grounding
 
@@ -103,7 +104,7 @@ Codebase verification confirmed two claims the plan depends on: `PostgrestError.
 - **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Blind Spots
 - **Location**: Phase 3 §2 (plan.md:378-380) vs Phase 2 §1 step 5 (293-294)
-- **Detail**: The route returns the *existing* row on a repeat save; the client prepended the returned row unconditionally. Within one tab the saved badge makes a repeat save unclickable, but the shared-state design is per-tab: a second tab, or an SSR list loaded before another tab saved, produces a prepend of a row already in the array — a duplicate `id`, a React key collision, and a visibly doubled row.
+- **Detail**: The route returns the _existing_ row on a repeat save; the client prepended the returned row unconditionally. Within one tab the saved badge makes a repeat save unclickable, but the shared-state design is per-tab: a second tab, or an SSR list loaded before another tab saved, produces a prepend of a row already in the array — a duplicate `id`, a React key collision, and a visibly doubled row.
 - **Fix**: Merge by `id` — replace in place when present, otherwise prepend.
 - **Decision**: FIXED
 

@@ -17,25 +17,25 @@ An Analyze button on `/dashboard` returns, within seconds, a ranked list of up t
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) | Source |
-| --- | --- | --- | --- |
-| Baseline statistic | Median, not mean | One extreme video moves a mean arbitrarily; every competitor worth curating already has outliers inflating theirs. | Research (D2) |
-| Competitor cap | 3–5, enforced in the profile | Makes quota, latency and CPU bounded at once — the cheapest single lever on all three. | Research (D1) |
-| API access | Plain `fetch()` + zod, never `search.list` | `googleapis` needs `http2`, which workerd lacks; `search.list` costs 100 units vs 1 and would cap the product at ~20 runs/day. | Research |
-| Competitor ID integrity | `UC`-format check at the profile **and** resolved-N-of-M reconciliation at analysis | `channels.list` silently omits unknown IDs — the worst failure shape for a product whose entire output is a ranked list. | Plan |
-| Sampling window | Last 20 long-form videos, from candidates paged to 180 days / 2 pages | Stable across wildly different upload cadences, and bounds paging for Shorts-heavy channels on both axes. | Plan |
-| Too-small sample | Skip the channel below 5 videos, name it in the response | A median over n=2 is degenerate; better to explain the gap than emit an undefendable score. | Plan |
-| Recent videos | Excluded from ranking under 7 days, still counted in the median | Launch-week spikes read as 4x outliers and settle to ~1.2x by day ten. | Plan |
-| Shorts cutoff | Under 5 minutes | User's call; risk is asymmetric — a leaked Short corrupts the baseline, a lost real video only shrinks the sample. | Plan |
-| Quota abuse | Cloudflare rate-limit binding, with an explicit "limit reached" message | No schema or migration; stops the realistic vector (double-clicks, retry loops) for a single-user MVP. | Plan |
-| Caching | None | ~650 runs/day of headroom means volume is not the binding constraint; rate limiting covers abuse. | Plan |
-| Justifications | One batched LLM call, structured output | One round trip instead of five, and the model can compare the five so they don't read alike. | Plan |
-| LLM failure | Return the ranking anyway, justifications omitted | The quota-consuming work is already done; discarding it produces exactly the empty screen the PRD forbids. | Plan |
-| Ranking | Top 5 videos by score, deterministic tie-break | LLM-based theme clustering would break the repeatability NFR outright. | Plan |
-| Language | English throughout | Every existing UI string is already English; this removes the one Polish inconsistency instead of adding more. | Plan |
-| Tests | Vitest, scoring module only | The repeatability NFR is a property no manual click-through verifies, and hand-rolling the maths was justified on the assumption of unit tests. | Plan |
-| Results UI | Section on `/dashboard`, not a dialog | A ranking is content to keep visible while deciding; a dialog also re-enters the Radix bug that cost real time in S-01. | Plan |
-| Workers plan | Free — design to the 10ms CPU budget | Matches what `infrastructure.md` documents, and the competitor cap keeps parsing bounded. | Plan |
+| Decision                | Choice                                                                              | Why (1 sentence)                                                                                                                                | Source        |
+| ----------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Baseline statistic      | Median, not mean                                                                    | One extreme video moves a mean arbitrarily; every competitor worth curating already has outliers inflating theirs.                              | Research (D2) |
+| Competitor cap          | 3–5, enforced in the profile                                                        | Makes quota, latency and CPU bounded at once — the cheapest single lever on all three.                                                          | Research (D1) |
+| API access              | Plain `fetch()` + zod, never `search.list`                                          | `googleapis` needs `http2`, which workerd lacks; `search.list` costs 100 units vs 1 and would cap the product at ~20 runs/day.                  | Research      |
+| Competitor ID integrity | `UC`-format check at the profile **and** resolved-N-of-M reconciliation at analysis | `channels.list` silently omits unknown IDs — the worst failure shape for a product whose entire output is a ranked list.                        | Plan          |
+| Sampling window         | Last 20 long-form videos, from candidates paged to 180 days / 2 pages               | Stable across wildly different upload cadences, and bounds paging for Shorts-heavy channels on both axes.                                       | Plan          |
+| Too-small sample        | Skip the channel below 5 videos, name it in the response                            | A median over n=2 is degenerate; better to explain the gap than emit an undefendable score.                                                     | Plan          |
+| Recent videos           | Excluded from ranking under 7 days, still counted in the median                     | Launch-week spikes read as 4x outliers and settle to ~1.2x by day ten.                                                                          | Plan          |
+| Shorts cutoff           | Under 5 minutes                                                                     | User's call; risk is asymmetric — a leaked Short corrupts the baseline, a lost real video only shrinks the sample.                              | Plan          |
+| Quota abuse             | Cloudflare rate-limit binding, with an explicit "limit reached" message             | No schema or migration; stops the realistic vector (double-clicks, retry loops) for a single-user MVP.                                          | Plan          |
+| Caching                 | None                                                                                | ~650 runs/day of headroom means volume is not the binding constraint; rate limiting covers abuse.                                               | Plan          |
+| Justifications          | One batched LLM call, structured output                                             | One round trip instead of five, and the model can compare the five so they don't read alike.                                                    | Plan          |
+| LLM failure             | Return the ranking anyway, justifications omitted                                   | The quota-consuming work is already done; discarding it produces exactly the empty screen the PRD forbids.                                      | Plan          |
+| Ranking                 | Top 5 videos by score, deterministic tie-break                                      | LLM-based theme clustering would break the repeatability NFR outright.                                                                          | Plan          |
+| Language                | English throughout                                                                  | Every existing UI string is already English; this removes the one Polish inconsistency instead of adding more.                                  | Plan          |
+| Tests                   | Vitest, scoring module only                                                         | The repeatability NFR is a property no manual click-through verifies, and hand-rolling the maths was justified on the assumption of unit tests. | Plan          |
+| Results UI              | Section on `/dashboard`, not a dialog                                               | A ranking is content to keep visible while deciding; a dialog also re-enters the Radix bug that cost real time in S-01.                         | Plan          |
+| Workers plan            | Free — design to the 10ms CPU budget                                                | Matches what `infrastructure.md` documents, and the competitor cap keeps parsing bounded.                                                       | Plan          |
 
 ## Scope
 
@@ -59,15 +59,15 @@ The call chain is fixed: `channels.list` (one call, all competitors) → `playli
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Foundation | Secrets + config banner, shared `jsonError`, Vitest harness, `UC` format check | Six-point secret plumbing where the one step CI cannot verify (`wrangler secret put`) is the one that breaks production |
-| 2. Scoring core | Pure scoring module + unit tests | The product's core maths — wrong numbers still look like numbers in the UI |
-| 3. YouTube client | zod schemas, 3-call chain, resolved-N-of-M reconciliation | Paging is data-dependent; Shorts are only identifiable after the third call |
-| 4. Analyze endpoint | Orchestration, rate limiting, LLM, every FR-009 failure path | Eight distinct failure exits, each needing its own readable message |
-| 5. Dashboard UI | Analyze trigger, ranked results, toasts, partial-state notices | First real screen in the app; empty and partial states must always explain themselves |
+| Phase               | What it delivers                                                               | Key risk                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| 1. Foundation       | Secrets + config banner, shared `jsonError`, Vitest harness, `UC` format check | Six-point secret plumbing where the one step CI cannot verify (`wrangler secret put`) is the one that breaks production |
+| 2. Scoring core     | Pure scoring module + unit tests                                               | The product's core maths — wrong numbers still look like numbers in the UI                                              |
+| 3. YouTube client   | zod schemas, 3-call chain, resolved-N-of-M reconciliation                      | Paging is data-dependent; Shorts are only identifiable after the third call                                             |
+| 4. Analyze endpoint | Orchestration, rate limiting, LLM, every FR-009 failure path                   | Eight distinct failure exits, each needing its own readable message                                                     |
+| 5. Dashboard UI     | Analyze trigger, ranked results, toasts, partial-state notices                 | First real screen in the app; empty and partial states must always explain themselves                                   |
 
-**Prerequisites:** S-01 complete (it is — the 3–5 cap landed 2026-09-12). Out of band: enable YouTube Data API v3 on the existing `yt-niche-adviser` Google Cloud project, obtain an Anthropic key, and set both as GitHub secrets *and* Worker secrets.
+**Prerequisites:** S-01 complete (it is — the 3–5 cap landed 2026-09-12). Out of band: enable YouTube Data API v3 on the existing `yt-niche-adviser` Google Cloud project, obtain an Anthropic key, and set both as GitHub secrets _and_ Worker secrets.
 **Estimated effort:** ~3–4 sessions across 5 phases.
 
 ## Open Risks & Assumptions

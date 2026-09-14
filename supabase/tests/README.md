@@ -18,13 +18,13 @@ inside its own transaction and rolls it back again.
 
 ## Files
 
-| File | Proves |
-|---|---|
-| `00-harness.test.sql` | Impersonation resolves to two distinct non-null identities, `anon` to none, and RLS is on for all three surfaces. **Read this first.** |
-| `01-channel-profiles.test.sql` | Per-verb, per-role isolation on `public.channel_profiles` |
-| `02-content-opportunities.test.sql` | Per-verb, per-role isolation on `public.content_opportunities` |
-| `03-policy-shape.test.sql` | The policy *expressions* say what they must say |
-| `04-avatars-bucket.test.sql` | Per-verb, per-role isolation on the private `avatars` bucket |
+| File                                | Proves                                                                                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `00-harness.test.sql`               | Impersonation resolves to two distinct non-null identities, `anon` to none, and RLS is on for all three surfaces. **Read this first.** |
+| `01-channel-profiles.test.sql`      | Per-verb, per-role isolation on `public.channel_profiles`                                                                              |
+| `02-content-opportunities.test.sql` | Per-verb, per-role isolation on `public.content_opportunities`                                                                         |
+| `03-policy-shape.test.sql`          | The policy _expressions_ say what they must say                                                                                        |
+| `04-avatars-bucket.test.sql`        | Per-verb, per-role isolation on the private `avatars` bucket                                                                           |
 
 `00-harness.test.sql` is the precondition for every other file. If it goes red,
 nothing else in this directory means anything — a suite where `auth.uid()` is
@@ -38,9 +38,9 @@ a single policy being consulted.
 Two fixed users, with visually distinct prefixes so a failing assertion names
 its actor legibly:
 
-| Actor | UUID |
-|---|---|
-| **User A** — the owner | `aaaaaaaa-0000-0000-0000-000000000001` |
+| Actor                     | UUID                                   |
+| ------------------------- | -------------------------------------- |
+| **User A** — the owner    | `aaaaaaaa-0000-0000-0000-000000000001` |
 | **User B** — the stranger | `bbbbbbbb-0000-0000-0000-000000000002` |
 
 Insert them into `auth.users` with the minimal accepted column set: `id`,

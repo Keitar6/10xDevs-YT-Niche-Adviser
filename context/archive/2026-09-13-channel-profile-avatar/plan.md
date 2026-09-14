@@ -18,7 +18,7 @@ Give the channel profile a visual identity: the user either uploads an image or 
 
 A signed-in user with a saved profile opens the profile dialog and either uploads an image or clicks Generate. Either way a 512×512 avatar appears in the dialog and in the topbar within seconds, is stored under `avatars/<user_id>/`, and is unreadable by any other user. The user can replace it or remove it. With the `AI` binding absent the Generate button is not rendered and upload continues to work unchanged.
 
-**Verification**: the Phase 3 checkpoint *is* the degraded state FR-015 requires, so upload-only correctness is proven before generation exists. Owner isolation is proven by a two-user Storage REST check, replicating the F-02 protocol (`context/changes/channel-profile-data-model/plan.md:170-179`).
+**Verification**: the Phase 3 checkpoint _is_ the degraded state FR-015 requires, so upload-only correctness is proven before generation exists. Owner isolation is proven by a two-user Storage REST check, replicating the F-02 protocol (`context/changes/channel-profile-data-model/plan.md:170-179`).
 
 ### Key Discoveries:
 
@@ -45,7 +45,7 @@ Build outward from the data layer, keeping every provider-dependent decision in 
 
 ## Critical Implementation Details
 
-**Write ordering on replace.** The new object must be uploaded and `avatar_path` updated *before* the superseded object is deleted. The reverse order loses the user's avatar entirely if the upload then fails, and a failed delete must never roll back a successful path update — an orphaned object is recoverable, a lost pointer is not.
+**Write ordering on replace.** The new object must be uploaded and `avatar_path` updated _before_ the superseded object is deleted. The reverse order loses the user's avatar entirely if the upload then fails, and a failed delete must never roll back a successful path update — an orphaned object is recoverable, a lost pointer is not.
 
 **Signed URLs start their clock at SSR render, not at image paint.** Minting in `Topbar.astro` means the ~1h window is consumed by how long the tab stays open, not by how long the image is displayed.
 
@@ -111,7 +111,7 @@ Establish the shared bounds and pure helpers before any I/O, following the seque
 
 **File**: `src/lib/services/avatar.ts`
 
-**Intent**: Own the validation bounds, the prompt template and the object-path scheme as pure, I/O-free functions. Exported constants are imported by *both* the route and the client component, so the client/server validation mirror that impl-review F1 flagged is enforced by construction rather than by discipline. Must not import `astro:env/server` or call `fetch`, per the convention documented at `src/lib/services/scoring.ts:4`.
+**Intent**: Own the validation bounds, the prompt template and the object-path scheme as pure, I/O-free functions. Exported constants are imported by _both_ the route and the client component, so the client/server validation mirror that impl-review F1 flagged is enforced by construction rather than by discipline. Must not import `astro:env/server` or call `fetch`, per the convention documented at `src/lib/services/scoring.ts:4`.
 
 **Contract**: exports `MAX_AVATAR_BYTES`, `ALLOWED_AVATAR_TYPES`, `AVATAR_EDGE_PX` (512); `validateAvatarUpload({ contentType, byteLength })` returning a discriminated result carrying the resolved file extension or a user-facing message; `buildAvatarPrompt(niche, subNiche)` slotting **truncated** user text into a fixed style template rather than concatenating it; `avatarObjectPath(userId, extension)` returning `<userId>/<uuid>.<ext>` so each write gets a fresh path and no stale image is ever served from cache.
 
@@ -158,7 +158,7 @@ A complete, shippable avatar feature. On completion the app is in exactly the st
 
 **File**: `src/components/Topbar.astro`
 
-**Intent**: Sign a URL for the stored path alongside the profile read already happening at `:8-15`, and render the avatar. A *failed* signing must stay distinguishable from "no avatar", mirroring the `loadFailed` handling that impl-review F4 introduced — the write path replaces the object, so a misread must not invite a destructive overwrite.
+**Intent**: Sign a URL for the stored path alongside the profile read already happening at `:8-15`, and render the avatar. A _failed_ signing must stay distinguishable from "no avatar", mirroring the `loadFailed` handling that impl-review F4 introduced — the write path replaces the object, so a misread must not invite a destructive overwrite.
 
 **Contract**: signed URL minted with ~1h expiry when `profile?.avatar_path` is set; passes `initialAvatarUrl` and an `avatarLoadFailed` flag into `<ProfileDialog />`.
 

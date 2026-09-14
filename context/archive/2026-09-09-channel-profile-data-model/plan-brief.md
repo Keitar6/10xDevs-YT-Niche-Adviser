@@ -16,16 +16,16 @@ A `channel_profiles` table exists locally with one row per user (niche, optional
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) |
-| --- | --- | --- |
+| Decision              | Choice                                                | Why (1 sentence)                                                                                            |
+| --------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | Competitor ID storage | `text[]` column on the profile row, not a child table | 3–5 opaque ID strings don't need normalization; S-02 fetches competitor data live from YouTube's API anyway |
-| 3–5 count enforcement | App-level only (S-01), no DB CHECK | Roadmap explicitly names this validation as S-01's risk, not F-02's |
-| Channel ID format | No DB-level format CHECK | Avoids baking in a possibly-wrong assumption about YouTube's ID shape |
-| TS type generation | Add `supabase gen types typescript` + type the client | End-to-end type safety, pays off as more tables arrive in S-01/S-03 |
-| RLS verification | curl against local REST API with two users' JWTs | Reuses the exact two-session pattern already proven debugging `google-oauth-login` this session |
-| `updated_at` | DB trigger (`BEFORE UPDATE`) | Correct regardless of which code path updates the row — can't be forgotten |
-| Migration scope | Local Supabase only, cloud push deferred | Nothing consumes this table until S-01; no reason to touch the cloud DB yet |
-| `sub_niche` | Nullable | PRD doesn't mark it must-have on its own, and not every niche needs a split |
+| 3–5 count enforcement | App-level only (S-01), no DB CHECK                    | Roadmap explicitly names this validation as S-01's risk, not F-02's                                         |
+| Channel ID format     | No DB-level format CHECK                              | Avoids baking in a possibly-wrong assumption about YouTube's ID shape                                       |
+| TS type generation    | Add `supabase gen types typescript` + type the client | End-to-end type safety, pays off as more tables arrive in S-01/S-03                                         |
+| RLS verification      | curl against local REST API with two users' JWTs      | Reuses the exact two-session pattern already proven debugging `google-oauth-login` this session             |
+| `updated_at`          | DB trigger (`BEFORE UPDATE`)                          | Correct regardless of which code path updates the row — can't be forgotten                                  |
+| Migration scope       | Local Supabase only, cloud push deferred              | Nothing consumes this table until S-01; no reason to touch the cloud DB yet                                 |
+| `sub_niche`           | Nullable                                              | PRD doesn't mark it must-have on its own, and not every niche needs a split                                 |
 
 ## Scope
 
@@ -39,8 +39,8 @@ One migration file creates the table, four granular RLS policies (select/insert/
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
+| Phase                         | What it delivers                                                                | Key risk                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | 1. Channel profile data model | Migration, RLS, trigger, generated types, typed client, curl-verified isolation | RLS policy correctness — the one area worth extra rigor per the roadmap's own risk note |
 
 **Prerequisites:** local Supabase running (`npx supabase start`) — already the case from `google-oauth-login`.

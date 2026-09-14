@@ -64,7 +64,7 @@ Recorded so `/10x-impl-review` reads these as decisions, not drift.
    has anonymous visitors. Fixed by branching the hero on state (user's call): signed out keeps
    Get started / Sign in; signed in without a profile gets "Set up your channel profile"
    (`data-profile-open`, a new delegated listener on `ProfileDialog` mirroring the auth one) plus
-   "Go to dashboard"; signed in with a profile gets "Go to dashboard" alone. A *failed* profile
+   "Go to dashboard"; signed in with a profile gets "Go to dashboard" alone. A _failed_ profile
    read is deliberately not treated as "no profile" — those users are sent to the dashboard rather
    than told to create one they may already have.
    - **`loadChannelProfile` lives in a new `channel-profile-server.ts`.** Putting it beside

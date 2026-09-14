@@ -28,11 +28,11 @@ resilience") in the live codebase. Specifically, the two risks it covers:
   payload for the justification step and the whole Analyze run dies, even though
   the deterministic scores were already computed.
 - **Risk #2** — YouTube quota exhaustion or an API error surfaces as a broken
-  screen, or as a *confidently empty* ranking indistinguishable from "these
+  screen, or as a _confidently empty_ ranking indistinguishable from "these
   competitors published nothing."
 
-Per §1 principle #3 of the test plan, the plan describes *what could fail*;
-this document is the ground truth for *where the failure lives*. Scope agreed
+Per §1 principle #3 of the test plan, the plan describes _what could fail_;
+this document is the ground truth for _where the failure lives_. Scope agreed
 with the user before research: both risks, full chain, plus the fake-transport
 seam decision that §4 defers to this phase.
 
@@ -40,7 +40,7 @@ seam decision that §4 defers to this phase.
 
 **The headline finding is that both risks are already largely defended in
 production code — and that this changes what Phase 1 should be.** This is not a
-bootstrap; it is a *characterization and gap-closing* phase. The code was written
+bootstrap; it is a _characterization and gap-closing_ phase. The code was written
 deliberately against these two failure modes (the archived plan from
 2026-09-10 specifies the degradation ladder almost line for line), but **none of
 that behaviour is covered by a single test** — there is no `justify.test.ts` and
@@ -50,7 +50,7 @@ What holds today:
 
 1. **Scores provably survive a justification failure, by construction.** The
    `opportunities` array is materialized with `justification: null` at
-   `analyze.ts:166`, *before* the LLM is called. The failure branch
+   `analyze.ts:166`, _before_ the LLM is called. The failure branch
    (`analyze.ts:182-183`) only writes `summary.justifications_error` and never
    reassigns `opportunities`. There is no code path where a justification
    failure discards the scored rows.
@@ -68,12 +68,12 @@ What holds today:
 
 What does **not** hold — four concrete, testable gaps, in priority order:
 
-| # | Gap | Where | Which risk |
-|---|-----|-------|-----------|
-| G1 | An **empty-string** justification is reported as *available* and renders as *nothing* | `analyze.ts:174,178` + `OpportunityList.tsx:62` | #1 |
-| G2 | Per-competitor `transport`/`malformed` failures fold into a bare `unresolved: string[]` with **no reason code** — indistinguishable from "this channel ID does not exist" | `youtube.ts:505-513`, `types.ts` `AnalyzeSummary.unresolved` | #2 |
-| G3 | **No top-level try/catch** in the route; `analyze.ts:108` re-throws non-`YouTubeError` into Astro's generic 500 HTML | `analyze.ts:46-190` | #1, #2 |
-| G4 | `stop_reason: "max_tokens"` is **never checked**; a truncation that still yields schema-valid JSON with fewer items looks identical to the model legitimately omitting rows | `justify.ts:123-133` | #1 |
+| #   | Gap                                                                                                                                                                         | Where                                                        | Which risk |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------- |
+| G1  | An **empty-string** justification is reported as _available_ and renders as _nothing_                                                                                       | `analyze.ts:174,178` + `OpportunityList.tsx:62`              | #1         |
+| G2  | Per-competitor `transport`/`malformed` failures fold into a bare `unresolved: string[]` with **no reason code** — indistinguishable from "this channel ID does not exist"   | `youtube.ts:505-513`, `types.ts` `AnalyzeSummary.unresolved` | #2         |
+| G3  | **No top-level try/catch** in the route; `analyze.ts:108` re-throws non-`YouTubeError` into Astro's generic 500 HTML                                                        | `analyze.ts:46-190`                                          | #1, #2     |
+| G4  | `stop_reason: "max_tokens"` is **never checked**; a truncation that still yields schema-valid JSON with fewer items looks identical to the model legitimately omitting rows | `justify.ts:123-133`                                         | #1         |
 
 G1 is the sharpest: it is a live defect, not a hypothetical, and it defeats the
 exact PRD guardrail ("Analyze never ends in emptiness without explanation") that
@@ -90,26 +90,26 @@ the rest of the file works so hard to uphold.
 const client = new Anthropic({ apiKey, maxRetries: 0, timeout: REQUEST_TIMEOUT_MS });
 ```
 
-No `fetch`, no `baseURL`. The API key is *not* read here — it is a parameter,
+No `fetch`, no `baseURL`. The API key is _not_ read here — it is a parameter,
 read upstream from `astro:env/server` at `analyze.ts:11` and passed at
 `analyze.ts:169`. `maxRetries: 0` is deliberate and recorded: the archived plan
-says *"No retry on the LLM call — one attempt, then degrade. Retrying pushes
-against the ~30s p95 target on the slowest path."*
+says _"No retry on the LLM call — one attempt, then degrade. Retrying pushes
+against the ~30s p95 target on the slowest path."_
 
 **One batched request for the whole ranking.** `justify.ts:110-121` issues
 exactly one `client.messages.parse()` per run, with `buildPrompt`
 (`justify.ts:75-91`) concatenating all ranked items (max `TOP_N = 5`) into a
-single user message. The file documents why: *"One batched call for the whole
+single user message. The file documents why: _"One batched call for the whole
 ranking — five separate calls would multiply the latency this step is already
-budgeted against."*
+budgeted against."_
 
-**Consequence for testing:** a single bad batch degrades *every* row at once.
+**Consequence for testing:** a single bad batch degrades _every_ row at once.
 There is no per-item fallback and no partial-batch retry. The only "partial"
 case handled is a schema-valid response that omits some `video_id`s, absorbed
 by the `Map` lookup at `analyze.ts:171-175`.
 
 **Parsing is delegated to the SDK, not hand-rolled.** This materially changes
-the risk. The code does *not* index `response.content[0].text` and `JSON.parse`
+the risk. The code does _not_ index `response.content[0].text` and `JSON.parse`
 it. It uses `client.messages.parse()` with `zodOutputFormat(justificationsSchema)`
 (imported at `justify.ts:10`), so content-block extraction, JSON parsing, and
 schema validation all happen inside the SDK, surfacing to this file as just two
@@ -126,14 +126,14 @@ if (!parsed) {
 ```
 
 Empty `content` array, non-`text` block type, truncated JSON, a prose refusal,
-and wrong-key JSON should *all* funnel into `parsed_output == null` and return a
+and wrong-key JSON should _all_ funnel into `parsed_output == null` and return a
 clean `ok: false`. **That is an assumption about SDK behaviour that no test in
 this repo verifies** — and verifying it is precisely the value Phase 1 adds.
 
 **G4 — the one silent-garbage path.** `stop_reason` is checked only for
 `"refusal"` (`justify.ts:123`). If `max_tokens` truncation happens to land
 after a complete justification object such that the structured-output machinery
-still yields schema-conforming JSON with *fewer* entries, the function returns
+still yields schema-conforming JSON with _fewer_ entries, the function returns
 `ok: true` with a short array. Downstream, `analyze.ts:171-175` cannot tell that
 apart from the model choosing to omit rows — both produce `justification: null`
 for the missing rows. The run is not wrong, but `summary.justifications_error`
@@ -152,14 +152,14 @@ the exercised path.
 
 **Error translation, all inside `getJson`:**
 
-| Upstream condition | Result |
-|---|---|
+| Upstream condition              | Result                                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ |
 | 403 + `reason: "quotaExceeded"` | `YouTubeError{ kind: "quota" }`, message names the Pacific-midnight reset (`youtube.ts:101-106`) |
-| 400 / 401 / other 403 | `YouTubeError{ kind: "auth" }` (`youtube.ts:107-112`) |
-| any other non-ok status (5xx) | `YouTubeError{ kind: "transport" }` naming the HTTP status (`youtube.ts:113-116`) |
-| network throw / timeout | `YouTubeError{ kind: "transport" }`, distinguishing `TimeoutError` by name (`youtube.ts:76-89`) |
-| `res.json()` fails | `YouTubeError{ kind: "malformed" }` (`youtube.ts:91-96`) |
-| 200 with `items: []` | **no error** — treated as a legitimate empty response |
+| 400 / 401 / other 403           | `YouTubeError{ kind: "auth" }` (`youtube.ts:107-112`)                                            |
+| any other non-ok status (5xx)   | `YouTubeError{ kind: "transport" }` naming the HTTP status (`youtube.ts:113-116`)                |
+| network throw / timeout         | `YouTubeError{ kind: "transport" }`, distinguishing `TimeoutError` by name (`youtube.ts:76-89`)  |
+| `res.json()` fails              | `YouTubeError{ kind: "malformed" }` (`youtube.ts:91-96`)                                         |
+| 200 with `items: []`            | **no error** — treated as a legitimate empty response                                            |
 
 **Timeout, no retry.** Every request carries
 `AbortSignal.timeout(REQUEST_TIMEOUT_MS)` with `REQUEST_TIMEOUT_MS = 10_000`
@@ -168,9 +168,9 @@ the exercised path.
 
 **Aggregation is `Promise.allSettled` with a deliberate fatal/local split**
 (`youtube.ts:496-513`). The code comments state the reasoning directly: quota
-and auth *"are properties of the run, not of one competitor: they will hit every
+and auth _"are properties of the run, not of one competitor: they will hit every
 remaining call too, so reporting them as a single unlucky channel would be a
-lie. They stay fatal."* Everything else is *"local to this competitor"* and gets
+lie. They stay fatal."_ Everything else is _"local to this competitor"_ and gets
 pushed into `unresolved`.
 
 **G2 — the confidently-empty gap lives exactly here.** The fatal/local split is
@@ -207,24 +207,24 @@ cap the product at ~20 runs/day.
 
 **Only `POST` is exported** (`analyze.ts:46`). **There is no zod schema** — and
 that is correct, not an oversight: no request body is read at all. The file
-documents it (`analyze.ts:47-48`): *"the run is defined entirely by the caller's
-saved profile, so there is nothing to parse and nothing to guard."* The auth
+documents it (`analyze.ts:47-48`): _"the run is defined entirely by the caller's
+saved profile, so there is nothing to parse and nothing to guard."_ The auth
 check is the first statement (`analyze.ts:49-51`), satisfying the CLAUDE.md rule
 that `PROTECTED_ROUTES` never covers `/api/*`.
 
 **The full degradation ladder**, matching the archived plan almost exactly:
 
-| Condition | Status | Body |
-|---|---|---|
-| no session | 401 | `{ error }` |
-| rate limited (5/60s) | 429 | `{ error }` |
-| `YOUTUBE_API_KEY` missing / no Supabase client | 500 | `{ error }` |
-| profile read error | 500 | `{ error }` |
-| no profile or zero competitors | 400 | `{ error }` |
-| `YouTubeError`, `kind === "quota"` | 429 | `{ error }` |
-| `YouTubeError`, any other kind | 502 | `{ error }` |
-| zero resolved / zero scored / zero rankable | 200 | `AnalyzeResponse` + `summary.empty_reason` |
-| LLM failed, partial, or unconfigured | 200 | full ranking, `justification: null`, `summary.justifications_error` |
+| Condition                                      | Status | Body                                                                |
+| ---------------------------------------------- | ------ | ------------------------------------------------------------------- |
+| no session                                     | 401    | `{ error }`                                                         |
+| rate limited (5/60s)                           | 429    | `{ error }`                                                         |
+| `YOUTUBE_API_KEY` missing / no Supabase client | 500    | `{ error }`                                                         |
+| profile read error                             | 500    | `{ error }`                                                         |
+| no profile or zero competitors                 | 400    | `{ error }`                                                         |
+| `YouTubeError`, `kind === "quota"`             | 429    | `{ error }`                                                         |
+| `YouTubeError`, any other kind                 | 502    | `{ error }`                                                         |
+| zero resolved / zero scored / zero rankable    | 200    | `AnalyzeResponse` + `summary.empty_reason`                          |
+| LLM failed, partial, or unconfigured           | 200    | full ranking, `justification: null`, `summary.justifications_error` |
 
 **G3 — the one hole in that ladder.** The only try/catch in the file is the
 narrow one around `fetchCompetitorVideos` (`analyze.ts:100-109`), and it
@@ -242,10 +242,9 @@ each individually reasonable, combining into a silent failure:
 
 ```ts
 // analyze.ts:172-175 — `??` substitutes only on null/undefined, so "" passes through
-justification: byVideoId.get(opportunity.video_id) ?? null,
-
-// analyze.ts:178 — "" !== null, so an empty justification counts as AVAILABLE
-summary.justifications_available = opportunities.every((o) => o.justification !== null);
+justification: (byVideoId.get(opportunity.video_id) ?? null,
+  // analyze.ts:178 — "" !== null, so an empty justification counts as AVAILABLE
+  (summary.justifications_available = opportunities.every((o) => o.justification !== null)));
 ```
 
 ```tsx
@@ -270,8 +269,8 @@ invisible in the list; the only signal is the aggregate banner rendered above it
 cases render through one branch — `Notice tone="info"` with
 `result.summary.empty_reason` (`AnalyzePanel.tsx:170-173`). There is no
 `empty_reason_kind` enum. This directly collides with the test plan's
-anti-pattern for Risk #2: *"Asserting the error message text rather than the
-user-visible state class — copy churns, the state class is the contract."*
+anti-pattern for Risk #2: _"Asserting the error message text rather than the
+user-visible state class — copy churns, the state class is the contract."_
 **Today there is no state class to assert.** A test either asserts prose (the
 named anti-pattern) or the phase adds a structured discriminant. That is a
 design decision for `/10x-plan`, not something research can settle.
@@ -279,7 +278,7 @@ design decision for `/10x-plan`, not something research can settle.
 ### 4. Test infrastructure — the fake-transport seam
 
 **Existing conventions.** Five test files, all in `src/lib/services/`, all using
-only `import { describe, expect, it } from "vitest"` and plain *relative*
+only `import { describe, expect, it } from "vitest"` and plain _relative_
 imports. Local factory functions with `Partial<T>` overrides are the fixture
 style (`scoring.test.ts:16-39`). **There is no `vi.*` call anywhere in the
 suite** — no `vi.mock`, no `vi.fn`, no `vi.stubGlobal`, no `beforeEach`, no setup
@@ -305,7 +304,7 @@ because it flips the plan's cost calculus:
 - The `@/*` alias is **not configured** in `vitest.config.ts`. It survives today
   only because the sole usage in a tested module is `import type`
   (`content-opportunity.ts:2`), which is erased. `analyze.ts` uses `@/` for
-  *value* imports, so route-level tests need alias config.
+  _value_ imports, so route-level tests need alias config.
 - `include` is scoped to `src/lib/services/**/*.test.ts`, so any test outside
   that directory is silently not run.
 
@@ -323,7 +322,7 @@ cheap one may cover both boundaries:
   ```ts
   const client = new Anthropic({ baseURL, apiKey, fetch: (url) => Promise.resolve(new Response(...)) });
   ```
-  Injecting a fake `fetch` keeps the SDK's real decoding *and* `justify.ts`'s
+  Injecting a fake `fetch` keeps the SDK's real decoding _and_ `justify.ts`'s
   real `parsed_output` / `stop_reason` handling in the path — the only way to
   actually test G4 and the SDK-behaviour assumptions in §1.
 - **Open question the plan must settle empirically:** the SDK dropped
@@ -363,12 +362,12 @@ the cost × signal rule (§1 principle 1) points to.
 ## Architecture Insights
 
 - **Degradation is a first-class design concern, and it is documented in-line.**
-  `justify.ts:4-7` states the module's contract outright: *"the only step in the
+  `justify.ts:4-7` states the module's contract outright: _"the only step in the
   analysis that is allowed to fail without failing the run… nothing thrown from
-  this module ever reaches the user as a 500."* `analyze.ts:1-8` states the
-  route's: *"A click never ends in unexplained emptiness — that is a PRD
-  guardrail, not a nicety."* The tests Phase 1 writes should be read as
-  *pinning contracts the code already claims*, which is a much stronger framing
+  this module ever reaches the user as a 500."_ `analyze.ts:1-8` states the
+  route's: _"A click never ends in unexplained emptiness — that is a PRD
+  guardrail, not a nicety."_ The tests Phase 1 writes should be read as
+  _pinning contracts the code already claims_, which is a much stronger framing
   than "adding coverage."
 - **The Result-type pattern is used at exactly one boundary.** `justifyOpportunities`
   returns `{ ok }` instead of throwing, which is why the caller needs no
@@ -376,7 +375,7 @@ the cost × signal rule (§1 principle 1) points to.
   error. Both are defensible, but the asymmetry means a test author must not
   assume one style from having seen the other.
 - **"Fatal vs local" is the real error-handling axis in the YouTube layer**, and
-  it is chosen per failure *kind*, not per call site. Quota and auth are
+  it is chosen per failure _kind_, not per call site. Quota and auth are
   properties of the run; transport and malformed are properties of one
   competitor. The design is right; the loss of fidelity on the "local" side
   (G2) is the bug.
@@ -394,21 +393,21 @@ the cost × signal rule (§1 principle 1) points to.
 
 - `context/archive/2026-09-10-analyze-and-rank-opportunities/plan.md:295-305` —
   the **eight-step degradation ladder** the route implements today, specified in
-  advance. Step 8 reads: *"LLM failure → 200 with the full ranking,
-  justifications omitted, and a flag the UI renders as a notice."* Phase 1 is
+  advance. Step 8 reads: _"LLM failure → 200 with the full ranking,
+  justifications omitted, and a flag the UI renders as a notice."_ Phase 1 is
   testing a contract that was written down before the code.
-- `.../plan.md:50` — *"No retry on the LLM call — one attempt, then degrade."*
+- `.../plan.md:50` — _"No retry on the LLM call — one attempt, then degrade."_
   A deliberate decision, not an omission; a test must not "fix" `maxRetries: 0`.
 - `.../plan.md:285` — the typed-error-chain ordering requirement, including the
-  note that `APIStatusError` is the *Python* SDK's name and does not exist here.
-- `.../plan.md:233` — *"Errors are classified rather than collapsed: HTTP 403
+  note that `APIStatusError` is the _Python_ SDK's name and does not exist here.
+- `.../plan.md:233` — _"Errors are classified rather than collapsed: HTTP 403
   carrying `quotaExceeded` is distinguishable by the caller from a transport
   failure or a malformed response, because FR-009 requires the quota case to
-  produce its own readable message."*
+  produce its own readable message."_
 - `.../research.md:306-311` — errors surface as a **toast** (per-run) and are
   deliberately kept distinct from the persistent config **banner**
   (`src/lib/config-status.ts` → `Layout.astro`) for missing keys, because
-  *"a toast cannot do this job, since it only fires if someone clicks Analyze."*
+  _"a toast cannot do this job, since it only fires if someone clicks Analyze."_
 - `.../research.md:264-284` — origin of the PRD's **mean → median** correction
   (decision D2, 2026-09-11), citing the breakdown-point argument; PRD FR-008 and
   `roadmap.md:32` were both amended. Relevant to Phase 3, not Phase 1, but it is
@@ -437,7 +436,7 @@ the cost × signal rule (§1 principle 1) points to.
    `fetch` parameter threaded through `justifyOpportunities`. Settle with a
    ~10-line spike before planning the test files.
 2. **Is G1 (empty-string justification) fixed in this phase or only
-   characterized?** Phase 1 is scoped as a *testing* phase, but G1 is a live
+   characterized?** Phase 1 is scoped as a _testing_ phase, but G1 is a live
    defect with a two-line fix (treat `""` as absent at `analyze.ts:174`). The
    test plan gives no guidance on test phases that uncover production bugs.
    Recommendation: fix it here, because a test asserting the current behaviour
@@ -451,7 +450,7 @@ the cost × signal rule (§1 principle 1) points to.
 4. **How far up the chain does Phase 1 test?** Testing `justify.ts` and
    `youtube.ts` directly is nearly free — no virtual modules, no alias needed.
    Testing `analyze.ts` (where G1 and G3 actually live) requires mocking
-   `astro:env/server` *and* `cloudflare:workers`, plus alias config and a
+   `astro:env/server` _and_ `cloudflare:workers`, plus alias config and a
    widened `include`. The cheap tests do not reach the gaps; the tests that reach
    the gaps carry the config cost. Worth an explicit decision rather than drift.
 5. **Should G3 be closed with a top-level try/catch?** It is a small change with

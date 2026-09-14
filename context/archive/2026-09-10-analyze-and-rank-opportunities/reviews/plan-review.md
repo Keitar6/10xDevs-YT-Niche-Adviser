@@ -1,4 +1,5 @@
 <!-- PLAN-REVIEW-REPORT -->
+
 # Plan Review: Analyze and Rank Opportunities (S-02)
 
 - **Plan**: `context/changes/analyze-and-rank-opportunities/plan.md`
@@ -9,13 +10,13 @@
 
 ## Verdicts
 
-| Dimension | Verdict (at review) | After fixes |
-|-----------|---------------------|-------------|
-| End-State Alignment | WARNING | PASS |
-| Lean Execution | PASS | PASS |
-| Architectural Fitness | WARNING | PASS |
-| Blind Spots | FAIL | PASS |
-| Plan Completeness | WARNING | PASS |
+| Dimension             | Verdict (at review) | After fixes |
+| --------------------- | ------------------- | ----------- |
+| End-State Alignment   | WARNING             | PASS        |
+| Lean Execution        | PASS                | PASS        |
+| Architectural Fitness | WARNING             | PASS        |
+| Blind Spots           | FAIL                | PASS        |
+| Plan Completeness     | WARNING             | PASS        |
 
 ## Grounding
 

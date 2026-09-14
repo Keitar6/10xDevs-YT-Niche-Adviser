@@ -18,17 +18,17 @@ A logged-in user on `/dashboard` clicks "Profile" (or "Set up profile") in the n
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) |
-| --- | --- | --- |
-| UI shape | Dialog, not a page | User's call after seeing the page in practice — felt like it should be a lightweight dialog, not full navigation |
-| Trigger location | Wire up the existing unused `Topbar.astro` on `/dashboard` | Reuses a component that already existed but was never rendered |
-| Save behavior | Client-side `fetch` via a plain `onSubmit` handler, dialog stays open (no navigation) | Feels like a real modal; first fetch-based form in this codebase. A React 19 function form action was tried first and is broken inside Radix's `Dialog` — `SubmitButton` gained a `pending` override prop instead |
-| Standalone `/profile` route | Removed | Dialog is now the only way in, per user's explicit choice |
-| Competitor ID input | Dynamic add/remove rows, **3–5** | Originally shipped min-3/no-max by user direction; superseded 2026-09-11 by decision D1 (cap of 5 enforced in the profile), restoring PRD FR-003 |
-| ID format validation | None — just non-empty trimmed strings | Mirrors F-02's DB-level decision not to bake in a possibly-wrong YouTube ID format assumption |
-| Duplicate competitor IDs | Rejected with a validation error | A duplicate is almost certainly a mistake; silently deduping could leave a user under the 3-minimum without telling them |
-| RLS re-verification | Single-user UI walkthrough only | F-02 already proved isolation at the DB level; this slice's own risk is scoping its queries correctly, not RLS itself |
-| Create vs. edit | Same upsert operation, same form | `user_id` is `unique` with `default auth.uid()` — the two cases are the same DB operation |
+| Decision                    | Choice                                                                                | Why (1 sentence)                                                                                                                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI shape                    | Dialog, not a page                                                                    | User's call after seeing the page in practice — felt like it should be a lightweight dialog, not full navigation                                                                                                  |
+| Trigger location            | Wire up the existing unused `Topbar.astro` on `/dashboard`                            | Reuses a component that already existed but was never rendered                                                                                                                                                    |
+| Save behavior               | Client-side `fetch` via a plain `onSubmit` handler, dialog stays open (no navigation) | Feels like a real modal; first fetch-based form in this codebase. A React 19 function form action was tried first and is broken inside Radix's `Dialog` — `SubmitButton` gained a `pending` override prop instead |
+| Standalone `/profile` route | Removed                                                                               | Dialog is now the only way in, per user's explicit choice                                                                                                                                                         |
+| Competitor ID input         | Dynamic add/remove rows, **3–5**                                                      | Originally shipped min-3/no-max by user direction; superseded 2026-09-11 by decision D1 (cap of 5 enforced in the profile), restoring PRD FR-003                                                                  |
+| ID format validation        | None — just non-empty trimmed strings                                                 | Mirrors F-02's DB-level decision not to bake in a possibly-wrong YouTube ID format assumption                                                                                                                     |
+| Duplicate competitor IDs    | Rejected with a validation error                                                      | A duplicate is almost certainly a mistake; silently deduping could leave a user under the 3-minimum without telling them                                                                                          |
+| RLS re-verification         | Single-user UI walkthrough only                                                       | F-02 already proved isolation at the DB level; this slice's own risk is scoping its queries correctly, not RLS itself                                                                                             |
+| Create vs. edit             | Same upsert operation, same form                                                      | `user_id` is `unique` with `default auth.uid()` — the two cases are the same DB operation                                                                                                                         |
 
 ## Scope
 
@@ -42,8 +42,8 @@ One upserting API route (conflict target: `user_id`) now returns JSON instead of
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
+| Phase                   | What it delivers                                                         | Key risk                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | 1. Channel profile CRUD | Upsert API route (JSON), dynamic-row form, profile dialog, Topbar wiring | First fetch-based form + first dialog in this codebase — worth careful manual verification of the non-navigating save flow |
 
 **Prerequisites:** `channel-profile-data-model` implemented (it is — `channel_profiles` exists with RLS).

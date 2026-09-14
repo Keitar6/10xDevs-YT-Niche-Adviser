@@ -5,7 +5,8 @@ git_commit: 40e33b8be55ae778fe69c13ab06eac3583cb6a3b
 branch: master
 repository: YT-Niche-Adviser
 topic: "Is yt-api-docs.md compatible with this codebase? Internal research for S-02 (analyze-and-rank-opportunities)"
-tags: [research, codebase, internal, s-02, youtube-data-api, api-routes, astro-env, rls, cloudflare-workers, compatibility]
+tags:
+  [research, codebase, internal, s-02, youtube-data-api, api-routes, astro-env, rls, cloudflare-workers, compatibility]
 status: complete
 research_type: internal
 last_updated: 2026-09-11
@@ -25,7 +26,7 @@ last_updated_note: "Added follow-up recording user decisions (D1-D4); PRD FR-008
 
 Review the codebase and decide whether [`yt-api-docs.md`](./yt-api-docs.md) — the external YouTube Data API v3 contract for S-02 — is compatible with it, given that we want to implement roadmap slice **S-02** (`analyze-and-rank-opportunities`, the north star).
 
-This is the internal counterpart to the two external documents already in this change folder. It answers *"what does our codebase already do, and what does it force on the plan"*, not *"what should we build with"*.
+This is the internal counterpart to the two external documents already in this change folder. It answers _"what does our codebase already do, and what does it force on the plan"_, not _"what should we build with"_.
 
 ## Summary
 
@@ -33,19 +34,19 @@ This is the internal counterpart to the two external documents already in this c
 
 Specifically, all five of the document's hard requirements check out against the repo as it stands:
 
-| `yt-api-docs.md` requires | Codebase status |
-|---|---|
-| Three plain `GET` calls over HTTP | Native to `workerd`; no Node built-in needed. **First** outbound third-party `fetch()` in the repo — no precedent, but no obstacle. |
-| `z.coerce.number()` for the string `viewCount` | `zod@4.4.3` installed (`package.json:37`) and already mandated for API routes by `CLAUDE.md`. `z.coerce` exists in v4. |
-| Absent parts modelled as absent keys, not `null` | Plain `.optional()` in zod. No conflict with the `Database`-derived type convention, which only covers DB rows. |
-| A server-side API key as an `astro:env/server` secret "alongside `SUPABASE_KEY`" | Exactly the existing pattern (`astro.config.mjs:19-20`). See the `optional: true` caveat below. |
-| No OAuth; a credential distinct from F-01's Google login | Correct. F-01 uses Supabase's Google provider (`src/pages/api/auth/google.ts`), which never touches an API key. |
+| `yt-api-docs.md` requires                                                        | Codebase status                                                                                                                     |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Three plain `GET` calls over HTTP                                                | Native to `workerd`; no Node built-in needed. **First** outbound third-party `fetch()` in the repo — no precedent, but no obstacle. |
+| `z.coerce.number()` for the string `viewCount`                                   | `zod@4.4.3` installed (`package.json:37`) and already mandated for API routes by `CLAUDE.md`. `z.coerce` exists in v4.              |
+| Absent parts modelled as absent keys, not `null`                                 | Plain `.optional()` in zod. No conflict with the `Database`-derived type convention, which only covers DB rows.                     |
+| A server-side API key as an `astro:env/server` secret "alongside `SUPABASE_KEY`" | Exactly the existing pattern (`astro.config.mjs:19-20`). See the `optional: true` caveat below.                                     |
+| No OAuth; a credential distinct from F-01's Google login                         | Correct. F-01 uses Supabase's Google provider (`src/pages/api/auth/google.ts`), which never touches an API key.                     |
 
 **The incompatibilities are not in the document — they are three gaps between the document's assumptions and this codebase's current state.** Ranked by how much they change the plan:
 
-1. **The document's call chain assumes "3-5 competitors"; the codebase deliberately allows unbounded, unvalidated competitor IDs.** `channel-profile-crud` relaxed the PRD's "3–5" to **min 3 / no max** *by explicit user direction*, and no layer — DB, API, or form — validates that an entry is a YouTube channel ID at all. Every quota, latency, and CPU figure in both external documents is computed against a bound the product does not enforce. This is the one finding that must reach `/10x-plan`.
+1. **The document's call chain assumes "3-5 competitors"; the codebase deliberately allows unbounded, unvalidated competitor IDs.** `channel-profile-crud` relaxed the PRD's "3–5" to **min 3 / no max** _by explicit user direction_, and no layer — DB, API, or form — validates that an entry is a YouTube channel ID at all. Every quota, latency, and CPU figure in both external documents is computed against a bound the product does not enforce. This is the one finding that must reach `/10x-plan`.
 2. **The PRD's "visible progress" NFR has no pattern to build on.** The repo's only async-UI idiom is a boolean `saving` flag plus a spinner. There is no `AbortController`, no timeout, no streaming, no polling anywhere in `src/`. The document's paging loops are exactly what makes S-02's runtime variable, so this is where its contract meets an unbuilt capability.
-3. **Secrets are declared `optional: true` and CI auto-deploys to production on every push to master.** A missing `YOUTUBE_API_KEY` therefore fails at *runtime*, not at build time — the Analyze button would ship broken and silent. The repo already has the right countermeasure (`src/lib/config-status.ts`), it just has to be used.
+3. **Secrets are declared `optional: true` and CI auto-deploys to production on every push to master.** A missing `YOUTUBE_API_KEY` therefore fails at _runtime_, not at build time — the Analyze button would ship broken and silent. The repo already has the right countermeasure (`src/lib/config-status.ts`), it just has to be used.
 
 Two points the document gets right but understates: the quota bucket is **per Google Cloud project**, and this project already has one (`yt-niche-adviser`, visible in the untracked, gitignored `OAuth.json`) — the key and F-01's OAuth client would share it. And `search.list` is not used anywhere today, so "banned from the analysis path" costs nothing to adopt as a plan invariant.
 
@@ -53,11 +54,11 @@ Two points the document gets right but understates: the quota bucket is **per Go
 
 ### 1. The competitor-ID contract — the real incompatibility
 
-`yt-api-docs.md` opens its call chain with *"Accepts a comma-separated id list — all 3-5 competitors resolve in one call"*. Three layers of this codebase disagree with the "3-5" half of that sentence, and all three agree with each other:
+`yt-api-docs.md` opens its call chain with _"Accepts a comma-separated id list — all 3-5 competitors resolve in one call"_. Three layers of this codebase disagree with the "3-5" half of that sentence, and all three agree with each other:
 
 - **DB** — `supabase/migrations/20260909213911_create_channel_profiles.sql:6` declares `competitor_channel_ids text[] not null` with **no check constraint at all**: no length bound, no element-format check, no element uniqueness.
 - **API** — `src/pages/api/profile.ts:13-16` validates `.min(3, ...)` plus set-uniqueness. There is **no `.max()`** and no format check; any non-empty trimmed string passes.
-- **Form** — `src/components/profile/ChannelProfileForm.tsx:26-42` mirrors the server exactly (min 3, non-empty, unique, no max), and `addCompetitorRow()` at `:78-80` has no upper bound. The label reads *"Competitor channel IDs (min. 3)"* (`:113`).
+- **Form** — `src/components/profile/ChannelProfileForm.tsx:26-42` mirrors the server exactly (min 3, non-empty, unique, no max), and `addCompetitorRow()` at `:78-80` has no upper bound. The label reads _"Competitor channel IDs (min. 3)"_ (`:113`).
 
 This is **not an oversight to fix in passing** — it is a recorded product decision:
 
@@ -68,8 +69,8 @@ This is **not an oversight to fix in passing** — it is a recorded product deci
 
 Two concrete consequences for the plan:
 
-- **Quota and latency are unbounded in two dimensions at once.** `yt-library-research.md` budgets ~15 units per run at 5 competitors; at 20 competitors with Shorts-heavy paging it is several times that, and the wall-clock cost scales with it — against a PRD target of *"< ~30 s p95"*.
-- **An invalid ID fails silently, which is the worst failure shape for this product.** `channels.list` omits unknown IDs from `items` rather than erroring. A user who pastes a channel *handle* (`@name`), a URL, or a video ID gets a quietly smaller result set, not an error. `yt-library-research.md` rejected `scrapetube` specifically for silent emptiness; the same hazard re-enters here through our own unvalidated input. The route needs an explicit "resolved N of M competitors" reconciliation step, and FR-009's readable-message guardrail should cover it.
+- **Quota and latency are unbounded in two dimensions at once.** `yt-library-research.md` budgets ~15 units per run at 5 competitors; at 20 competitors with Shorts-heavy paging it is several times that, and the wall-clock cost scales with it — against a PRD target of _"< ~30 s p95"_.
+- **An invalid ID fails silently, which is the worst failure shape for this product.** `channels.list` omits unknown IDs from `items` rather than erroring. A user who pastes a channel _handle_ (`@name`), a URL, or a video ID gets a quietly smaller result set, not an error. `yt-library-research.md` rejected `scrapetube` specifically for silent emptiness; the same hazard re-enters here through our own unvalidated input. The route needs an explicit "resolved N of M competitors" reconciliation step, and FR-009's readable-message guardrail should cover it.
 
 ### 2. Secrets: the pattern fits, `optional: true` is the catch
 
@@ -135,17 +136,17 @@ What exists today, in full:
 
 A repo-wide grep finds **zero** occurrences of `AbortController`, `signal:`, client-side timeout, `ReadableStream`, or `EventSource`. There is no polling, no job table, no streaming.
 
-This is where `yt-api-docs.md` bites hardest, and it is worth reading its two Open Questions in this light. Q8 (paging depth for Shorts-heavy channels) is framed as a quota question; internally it is *also* the latency question, because the document establishes that **Shorts are only identifiable after `videos.list`** — so a channel that posts mostly Shorts forces more pages to reach the same long-form sample. Runtime is therefore data-dependent and not knowable up front.
+This is where `yt-api-docs.md` bites hardest, and it is worth reading its two Open Questions in this light. Q8 (paging depth for Shorts-heavy channels) is framed as a quota question; internally it is _also_ the latency question, because the document establishes that **Shorts are only identifiable after `videos.list`** — so a channel that posts mostly Shorts forces more pages to reach the same long-form sample. Runtime is therefore data-dependent and not knowable up front.
 
-`yt-library-research.md` correctly notes Workers place no wall-clock limit on HTTP-triggered requests, so a multi-second blocking POST is *architecturally* fine. The gap is purely the UI contract: a spinner satisfies "not hung" only weakly at 30 s. The plan must either cap paging hard enough that a spinner is honest, or introduce a progress mechanism — which would be new architecture in a repo whose sole hydration directive is `client:load` (three uses: `Topbar.astro:25`, `signin.astro:23`, `signup.astro:23`).
+`yt-library-research.md` correctly notes Workers place no wall-clock limit on HTTP-triggered requests, so a multi-second blocking POST is _architecturally_ fine. The gap is purely the UI contract: a spinner satisfies "not hung" only weakly at 30 s. The plan must either cap paging hard enough that a spinner is honest, or introduce a progress mechanism — which would be new architecture in a repo whose sole hydration directive is `client:load` (three uses: `Topbar.astro:25`, `signin.astro:23`, `signup.astro:23`).
 
 ### 6. CPU budget: the free plan is a documented assumption
 
-`context/foundation/infrastructure.md:31` states *"Free tier (100k req/day) comfortably covers stated scale"*, and its risk register already anticipates this slice:
+`context/foundation/infrastructure.md:31` states _"Free tier (100k req/day) comfortably covers stated scale"_, and its risk register already anticipates this slice:
 
 > "Free-tier 10ms CPU cap trips under heavier scoring computation as usage grows … **Mitigation: Keep the outlier-scoring formula lightweight and synchronous-cheap**; if it grows heavier, move to the $5/mo Workers Paid plan."
 
-That partially answers Open Question 2 in `yt-library-research.md` — the *documented intent* is the free plan, though nothing in the repo verifies the actual Cloudflare account, and `wrangler.jsonc` sets no `limits.cpu_ms`. Awaiting `fetch()` costs no CPU, so the exposure is exactly what the external research identified: JSON parsing plus zod validation of ~250 video records, which under an unbounded competitor list (finding 1) is likewise unbounded.
+That partially answers Open Question 2 in `yt-library-research.md` — the _documented intent_ is the free plan, though nothing in the repo verifies the actual Cloudflare account, and `wrangler.jsonc` sets no `limits.cpu_ms`. Awaiting `fetch()` costs no CPU, so the exposure is exactly what the external research identified: JSON parsing plus zod validation of ~250 video records, which under an unbounded competitor list (finding 1) is likewise unbounded.
 
 `wrangler.jsonc` currently configures only the `ASSETS` binding and `observability.enabled: true` — **no KV, no D1, no rate-limit binding, no AI binding**. Any caching or per-user rate limiting floated in the external research would be new infrastructure, not a config tweak.
 
@@ -175,7 +176,7 @@ Every prior change states the same and works around it identically — `channel-
 
 > "After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase."
 
-This collides with the recommendation in `yt-library-research.md` to hand-roll the statistics, which was justified *because* "this arithmetic is the product's core hypothesis" and "needs unit tests regardless". It also collides with the PRD's determinism NFR — *"ta sama analiza … zwraca ten sam outlier_score i tę samą kolejność rankingu"* — which is a property no manual click-through verifies well. The scoring function is the first genuinely pure, testable logic in the project. Either a test runner enters scope here, or the determinism NFR is verified by hand and that is stated openly.
+This collides with the recommendation in `yt-library-research.md` to hand-roll the statistics, which was justified _because_ "this arithmetic is the product's core hypothesis" and "needs unit tests regardless". It also collides with the PRD's determinism NFR — _"ta sama analiza … zwraca ten sam outlier_score i tę samą kolejność rankingu"_ — which is a property no manual click-through verifies well. The scoring function is the first genuinely pure, testable logic in the project. Either a test runner enters scope here, or the determinism NFR is verified by hand and that is stated openly.
 
 ## Code References
 
@@ -199,13 +200,13 @@ This collides with the recommendation in `yt-library-research.md` to hand-roll t
 
 **The codebase has no service layer, and S-02 is the change that forces one.** `CLAUDE.md` names `src/lib/services/`, but no plan has ever proposed it and business logic currently lives inline in route handlers. S-02 brings four separable concerns — YouTube client, Shorts filter, scoring, LLM justification — into one slice. Keeping the scoring function pure and framework-free is what makes it testable at all, and testability is what the external research's "hand-roll the maths" recommendation depends on.
 
-**Every external-API constraint in `yt-api-docs.md` is amplified by one unenforced internal constraint.** The document's quota table, its Shorts-paging warning (Q8), and its minimum-sample-size question (Q7) are all stated per-competitor. Multiply any of them by an unbounded competitor count and the per-run cost, latency, and CPU all become unbounded. Capping competitors *at analysis time* is the cheapest single lever on all three at once — cheaper than caching, cheaper than a rate-limit binding, cheaper than upgrading the Workers plan.
+**Every external-API constraint in `yt-api-docs.md` is amplified by one unenforced internal constraint.** The document's quota table, its Shorts-paging warning (Q8), and its minimum-sample-size question (Q7) are all stated per-competitor. Multiply any of them by an unbounded competitor count and the per-run cost, latency, and CPU all become unbounded. Capping competitors _at analysis time_ is the cheapest single lever on all three at once — cheaper than caching, cheaper than a rate-limit binding, cheaper than upgrading the Workers plan.
 
-**The repo's graceful-degradation idiom already exists and should be reused rather than reinvented.** `supabase.ts` returns `null` → `config-status.ts` renders a banner → `profile.ts` returns a typed 500. FR-009 needs the same three-layer shape for four new failure modes: key not configured, quota exceeded (HTTP 403 with `quotaExceeded`), a competitor ID that resolves to nothing, and too few long-form videos to compute a defensible baseline. The last two are *data* failures with HTTP 200 responses — they will not surface unless the code looks for them.
+**The repo's graceful-degradation idiom already exists and should be reused rather than reinvented.** `supabase.ts` returns `null` → `config-status.ts` renders a banner → `profile.ts` returns a typed 500. FR-009 needs the same three-layer shape for four new failure modes: key not configured, quota exceeded (HTTP 403 with `quotaExceeded`), a competitor ID that resolves to nothing, and too few long-form videos to compute a defensible baseline. The last two are _data_ failures with HTTP 200 responses — they will not surface unless the code looks for them.
 
 **The pattern-consistency findings from `google-oauth-login`'s impl-review predict S-02's review.** That review's one accepted warning (F2) was that an error path redirected to the wrong page — a consistency defect, not a functional one. With `jsonError` currently private to `profile.ts` and the error envelope unshared, S-02 is set up to repeat that class of finding unless the helper is extracted first.
 
-**A language decision is overdue.** API messages and UI copy are English throughout (`"You must be signed in"`, `"Competitor channel IDs (min. 3)"`); `src/lib/config-status.ts:15-17` is the lone Polish outlier (*"Supabase nie jest skonfigurowany…"*), while the PRD and roadmap are Polish. S-02 adds both user-facing error copy (FR-009) and LLM-generated justification text — the largest injection of user-visible prose so far. Pick one before generating a prompt in it.
+**A language decision is overdue.** API messages and UI copy are English throughout (`"You must be signed in"`, `"Competitor channel IDs (min. 3)"`); `src/lib/config-status.ts:15-17` is the lone Polish outlier (_"Supabase nie jest skonfigurowany…"_), while the PRD and roadmap are Polish. S-02 adds both user-facing error copy (FR-009) and LLM-generated justification text — the largest injection of user-visible prose so far. Pick one before generating a prompt in it.
 
 ## Historical Context (from prior changes)
 
@@ -245,17 +246,17 @@ Four decisions taken by the user after reading the findings above. Recorded here
 
 The cap is **provisional and explicitly revisitable**. It restores the bound that every quota, latency, and CPU estimate in `yt-api-docs.md` and `yt-library-research.md` already assumes, which is what makes those numbers usable in the plan.
 
-**Enforced in the profile, not in the analysis path** — user decision: *"cap is enforced in the profile, that's our source of truth for analysis."* This is the better half of the fork: it keeps a single definition of a valid profile, means `/api/analyze` can trust its input rather than re-deriving a subset, and removes the risk of the analysis silently ignoring curated competitors the user can still see in their profile. It also **restores conformance with PRD FR-003** (*"3–5 ID konkurentów"*), so it is not a new deviation — it retires an old one.
+**Enforced in the profile, not in the analysis path** — user decision: _"cap is enforced in the profile, that's our source of truth for analysis."_ This is the better half of the fork: it keeps a single definition of a valid profile, means `/api/analyze` can trust its input rather than re-deriving a subset, and removes the risk of the analysis silently ignoring curated competitors the user can still see in their profile. It also **restores conformance with PRD FR-003** (_"3–5 ID konkurentów"_), so it is not a new deviation — it retires an old one.
 
 **Consequence: this reopens S-01, which is still `in-progress`.** `channel-profile-crud` deliberately shipped min-3/no-max by explicit user direction (`context/changes/channel-profile-crud/plan.md:28`); that decision is now superseded and three places need the bound, plus one annotation:
 
-| Location | Change |
-|---|---|
-| `src/pages/api/profile.ts:13-16` | add `.max(5, ...)` to the `competitor_channel_ids` array schema |
-| `src/components/profile/ChannelProfileForm.tsx:26-42` | mirror the max in `validate()` |
+| Location                                              | Change                                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `src/pages/api/profile.ts:13-16`                      | add `.max(5, ...)` to the `competitor_channel_ids` array schema                    |
+| `src/components/profile/ChannelProfileForm.tsx:26-42` | mirror the max in `validate()`                                                     |
 | `src/components/profile/ChannelProfileForm.tsx:78-80` | stop `addCompetitorRow()` at 5 (disable the button rather than erroring on submit) |
-| `src/components/profile/ChannelProfileForm.tsx:113` | label reads "Competitor channel IDs (min. 3)" → "(3–5)" |
-| `context/changes/channel-profile-crud/plan.md:28` | annotate the recorded deviation as superseded on 2026-09-11 |
+| `src/components/profile/ChannelProfileForm.tsx:113`   | label reads "Competitor channel IDs (min. 3)" → "(3–5)"                            |
+| `context/changes/channel-profile-crud/plan.md:28`     | annotate the recorded deviation as superseded on 2026-09-11                        |
 
 A DB-level `check (array_length(competitor_channel_ids, 1) between 3 and 5)` is **not** recommended: `channel-profile-data-model` deliberately kept count rules out of the schema, and re-introducing one would need a fresh migration for a constraint the app already enforces on both sides. Existing rows are unaffected — no profile in the wild can exceed 5 yet, since the app has one user and the form is the only writer.
 
@@ -269,17 +270,17 @@ This unblocks `/10x-plan`. It adopts the recommendation in `yt-library-research.
 
 **This now conflicts with two foundation documents that still specify the mean**, both of which must be reconciled before or during `/10x-plan`:
 
-- `context/foundation/prd.md` — FR-008 (*"outlier_score = wyświetlenia filmu / średnia wyświetleń kanału z okna czasowego"*), restated in the Business Logic section.
-- `context/foundation/roadmap.md:32` — the vision recap (*"wyświetlenia filmu względem średniej danego kanału"*).
+- `context/foundation/prd.md` — FR-008 (_"outlier_score = wyświetlenia filmu / średnia wyświetleń kanału z okna czasowego"_), restated in the Business Logic section.
+- `context/foundation/roadmap.md:32` — the vision recap (_"wyświetlenia filmu względem średniej danego kanału"_).
 
-Two ways to close the gap, both with precedent: amend FR-008 in the PRD, or record it as a deliberate deviation in the plan the way `channel-profile-crud/plan.md:28` recorded the 3–5 relaxation. Amending is preferable here because the formula *is* the product hypothesis and two foundation docs currently assert the opposite — a future agent reading either would implement the mean.
+Two ways to close the gap, both with precedent: amend FR-008 in the PRD, or record it as a deliberate deviation in the plan the way `channel-profile-crud/plan.md:28` recorded the 3–5 relaxation. Amending is preferable here because the formula _is_ the product hypothesis and two foundation docs currently assert the opposite — a future agent reading either would implement the mean.
 
 **Both foundation documents were amended on 2026-09-11** rather than carrying the conflict into the plan:
 
 - `context/foundation/prd.md` — FR-008 now reads `mediana`, with a dated `> Poprawka` annotation in the document's existing Socrates style recording the decision, its rationale, and the evidence trail. The Vision, scale-note, and Business Logic restatements were updated to match. `version: 1` / `status: draft` left untouched — bump them if you want the change to read as a formal revision rather than a draft edit.
 - `context/foundation/roadmap.md` — the vision recap at line 32 now reads `mediany`, and S-02 gained a `Rozstrzygnięcia (2026-09-11)` block recording both this and D1.
 
-**Compute both, score on the median.** Per the user: *"eventually we will calculate both."* The scoring helper should return mean **and** median from the same sorted array — it is a handful of extra lines, costs nothing at runtime, and turns the future statistics view (D3) into a display change rather than a recomputation. Only the median feeds `outlier_score`.
+**Compute both, score on the median.** Per the user: _"eventually we will calculate both."_ The scoring helper should return mean **and** median from the same sorted array — it is a handful of extra lines, costs nothing at runtime, and turns the future statistics view (D3) into a display change rather than a recomputation. Only the median feeds `outlier_score`.
 
 Sub-decision still deferred to `/10x-plan`: the minimum-sample rule (`yt-api-docs.md` Q7) matters **more** under a median, not less — a median over n=2 is more degenerate than a mean over n=2. The low-sample floor needs a real answer.
 
@@ -297,7 +298,7 @@ Yes. Nothing else in the app is slow enough to need it: the only other async pat
 
 D1 materially improves the options here, because bounded competitors means bounded work. Recommended order of preference:
 
-1. **Single blocking POST + spinner, with the work capped** so p95 stays comfortably under the PRD's ~30 s target. Zero new architecture; reuses `ChannelProfileForm.tsx:52-70` and `SubmitButton.tsx` exactly. Honest *if* the analysis is genuinely fast, which D1 plus a paging cap makes achievable.
+1. **Single blocking POST + spinner, with the work capped** so p95 stays comfortably under the PRD's ~30 s target. Zero new architecture; reuses `ChannelProfileForm.tsx:52-70` and `SubmitButton.tsx` exactly. Honest _if_ the analysis is genuinely fast, which D1 plus a paging cap makes achievable.
 2. **Streamed progress** — the Astro route returns a `ReadableStream` of NDJSON stage events (`resolving channels` → `fetching uploads` → `scoring` → `generating justifications`) that the island renders. Native to `workerd`, no new infrastructure, but it is new architecture in a repo with no streaming anywhere, and `@astrojs/cloudflare`'s streaming behaviour should be verified before committing to it.
 3. **Two-phase job + polling** — needs storage (KV, D1, or a Supabase table). Overkill for MVP; reject unless 1 and 2 both fail.
 
@@ -314,10 +315,10 @@ Keep the two error surfaces distinct, because they answer different questions:
 
 Per Astro's documentation, secret server variables are **not included in the final bundle** and are "validated upon import from the `astro:env/server` module" — i.e. at runtime. Build-time secret checking is opt-in via `env.validateSecrets: true` (default `false`), which this repo does not set.
 
-That has a consequence worth stating plainly, because it narrows what any build-time fix can achieve: **CI's build environment and the Cloudflare Worker's runtime secrets are different places.** The GitHub Actions `env:` block at `.github/workflows/ci.yml:22-24` feeds the build; production values come from `wrangler secret put`. So turning on `validateSecrets` and dropping `optional: true` would catch a missing *GitHub repository secret* — it would **not** catch a forgotten `wrangler secret put`, which is the actual failure mode that ships a silently broken Analyze button. It would also cost: every secret gets validated on import even when unused (Astro's docs note dummy values may be needed to satisfy builds), local `astro dev` would demand a YouTube key, and a missing key would *throw on import* instead of degrading — which is strictly worse for FR-009's readable-message requirement.
+That has a consequence worth stating plainly, because it narrows what any build-time fix can achieve: **CI's build environment and the Cloudflare Worker's runtime secrets are different places.** The GitHub Actions `env:` block at `.github/workflows/ci.yml:22-24` feeds the build; production values come from `wrangler secret put`. So turning on `validateSecrets` and dropping `optional: true` would catch a missing _GitHub repository secret_ — it would **not** catch a forgotten `wrangler secret put`, which is the actual failure mode that ships a silently broken Analyze button. It would also cost: every secret gets validated on import even when unused (Astro's docs note dummy values may be needed to satisfy builds), local `astro dev` would demand a YouTube key, and a missing key would _throw on import_ instead of degrading — which is strictly worse for FR-009's readable-message requirement.
 
 So the recommendation stands but for a sharper reason: keep `optional: true`, null-guard at the source like `src/lib/supabase.ts:7-9`, return a readable `jsonError(...)` like `src/pages/api/profile.ts:47-49`, and add a `configStatuses` entry so a missing key is visible on every page load rather than only on click. The banner does not prevent the bad deploy — it makes it loud within seconds instead of silent until a user clicks Analyze, which matters because the repo has no logger, no Sentry, and `wrangler tail` is live-only.
 
-The only real prevention is a post-deploy smoke check, which `context/foundation/infrastructure.md` already prescribes as a mitigation in its risk register: *"Do an early smoke-test deploy to Workers (not just local `astro dev`) as soon as auth + first API route are wired up, not at the end of the build."* S-02 is that first API route with external dependencies.
+The only real prevention is a post-deploy smoke check, which `context/foundation/infrastructure.md` already prescribes as a mitigation in its risk register: _"Do an early smoke-test deploy to Workers (not just local `astro dev`) as soon as auth + first API route are wired up, not at the end of the build."_ S-02 is that first API route with external dependencies.
 
 **Source**: Astro documentation via Context7 (`/withastro/docs`) — `guides/environment-variables` (secret server variables, validation on import) and `reference/configuration-reference` (`env.validateSecrets`, default `false`, "useful in some continuous integration (CI) pipelines to make sure all your secrets are correctly set before deploying").

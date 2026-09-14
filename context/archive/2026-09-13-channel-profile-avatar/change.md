@@ -17,7 +17,7 @@ model's input schema accepts only `prompt` and `steps` — there is no `width`/`
 (`Ai_Cf_Black_Forest_Labs_Flux_1_Schnell_Input` in `worker-configuration.d.ts`). It
 emits 1024×1024 and there is nowhere to shrink it: Supabase transforms are Pro-only
 and the 10ms Worker CPU cap rules out in-process resizing. Generated avatars are
-therefore stored at 1024 (~200 KB, well under the 2 MiB bucket cap); *uploaded*
+therefore stored at 1024 (~200 KB, well under the 2 MiB bucket cap); _uploaded_
 avatars are still canvas-normalized to 512. Cost follows the plan's own 1024 figure:
 57.6 neurons ≈ $0.00063 per image, ~173/day on the free allocation rather than ~230.
 
@@ -37,7 +37,7 @@ FR-015's degraded upload-only mode is reached, so it is kept and the read is wid
 **Hosted project was further ahead than the plan assumed (2026-09-13):** Phase 5 said
 "this is the first cloud migration push in the project's history" and that `db push`
 would apply all three migrations. `supabase migration list` after linking showed
-`20260909213911` and `20260912190947` were *already* applied remotely; only
+`20260909213911` and `20260912190947` were _already_ applied remotely; only
 `20260913134159_add_channel_profile_avatar` was pending, and only it was pushed.
 Verified afterwards against the hosted project: `channel_profiles.avatar_path text`,
 bucket `avatars` (`public=false`, `2097152`, `{image/png,image/jpeg,image/webp}`), and
@@ -51,21 +51,21 @@ complete (3.4/3.5 confirmed in the browser by the user; every other row proven b
 automated checks or direct curl/SQL against the real stack). The four remaining rows
 are deliberately not claimed:
 
-- **5.1 CI green on `master`** — *won't-do, blocked on infrastructure outside this
-  slice.* `.github/workflows/ci.yml` is committed on `master`, the API reports it
+- **5.1 CI green on `master`** — _won't-do, blocked on infrastructure outside this
+  slice._ `.github/workflows/ci.yml` is committed on `master`, the API reports it
   `state=active`, and Actions is `enabled: true` / `allowed_actions: all`, yet the
   repository has **zero workflow runs ever** and PR #21 did not trigger one either.
   This contradicts CLAUDE.md's claim that CI "runs lint + build on every push and PR
-  to master". Needs an account-level Actions/billing check. What *did* pass on PR #21
+  to master". Needs an account-level Actions/billing check. What _did_ pass on PR #21
   is Cloudflare's own "Workers Builds" check, so the production build is verified —
   just not by the workflow the plan named.
-- **5.4 two-user isolation in production** — *won't-do, accepted by the user.* The
+- **5.4 two-user isolation in production** — _won't-do, accepted by the user._ The
   hosted policies were dumped and compared after `db push` and are byte-identical to
   the local ones, which were proven with a full two-user REST protocol (B gets 404 on
   read, 403 `new row violates row-level security policy` on insert, 403 `AccessDenied`
   on delete, `[]` on list; A and anon behave correctly). Re-running it in production
   would require creating throwaway users in real auth.
-- **5.3 / 5.5 production smoke + CPU time** — *pending.* The Worker is deployed
+- **5.3 / 5.5 production smoke + CPU time** — _pending._ The Worker is deployed
   (version `2ef8e060`) with `env.AI` and `env.AVATAR_LIMITER` present, but it has not
   been exercised through the browser yet. Note that `YOUTUBE_API_KEY` and
   `ANTHROPIC_API_KEY` are **not** set as Worker secrets, so on the deployed app profile
@@ -104,7 +104,7 @@ environment variable for wrangler to work.
 **Cause is this slice.** The `ai` binding added in `2f1ecd5` has no local
 emulation — as `wrangler.jsonc`'s own comment says, "inference always runs
 remotely, including under `astro dev`" — so `@cloudflare/vite-plugin` opens a
-*remote* proxy session during `astro sync` and `astro build`. `ci.yml` set its
+_remote_ proxy session during `astro sync` and `astro build`. `ci.yml` set its
 `env:` block only on the `npm run build` step, so `astro sync` ran with no
 credentials at all.
 
@@ -115,4 +115,4 @@ build, and the project's first CI deploy:
 `699e2547-ffb4-4f8c-bba8-29da4bbb7bc9`.
 
 Rows 5.3–5.5 remain open: production is now deployed, so they are finally
-*checkable*, but they need the deployed app exercised by hand.
+_checkable_, but they need the deployed app exercised by hand.

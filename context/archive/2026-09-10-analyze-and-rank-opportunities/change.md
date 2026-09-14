@@ -21,7 +21,7 @@ each to a canonical `UC…` ID at **profile-save time**, storing the ID.
 
 **Why.** Measured against the live API: `id=` accepts a comma-joined batch (1
 unit for the whole set) but `forHandle` takes exactly one handle per call — and
-`forHandle=a,b,c` returns an empty `items` array *with no error*, the same
+`forHandle=a,b,c` returns an empty `items` array _with no error_, the same
 silent-emptiness shape `yt-library-research.md` rejected `scrapetube` over.
 Resolving at save keeps `/api/analyze` on its contracted single batched call,
 costs ≤5 units on a rare operation, and is strictly safer than a regex: a regex
@@ -97,7 +97,7 @@ What was already demonstrated, via a live scratch run against the real API
 - **3.5** — MKBHD 20, Kurzgesagt 7, Veritasium 14, Fireship 20 long-form videos;
   every channel's minimum duration above 300s, so the Shorts filter held.
 - **3.6** — Fireship alone: `channels -> playlistItems(first) ->
-  playlistItems(next) -> videos(n=50)`. Paging stopped on `MAX_PAGES`, and the
+playlistItems(next) -> videos(n=50)`. Paging stopped on `MAX_PAGES`, and the
   first `videos.list` came strictly after the last `playlistItems`.
 - **3.7** — `UCzzzzzzzzzzzzzzzzzzzzzz` landed in `unresolved` without throwing.
 - **3.8** — 10 calls (= 10 units, every call in this chain costs 1 regardless of
@@ -109,7 +109,7 @@ Re-confirm all four through the UI once Phase 4/5 land.
 ### Deviation from plan — Phase 3, comment wording
 
 Success criterion 3.4 greps `src/` for the forbidden search endpoint. The module
-comment explaining *why* that endpoint is never used named it literally, which
+comment explaining _why_ that endpoint is never used named it literally, which
 made the criterion fail on its own documentation. The comment now says "the
 search endpoint" so the grep stays a real check rather than one that permanently
 trips.
@@ -151,7 +151,7 @@ changes `Response.json()` from DOM's `Promise<any>` to workerd's generic
 `error`-typed and the binding access becomes three `no-unsafe-*` errors. The
 adapter leaves no alternative — `createLocals` in
 `@astrojs/cloudflare/dist/utils/cf-helpers.js` defines `locals.runtime.env` as a
-getter that *throws*, pointing at the `cloudflare:workers` import. The generated
+getter that _throws_, pointing at the `cloudflare:workers` import. The generated
 file is excluded from ESLint alongside `database.types.ts`.
 
 ### Deviation from plan — Phase 4, shared result types are interfaces, not zod
@@ -164,7 +164,7 @@ the inferred `Justification` type, per the convention. The `/api/analyze`
 response DTOs (`AnalyzeResponse`, `AnalyzeSummary`, `AnalyzeOpportunity`,
 `SkippedChannel`) are plain interfaces declared in `src/types.ts`.
 
-**Why.** The server *constructs* that payload and never parses one, so a runtime
+**Why.** The server _constructs_ that payload and never parses one, so a runtime
 schema for it would validate nothing. Phase 5's island is the only consumer that
 reads it as untrusted input, and it can add a parse schema when it needs one.
 
@@ -201,7 +201,7 @@ and Anthropic APIs, with a throwaway account `p4-smoke@example.com` /
 
 - **4.5** — two consecutive live runs returned **identical ordering**; scores
   moved only in the 4th decimal (`1.7796 → 1.7797`) from view-count growth. One
-  row's score *fell* on +0 views, which is the median shifting under it — exactly
+  row's score _fell_ on +0 views, which is the median shifting under it — exactly
   the drift mechanism the plan describes, and why exact equality is a unit-test
   claim rather than a live one.
 - **4.8** — with a fourth, bogus `UCzzzzzzzzzzzzzzzzzzzzzz` competitor inserted
@@ -223,7 +223,7 @@ but non-existent `UC…` id with a 400, so a bogus competitor can only reach
 `channel_profiles` by direct DB insert (done here with the local service-role key
 against the REST API, then reverted).
 
-### Phase 4 finding — "unset a secret" means both `.env` *and* `.dev.vars`
+### Phase 4 finding — "unset a secret" means both `.env` _and_ `.dev.vars`
 
 Removing `ANTHROPIC_API_KEY` from `.dev.vars` alone does **not** unset it under
 `astro dev`: the first 4.9 attempt still produced justifications and no banner,
@@ -233,7 +233,7 @@ incomplete as written — both files have to lose the line, or the test silently
 passes while proving nothing. Worth folding into the manual protocol before
 anyone repeats it.
 
-### Note for Phase 5 — the LLM call *is* the latency
+### Note for Phase 5 — the LLM call _is_ the latency
 
 Measured at 3 competitors: **10.15s / 9.96s / 9.30s** with justifications, and
 **1.22s** on the same profile with `ANTHROPIC_API_KEY` unset. The YouTube chain
@@ -249,7 +249,7 @@ this call, not the YouTube paging.
 `channel-profile-crud/plan.md`: repoint the generated `cn` import at
 `@/lib/utils` and remove the redundant `cn` npm package the CLI pulls in."
 
-**Implemented:** as planned, plus removal of a *second* unwanted dependency the
+**Implemented:** as planned, plus removal of a _second_ unwanted dependency the
 CLI installs — `next-themes`.
 
 **Why.** The generated `sonner.tsx` reads the active theme via `useTheme()` from
@@ -339,7 +339,7 @@ Supabase and the live YouTube and Anthropic APIs using `p4-smoke@example.com`.
 5-competitor profile (@mkbhd, @kurzgesagt, @veritasium, @fireship,
 @linustechtips): **11.20 / 11.17 / 10.63 / 10.95s**; a later batch of six read
 9.69–11.72s. This is **over the plan's ~10s escalation line**, so the follow-up
-to stream progress (NDJSON) is now *triggered*, not hypothetical.
+to stream progress (NDJSON) is now _triggered_, not hypothetical.
 
 **The LLM call is confirmed as ~85% of the latency.** The same 5-competitor
 profile with `ANTHROPIC_API_KEY` unset returned in **1.62s**. YouTube paging plus
@@ -370,7 +370,7 @@ rejection, not a partial 200 that could slip past `res.ok`, so it lands in
 `finally` clearing `running`. Verified at the transport layer; the on-screen
 render follows deterministically from that branch.
 
-**5.7 — the rate limit is effectively unreachable by clicking.** Six *sequential*
+**5.7 — the rate limit is effectively unreachable by clicking.** Six _sequential_
 runs all returned 200: at ~10s per run, six runs span ~64s and the oldest ages
 out of the 60s window before the sixth fires. Tripping it took **8 concurrent**
 requests, which then produced HTTP 429 and exactly "You can run at most 5 analyses
@@ -385,6 +385,7 @@ channels all clearing the sample floor with zero skips, 3.7 by the 5.8 run above
 They carry the Phase 5 sha because that is when they were confirmed.
 
 **Still open, and not closable from here:**
+
 - **3.6** — call ordering inside the paging loop is not observable from outside
   the process; it was demonstrated by the Phase 3 scratch harness.
 - **3.8** — quota per run needs the Google Cloud console.

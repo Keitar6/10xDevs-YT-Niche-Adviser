@@ -8,7 +8,7 @@
 Phase 1 of the project's test plan covers the two top risks: the LLM
 justification provider returning garbage and killing a run whose scores were
 already computed (Risk #1), and a YouTube quota or API error surfacing as a
-broken screen or a *confidently empty* ranking (Risk #2). Research found both
+broken screen or a _confidently empty_ ranking (Risk #2). Research found both
 risks are already largely defended in production code — and that **none of that
 behaviour is covered by a single test**. So this is a characterization and
 gap-closing phase, not a bootstrap.
@@ -34,17 +34,17 @@ error page.
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) | Source |
-| --- | --- | --- | --- |
-| Transport seam | `vi.stubGlobal("fetch", …)`, no library | A spike settled research's open question: the SDK resolves `fetch` in the client constructor and `justify.ts` constructs per call, so one stub reaches both boundaries with zero production-code change | Plan (spike) |
-| Fake fidelity | Real `Response` objects | Keeps the real `res.json()`, real zod schemas and real SDK decoder in the path — the test plan's "fake the transport, not the parsing" rule | Plan |
-| Fix vs characterize | Fix G1, G2, G3 (and G5) | A test asserting today's behaviour would pin a defect; all sit on the exact PRD guardrail this phase defends | Plan |
-| "Present" justification | Non-empty after trim | Closes the silent-render gap with one boundary rule; a length floor would be a number invented here rather than derived from the PRD | Plan |
-| Test reach | Extract the merge, test services only | Route-level tests would need `astro:env/server` + `cloudflare:workers` mocks, alias config and a widened `include`; extraction gets G1 covered at the cheapest layer | Plan |
-| G2 shape | Reason-coded `unresolved` entries | Gives Risk #2's anti-pattern the state class it demands, mirroring the existing `SkippedChannel` shape | Plan |
-| G2 UI reach | One extra warning notice | Today the panel actively mis-reports a failed competitor as "Not found on YouTube" — the risk is only closed where the user meets it | Plan |
-| G3 catch body | Log server-side, generic message | Mirrors the existing `channel_profiles` handling in the same file: raw detail stays server-side, client gets readable `{ error }` | Plan |
-| G4 (`max_tokens`) | Characterize, don't defend | The spike showed truncation almost always throws, making the silent short array near-unreachable | Plan (spike) |
+| Decision                | Choice                                  | Why (1 sentence)                                                                                                                                                                                        | Source       |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Transport seam          | `vi.stubGlobal("fetch", …)`, no library | A spike settled research's open question: the SDK resolves `fetch` in the client constructor and `justify.ts` constructs per call, so one stub reaches both boundaries with zero production-code change | Plan (spike) |
+| Fake fidelity           | Real `Response` objects                 | Keeps the real `res.json()`, real zod schemas and real SDK decoder in the path — the test plan's "fake the transport, not the parsing" rule                                                             | Plan         |
+| Fix vs characterize     | Fix G1, G2, G3 (and G5)                 | A test asserting today's behaviour would pin a defect; all sit on the exact PRD guardrail this phase defends                                                                                            | Plan         |
+| "Present" justification | Non-empty after trim                    | Closes the silent-render gap with one boundary rule; a length floor would be a number invented here rather than derived from the PRD                                                                    | Plan         |
+| Test reach              | Extract the merge, test services only   | Route-level tests would need `astro:env/server` + `cloudflare:workers` mocks, alias config and a widened `include`; extraction gets G1 covered at the cheapest layer                                    | Plan         |
+| G2 shape                | Reason-coded `unresolved` entries       | Gives Risk #2's anti-pattern the state class it demands, mirroring the existing `SkippedChannel` shape                                                                                                  | Plan         |
+| G2 UI reach             | One extra warning notice                | Today the panel actively mis-reports a failed competitor as "Not found on YouTube" — the risk is only closed where the user meets it                                                                    | Plan         |
+| G3 catch body           | Log server-side, generic message        | Mirrors the existing `channel_profiles` handling in the same file: raw detail stays server-side, client gets readable `{ error }`                                                                       | Plan         |
+| G4 (`max_tokens`)       | Characterize, don't defend              | The spike showed truncation almost always throws, making the silent short array near-unreachable                                                                                                        | Plan (spike) |
 
 ## Scope
 
@@ -69,12 +69,12 @@ with everything that can only be checked by hand grouped into the last phase.
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Harness + LLM boundary | `justify.test.ts`; the G5 `AnthropicError` branch | Vitest's `unstubGlobals` is off by default — stubs leak between tests without an explicit `afterEach` |
-| 2. YouTube boundary + G2 | `youtube.test.ts`; reason-coded `unresolved` through the DTO | Two different `unresolved` concepts exist; touching the wrong one breaks profile saving |
-| 3. G1 merge extraction | `justification-merge.ts` + suite; empty/whitespace → absent | The extraction could silently change the happy path, which no unit test establishes |
-| 4. Close the chain | Route try/catch; split notice; test-plan §6.2 | Phases 2 and 4 must deploy together or the notice renders `[object Object]` |
+| Phase                     | What it delivers                                             | Key risk                                                                                              |
+| ------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| 1. Harness + LLM boundary | `justify.test.ts`; the G5 `AnthropicError` branch            | Vitest's `unstubGlobals` is off by default — stubs leak between tests without an explicit `afterEach` |
+| 2. YouTube boundary + G2  | `youtube.test.ts`; reason-coded `unresolved` through the DTO | Two different `unresolved` concepts exist; touching the wrong one breaks profile saving               |
+| 3. G1 merge extraction    | `justification-merge.ts` + suite; empty/whitespace → absent  | The extraction could silently change the happy path, which no unit test establishes                   |
+| 4. Close the chain        | Route try/catch; split notice; test-plan §6.2                | Phases 2 and 4 must deploy together or the notice renders `[object Object]`                           |
 
 **Prerequisites:** `npm ci` in this worktree (no `node_modules` present); a
 valid `ANTHROPIC_API_KEY` and `YOUTUBE_API_KEY` in `.dev.vars` for the manual
@@ -86,7 +86,7 @@ checks.
 - A `Response` body is single-use, and `youtube.ts` issues three sequential
   calls per channel — the fake must build a fresh `Response` per invocation or
   fan-out tests fail confusingly.
-- The new `AnthropicError` branch must sit *after* the three typed branches;
+- The new `AnthropicError` branch must sit _after_ the three typed branches;
   first would swallow every `APIError`, mirroring the ordering hazard the file
   already documents.
 - Whether a refusal carrying prose is pre-empted by the SDK's parse throw is

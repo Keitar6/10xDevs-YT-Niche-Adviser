@@ -1,4 +1,5 @@
 <!-- IMPL-REVIEW-REPORT -->
+
 # Implementation Review: Analyze and Rank Opportunities
 
 - **Plan**: `context/changes/analyze-and-rank-opportunities/plan.md`
@@ -9,24 +10,24 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| Plan Adherence | PASS |
-| Scope Discipline | WARNING |
-| Safety & Quality | WARNING |
-| Architecture | PASS |
-| Pattern Consistency | PASS |
-| Success Criteria | WARNING |
+| Dimension           | Verdict |
+| ------------------- | ------- |
+| Plan Adherence      | PASS    |
+| Scope Discipline    | WARNING |
+| Safety & Quality    | WARNING |
+| Architecture        | PASS    |
+| Pattern Consistency | PASS    |
+| Success Criteria    | WARNING |
 
 ## Automated verification
 
-| Command | Result |
-|---------|--------|
-| `npm test` | PASS — 5 files, 67 tests, 186ms |
-| `npm run build` | PASS — astro build, 14.6s, no errors |
-| `npm run lint` (this slice's 17 files) | PASS — 0 errors, 0 warnings |
-| `npm run lint` (full repo) | FAIL — 54 prettier errors in `src/components/profile/AvatarField.tsx`, introduced by `6d5417f` (not this slice). See the note under Success Criteria. |
-| `grep -r "search.list\|/search?" src/` | PASS — no matches |
+| Command                                | Result                                                                                                                                                |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`                             | PASS — 5 files, 67 tests, 186ms                                                                                                                       |
+| `npm run build`                        | PASS — astro build, 14.6s, no errors                                                                                                                  |
+| `npm run lint` (this slice's 17 files) | PASS — 0 errors, 0 warnings                                                                                                                           |
+| `npm run lint` (full repo)             | FAIL — 54 prettier errors in `src/components/profile/AvatarField.tsx`, introduced by `6d5417f` (not this slice). See the note under Success Criteria. |
+| `grep -r "search.list\|/search?" src/` | PASS — no matches                                                                                                                                     |
 
 ## Notes on plan adherence
 
@@ -38,7 +39,7 @@ and coherently implemented end to end:
 - Handles/URLs accepted and resolved at save time rather than rejected — documented;
   wired through form, API, resolution, storage, and display.
 - Anthropic error-chain order `RateLimitError → APIConnectionError → APIError` — this
-  *corrects* a bug in the plan, which listed an order that left the
+  _corrects_ a bug in the plan, which listed an order that left the
   `APIConnectionError` branch unreachable (`APIConnectionError extends APIError`).
 - `youtube-ids.ts` / `channel-profile.ts` — justified consequences of the two
   deviations above, not independent scope creep.
@@ -114,7 +115,7 @@ channels named by title rather than raw ID.
 - **Detail**: The plan set an explicit escalation line — "Escalate to streamed NDJSON
   only if measured p95 exceeds ~10s." Phase 5 measured p95 at **~11.2s** at the
   contracted 5-competitor cap (11.20 / 11.17 / 10.63 / 10.95s), and `change.md` correctly
-  records the follow-up as "*triggered*, not hypothetical", with the LLM call isolated as
+  records the follow-up as "_triggered_, not hypothetical", with the LLM call isolated as
   ~85% of latency (1.62s with `ANTHROPIC_API_KEY` unset). But this exists nowhere else:
   no roadmap Parked entry, no backlog row, no follow-ups file. Archiving makes
   `change.md` read-only by convention, so a triggered, measured, well-diagnosed follow-up
@@ -139,7 +140,7 @@ channels named by title rather than raw ID.
   3.6 (call ordering inside the paging loop) is not observable from outside the process
   and was demonstrated by a Phase 3 scratch harness; 3.8 (quota per run) needs the Google
   Cloud console; 5.13 (CPU time per invocation) needs Workers Logs after a smoke deploy.
-  This is not rubber-stamping — the remaining rows are the ones that were *not* ticked.
+  This is not rubber-stamping — the remaining rows are the ones that were _not_ ticked.
   5.13 is the one that matters: a 10ms CPU overrun on the free plan surfaces as an
   intermittent Error 1102 with no clean error, and the prescribed escalation is the
   $5/mo Workers Paid plan.
@@ -188,14 +189,14 @@ on push to `master`" that cannot be true until this is fixed. It is auto-fixable
 
 ## Triage outcome — 2026-09-13
 
-| Finding | Decision |
-|---------|----------|
-| F1 — no fetch timeout | FIXED |
-| F2 — whole-batch analyze failure | FIXED (Fix A) |
-| F3 — untracked NDJSON follow-up | FIXED (parked on roadmap) |
-| F4 — unverifiable manual criteria | ACCEPTED |
-| F5 — whole-batch handle resolution | FIXED |
-| F6 — raw DB errors to client | FIXED |
+| Finding                            | Decision                  |
+| ---------------------------------- | ------------------------- |
+| F1 — no fetch timeout              | FIXED                     |
+| F2 — whole-batch analyze failure   | FIXED (Fix A)             |
+| F3 — untracked NDJSON follow-up    | FIXED (parked on roadmap) |
+| F4 — unverifiable manual criteria  | ACCEPTED                  |
+| F5 — whole-batch handle resolution | FIXED                     |
+| F6 — raw DB errors to client       | FIXED                     |
 
 Post-triage verification: `npm run lint` 0 errors, `npm test` 67/67 passing,
 `npm run build` complete. The pre-existing `AvatarField.tsx` formatting break that

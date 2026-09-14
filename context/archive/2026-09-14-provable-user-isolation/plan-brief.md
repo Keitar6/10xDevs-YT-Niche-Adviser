@@ -6,7 +6,7 @@
 ## What & Why
 
 The PRD names per-user isolation as a non-functional requirement that must be
-*verifiable by test*, and no such test exists. Today the guarantee is correct
+_verifiable by test_, and no such test exists. Today the guarantee is correct
 but held up entirely by developer discipline — comments, review habits, and
 scripted curl that was never part of any gate. This change converts it into a
 mechanically enforced invariant: a pgTAP suite proving isolation per verb and
@@ -20,7 +20,7 @@ Research swept the full access-control surface and found **zero defects**:
 both `USING` and `WITH CHECK`, and no service-role client anywhere across 13
 Supabase construction sites. What is missing is any mechanism that would catch
 the next migration silently undoing it — the previous change said so outright:
-*"a future migration that weakens a policy would not be caught automatically."*
+_"a future migration that weakens a policy would not be caught automatically."_
 
 ## Desired End State
 
@@ -33,20 +33,20 @@ client exists in `src/`. Breaking a policy turns the suite red.
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) | Source |
-| --- | --- | --- | --- |
-| Framing | Pinning job, not remediation | Research found no defects; the deliverable is regression-safety, so a red first run means the test is wrong | Research |
-| Impersonation | Built-in `set local role` + `request.jwt.claim.sub` | Verified working on this PG 17 stack during planning; avoids basejump's `pg_tle` → `pgsql-http` → `dbdev` chain that §7 argues against | Plan |
-| Vacuous-pass guard | Dedicated first file asserting `auth.uid()` per user | If `auth.uid()` were NULL for both users every isolation assertion would pass while proving nothing | Research → Plan |
-| Harden or assert? | Assert-only — no `FORCE RLS`, no `REVOKE` | The roadmap's F-03 outcome reads as assert-only, and a `REVOKE` against implicit Data-API grants risks PostgREST paths not exercised locally | Plan |
-| Roles under test | `anon` + two `authenticated` users | Covers exactly the roles the app can present; `service_role` assertions would pin a platform truth that can never fail meaningfully | Plan |
-| Fixtures | Two `auth.users` rows created in-transaction, rolled back | Self-contained and re-runnable; no seed file, no cleanup debt, no cross-file ordering | Plan |
-| Policy assertions | Assert `qual` / `with_check` expressions, never counts | Review finding F5 caught a criterion four `using(true)` policies would have satisfied | Research |
-| Route scope | The 7 data-touching handlers | `/api/auth/*` establishes sessions rather than consuming them and shares no contract | Plan |
-| Vitest wiring | `resolve.alias` stubs; **F-03 owns the config edit** | Keeps the Astro/Cloudflare pipelines out of an instant test run, and gives F-04 a base to extend rather than a conflict | Plan |
-| No-bypass invariant | Source-scanning Vitest test | If a service-role client ever lands, RLS drops from guarantee to decoration and every other test stops describing production | Research → Plan |
-| Gate placement | Local gate now; CI decided in `test-plan.md` §3 Phase 4 | §5 already defers the placement, and a cold runner pays a full ~13-image pull | Plan |
-| Avatar signed URL | Out of scope, recorded in §7 | A distinct authorization mechanism no DB-level test can reach; covering it at the route layer means asserting on a stubbed call | Plan |
+| Decision            | Choice                                                    | Why (1 sentence)                                                                                                                             | Source          |
+| ------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| Framing             | Pinning job, not remediation                              | Research found no defects; the deliverable is regression-safety, so a red first run means the test is wrong                                  | Research        |
+| Impersonation       | Built-in `set local role` + `request.jwt.claim.sub`       | Verified working on this PG 17 stack during planning; avoids basejump's `pg_tle` → `pgsql-http` → `dbdev` chain that §7 argues against       | Plan            |
+| Vacuous-pass guard  | Dedicated first file asserting `auth.uid()` per user      | If `auth.uid()` were NULL for both users every isolation assertion would pass while proving nothing                                          | Research → Plan |
+| Harden or assert?   | Assert-only — no `FORCE RLS`, no `REVOKE`                 | The roadmap's F-03 outcome reads as assert-only, and a `REVOKE` against implicit Data-API grants risks PostgREST paths not exercised locally | Plan            |
+| Roles under test    | `anon` + two `authenticated` users                        | Covers exactly the roles the app can present; `service_role` assertions would pin a platform truth that can never fail meaningfully          | Plan            |
+| Fixtures            | Two `auth.users` rows created in-transaction, rolled back | Self-contained and re-runnable; no seed file, no cleanup debt, no cross-file ordering                                                        | Plan            |
+| Policy assertions   | Assert `qual` / `with_check` expressions, never counts    | Review finding F5 caught a criterion four `using(true)` policies would have satisfied                                                        | Research        |
+| Route scope         | The 7 data-touching handlers                              | `/api/auth/*` establishes sessions rather than consuming them and shares no contract                                                         | Plan            |
+| Vitest wiring       | `resolve.alias` stubs; **F-03 owns the config edit**      | Keeps the Astro/Cloudflare pipelines out of an instant test run, and gives F-04 a base to extend rather than a conflict                      | Plan            |
+| No-bypass invariant | Source-scanning Vitest test                               | If a service-role client ever lands, RLS drops from guarantee to decoration and every other test stops describing production                 | Research → Plan |
+| Gate placement      | Local gate now; CI decided in `test-plan.md` §3 Phase 4   | §5 already defers the placement, and a cold runner pays a full ~13-image pull                                                                | Plan            |
+| Avatar signed URL   | Out of scope, recorded in §7                              | A distinct authorization mechanism no DB-level test can reach; covering it at the route layer means asserting on a stubbed call              | Plan            |
 
 ## Scope
 
@@ -66,7 +66,7 @@ client from `locals`; creating the missing `supabase/seed.sql`.
 Two harnesses kept deliberately apart, because they have different
 prerequisites. **pgTAP** under `supabase/tests/` needs Docker and proves the
 database boundary — which matters here more than usual, since with no
-service-role client anywhere, RLS is not defence-in-depth but the *only* thing
+service-role client anywhere, RLS is not defence-in-depth but the _only_ thing
 between two users. **Vitest** proves the route boundary and needs no database at
 all. Coupling them would gate a Docker-free suite behind Docker.
 
@@ -78,13 +78,13 @@ merely observes zero rows.
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Harness + oracle guard | `supabase/tests/`, `npm run test:db`, proof that impersonation actually drives `auth.uid()` | Everything downstream is vacuous if this is wrong — which is why it is its own phase |
-| 2. Table isolation | Four verbs × three roles on both tables, plus policy-expression assertions | Writing a denied `INSERT` outside `throws_ok` aborts the whole file |
-| 3. Avatar bucket | Same proof over `storage.objects` under `avatars` | Fixtures written at the bucket root instead of `<user_id>/<file>` would silently pass |
-| 4. Route guards + no-bypass scan | `vitest.config.ts` widening, 7-handler table, middleware pin, source scan | Two virtual modules (`astro:env/server`, `cloudflare:workers`) must resolve before any handler imports |
-| 5. Gate + cookbook | Local gate documented, §6.3/§6.4 filled, roadmap synced | Thin by design; the risk is skipping it, since the roadmap lists these as owed by F-03 |
+| Phase                            | What it delivers                                                                            | Key risk                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1. Harness + oracle guard        | `supabase/tests/`, `npm run test:db`, proof that impersonation actually drives `auth.uid()` | Everything downstream is vacuous if this is wrong — which is why it is its own phase                   |
+| 2. Table isolation               | Four verbs × three roles on both tables, plus policy-expression assertions                  | Writing a denied `INSERT` outside `throws_ok` aborts the whole file                                    |
+| 3. Avatar bucket                 | Same proof over `storage.objects` under `avatars`                                           | Fixtures written at the bucket root instead of `<user_id>/<file>` would silently pass                  |
+| 4. Route guards + no-bypass scan | `vitest.config.ts` widening, 7-handler table, middleware pin, source scan                   | Two virtual modules (`astro:env/server`, `cloudflare:workers`) must resolve before any handler imports |
+| 5. Gate + cookbook               | Local gate documented, §6.3/§6.4 filled, roadmap synced                                     | Thin by design; the risk is skipping it, since the roadmap lists these as owed by F-03                 |
 
 **Prerequisites:** Docker running with the local Supabase stack (already
 available — currently up and healthy); `pg_prove:3.36` image cached (already

@@ -28,19 +28,19 @@ row can be removed. No other user can read, modify or delete those rows.
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) |
-| --- | --- | --- |
-| Snapshot vs. reference | Full snapshot, frozen at save | S-02 measured the score drifting on zero new views, so a reference would silently change the number the user decided on. |
-| Duplicate saves | One row per video, idempotent on `(user_id, video_id)` | The saved list is a list of topics, not a log; it also makes the already-saved badge trivially correct. |
-| `status` field | Column with a CHECK and a `'new'` default, no UI | Satisfies FR-010's letter while leaving parked FR-012 a pure UI change with no migration. |
-| Browse surface | Panel on `/dashboard` | Save and browse on one screen keeps the loop visible; reuses the 23-line dashboard rather than adding a route. |
-| Shared state | One parent island owns both panels | A save updates the badge and the list in the same render; a reload would destroy the ~11s analysis result. |
-| Remove | Yes, from the saved list only | A one-click idempotent save with no undo is a trap, and the DELETE policy ships in the migration regardless. |
-| Save button | Pending, then confirmed — not optimistic | The UI never shows a row as saved until the server says it is. |
-| Staleness | Each row labelled `Saved <date>` | Makes explicit that the numbers are as of the save, which is the only real objection to the snapshot model. |
-| Isolation proof | Scripted two-account `curl` protocol | Exercises the real policies against the real database with no new test infrastructure, matching how F-02's and S-05's policies were confirmed. |
-| Remove endpoint shape | `DELETE /api/opportunities?id=<uuid>`, same file as POST | Mirrors `avatar.ts` (POST + DELETE in one file) and avoids introducing the repo's first dynamic route on an adapter that has surprised this project before. |
-| Saved list bound | Capped at 200 rows with a visible note | Saving only ever adds, and every row is selected, rendered and serialized into the island's props on each dashboard load. |
+| Decision               | Choice                                                   | Why (1 sentence)                                                                                                                                            |
+| ---------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Snapshot vs. reference | Full snapshot, frozen at save                            | S-02 measured the score drifting on zero new views, so a reference would silently change the number the user decided on.                                    |
+| Duplicate saves        | One row per video, idempotent on `(user_id, video_id)`   | The saved list is a list of topics, not a log; it also makes the already-saved badge trivially correct.                                                     |
+| `status` field         | Column with a CHECK and a `'new'` default, no UI         | Satisfies FR-010's letter while leaving parked FR-012 a pure UI change with no migration.                                                                   |
+| Browse surface         | Panel on `/dashboard`                                    | Save and browse on one screen keeps the loop visible; reuses the 23-line dashboard rather than adding a route.                                              |
+| Shared state           | One parent island owns both panels                       | A save updates the badge and the list in the same render; a reload would destroy the ~11s analysis result.                                                  |
+| Remove                 | Yes, from the saved list only                            | A one-click idempotent save with no undo is a trap, and the DELETE policy ships in the migration regardless.                                                |
+| Save button            | Pending, then confirmed — not optimistic                 | The UI never shows a row as saved until the server says it is.                                                                                              |
+| Staleness              | Each row labelled `Saved <date>`                         | Makes explicit that the numbers are as of the save, which is the only real objection to the snapshot model.                                                 |
+| Isolation proof        | Scripted two-account `curl` protocol                     | Exercises the real policies against the real database with no new test infrastructure, matching how F-02's and S-05's policies were confirmed.              |
+| Remove endpoint shape  | `DELETE /api/opportunities?id=<uuid>`, same file as POST | Mirrors `avatar.ts` (POST + DELETE in one file) and avoids introducing the repo's first dynamic route on an adapter that has surprised this project before. |
+| Saved list bound       | Capped at 200 rows with a visible note                   | Saving only ever adds, and every row is selected, rendered and serialized into the island's props on each dashboard load.                                   |
 
 ## Scope
 
@@ -72,11 +72,11 @@ explicit `user_id` filter alongside RLS.
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Data model + RLS | Migration, regenerated types, client-safe/server-only service pair, schema unit tests | A wrong policy is the PRD's hardest guardrail — mitigated by copying the twice-proven `channel_profiles` shape and asserting four policies exist |
-| 2. Save & remove API | One route file with POST + DELETE, idempotent save, scripted two-account isolation protocol | The `23505` re-select path is the one non-obvious branch; Supabase's `ignoreDuplicates` upsert does not work here |
-| 3. Dashboard composition | Parent island, Save control, saved panel, SSR wiring | `AnalyzePanel` stops being self-contained; formatters must move to `src/lib/format.ts` before they get copied |
+| Phase                    | What it delivers                                                                            | Key risk                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Data model + RLS      | Migration, regenerated types, client-safe/server-only service pair, schema unit tests       | A wrong policy is the PRD's hardest guardrail — mitigated by copying the twice-proven `channel_profiles` shape and asserting four policies exist |
+| 2. Save & remove API     | One route file with POST + DELETE, idempotent save, scripted two-account isolation protocol | The `23505` re-select path is the one non-obvious branch; Supabase's `ignoreDuplicates` upsert does not work here                                |
+| 3. Dashboard composition | Parent island, Save control, saved panel, SSR wiring                                        | `AnalyzePanel` stops being self-contained; formatters must move to `src/lib/format.ts` before they get copied                                    |
 
 **Prerequisites:** S-02 shipped (it is `in-progress` on the roadmap with Phase 5 landed;
 `/api/analyze` returns the DTOs this slice persists). Local Supabase running via Docker.

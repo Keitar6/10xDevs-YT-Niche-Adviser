@@ -35,13 +35,13 @@ Two sweeps were run:
 
 **Net recommendation: one new runtime dependency.**
 
-| Capability | Decision |
-|---|---|
-| YouTube Data API v3 access | Plain `fetch()` + `zod` schemas — **no library** |
-| LLM justification (FR-008) | **`@anthropic-ai/sdk`** — the only new dependency |
-| Outlier scoring maths | Hand-rolled — **no library** |
-| ISO-8601 duration parsing (Shorts filter) | Regex, or `iso8601-duration` (<1 KB) — optional |
-| Concurrency / retry | Native `Promise.all` + `scheduler.wait()` — **no library** |
+| Capability                                | Decision                                                   |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| YouTube Data API v3 access                | Plain `fetch()` + `zod` schemas — **no library**           |
+| LLM justification (FR-008)                | **`@anthropic-ai/sdk`** — the only new dependency          |
+| Outlier scoring maths                     | Hand-rolled — **no library**                               |
+| ISO-8601 duration parsing (Shorts filter) | Regex, or `iso8601-duration` (<1 KB) — optional            |
+| Concurrency / retry                       | Native `Promise.all` + `scheduler.wait()` — **no library** |
 
 Three findings materially affect the plan and are expanded in [Architecture Insights](#architecture-insights):
 
@@ -53,23 +53,23 @@ Three findings materially affect the plan and are expanded in [Architecture Insi
 
 ### YouTube Data API v3 — official client libraries
 
-| Option | Verdict | Evidence |
-|---|---|---|
-| `googleapis` / `@googleapis/youtube` | **Rejected** | Pulls `googleapis-common`, which does `require("http2")`. workerd does not provide `http2` even with `nodejs_compat`. Cloudflare closed [workers-sdk#4253](https://github.com/cloudflare/workers-sdk/issues/4253) with *"I'd recommend making direct fetch calls to the relevant Google APIs for now"*. Google closed [google-api-nodejs-client#3453](https://github.com/googleapis/google-api-nodejs-client/issues/3453) with *"we are not planning on adding support for additional runtimes for this library in the future."* |
-| `googleapis` + `gtoken` fork override | **Rejected** | A [documented workaround](https://medium.com/@bjornbeishline/using-googleapis-with-cloudflare-workers-33b9b6de26c4) exists but requires an npm `overrides` entry pinned to a personal GitHub fork of `gtoken`, and only solves service-account signing. Unacceptable supply-chain risk for a 3-week MVP. |
-| `google-api-fetch` | **Not applicable** | Genuinely edge-native and zero-dependency, but implements only Drive/Docs/Sheets. No YouTube surface. |
-| **Plain `fetch()` + `zod`** | **Recommended** | Both maintainer camps point here. Three GET endpoints, all authenticated with a bare API key (competitor data is public — no OAuth needed). `zod@^4.4.3` is already a dependency and CLAUDE.md already mandates zod for API route validation. |
+| Option                                | Verdict            | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `googleapis` / `@googleapis/youtube`  | **Rejected**       | Pulls `googleapis-common`, which does `require("http2")`. workerd does not provide `http2` even with `nodejs_compat`. Cloudflare closed [workers-sdk#4253](https://github.com/cloudflare/workers-sdk/issues/4253) with _"I'd recommend making direct fetch calls to the relevant Google APIs for now"_. Google closed [google-api-nodejs-client#3453](https://github.com/googleapis/google-api-nodejs-client/issues/3453) with _"we are not planning on adding support for additional runtimes for this library in the future."_ |
+| `googleapis` + `gtoken` fork override | **Rejected**       | A [documented workaround](https://medium.com/@bjornbeishline/using-googleapis-with-cloudflare-workers-33b9b6de26c4) exists but requires an npm `overrides` entry pinned to a personal GitHub fork of `gtoken`, and only solves service-account signing. Unacceptable supply-chain risk for a 3-week MVP.                                                                                                                                                                                                                         |
+| `google-api-fetch`                    | **Not applicable** | Genuinely edge-native and zero-dependency, but implements only Drive/Docs/Sheets. No YouTube surface.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Plain `fetch()` + `zod`**           | **Recommended**    | Both maintainer camps point here. Three GET endpoints, all authenticated with a bare API key (competitor data is public — no OAuth needed). `zod@^4.4.3` is already a dependency and CLAUDE.md already mandates zod for API route validation.                                                                                                                                                                                                                                                                                    |
 
 ### YouTube Data API v3 — quota economics
 
 Default allocation is **10,000 units/day per Google Cloud project** (not per key), resetting at midnight Pacific. There is no paid tier — quota increases are a free request form that can take weeks.
 
-| Method | Units | Role in S-02 |
-|---|---|---|
-| `search.list` | **100** | Never use |
-| `channels.list` | 1 | Once per competitor -> `contentDetails.relatedPlaylists.uploads` |
-| `playlistItems.list` | 1 | Uploads playlist, 50 items/page, reverse-chronological by `contentDetails.videoPublishedAt` |
-| `videos.list` | 1 | Batches **up to 50 video IDs per call** for `statistics` + `contentDetails` |
+| Method               | Units   | Role in S-02                                                                                |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------- |
+| `search.list`        | **100** | Never use                                                                                   |
+| `channels.list`      | 1       | Once per competitor -> `contentDetails.relatedPlaylists.uploads`                            |
+| `playlistItems.list` | 1       | Uploads playlist, 50 items/page, reverse-chronological by `contentDetails.videoPublishedAt` |
+| `videos.list`        | 1       | Batches **up to 50 video IDs per call** for `statistics` + `contentDetails`                 |
 
 Notes that affect implementation:
 
@@ -82,59 +82,59 @@ Notes that affect implementation:
 
 ### Unofficial YouTube libraries (scrapers / InnerTube)
 
-| Library | Verdict | Evidence |
-|---|---|---|
-| `youtubei.js` (YouTube.js) | **Rejected** | Client for YouTube's private InnerTube API; v18, ~121 dependents, actively maintained, and its `getChannel(id).getVideos()` / `.getShorts()` would natively separate long-form from Shorts. But it is reverse-engineered (breaks on YouTube payload changes), ToS-grey for a shipped product, and depends on `jintr` (a JS interpreter) for signature decoding — exactly the category workerd blocks. |
-| `youtubei` (SuspiciousLookingOwl) | Rejected | Same InnerTube approach, Node >= 16, smaller project. |
-| `ytdl-core`, `@distube/ytdl-core`, `cloud-ytdl` | Not applicable | Media downloaders. `cloud-ytdl` requires Node 18+ and `undici`. |
-| `@vreden/youtube_scraper` | Rejected | 322K weekly downloads but proxies through `api.vreden.my.id` — routes our traffic through an unknown third party. |
-| `scrapetube`, `yt-dlp`, `youtube-transcript-api`, NewPipe Extractor | Out of ecosystem | Python / Java. |
+| Library                                                             | Verdict          | Evidence                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `youtubei.js` (YouTube.js)                                          | **Rejected**     | Client for YouTube's private InnerTube API; v18, ~121 dependents, actively maintained, and its `getChannel(id).getVideos()` / `.getShorts()` would natively separate long-form from Shorts. But it is reverse-engineered (breaks on YouTube payload changes), ToS-grey for a shipped product, and depends on `jintr` (a JS interpreter) for signature decoding — exactly the category workerd blocks. |
+| `youtubei` (SuspiciousLookingOwl)                                   | Rejected         | Same InnerTube approach, Node >= 16, smaller project.                                                                                                                                                                                                                                                                                                                                                 |
+| `ytdl-core`, `@distube/ytdl-core`, `cloud-ytdl`                     | Not applicable   | Media downloaders. `cloud-ytdl` requires Node 18+ and `undici`.                                                                                                                                                                                                                                                                                                                                       |
+| `@vreden/youtube_scraper`                                           | Rejected         | 322K weekly downloads but proxies through `api.vreden.my.id` — routes our traffic through an unknown third party.                                                                                                                                                                                                                                                                                     |
+| `scrapetube`, `yt-dlp`, `youtube-transcript-api`, NewPipe Extractor | Out of ecosystem | Python / Java.                                                                                                                                                                                                                                                                                                                                                                                        |
 
-**The decisive datapoint**: Scrapfly's 2026 open-source scraper survey found `scrapetube`'s `get_channel` **silently returns zero rows** (a `lockupViewModel` change broke it; fix PRs open since May 2026) — *"No exception fires. The generator yields nothing, which is the worst failure shape for a data pipeline."* For a product whose entire output is a ranked list, silent emptiness is the worst possible failure mode.
+**The decisive datapoint**: Scrapfly's 2026 open-source scraper survey found `scrapetube`'s `get_channel` **silently returns zero rows** (a `lockupViewModel` change broke it; fix PRs open since May 2026) — _"No exception fires. The generator yields nothing, which is the worst failure shape for a data pipeline."_ For a product whose entire output is a ranked list, silent emptiness is the worst possible failure mode.
 
 ### TypeScript typings for the Data API
 
-| Package | Assessment |
-|---|---|
+| Package                                 | Assessment                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@maxim_mazurok/gapi.client.youtube-v3` | Auto-generated from Google's discovery service and auto-updated. But it declares a **global `gapi.client.youtube` namespace**, not importable interfaces — designed for the browser `gapi` runtime and depends on `@types/gapi.client`. Also needs an explicit `tsconfig.compilerOptions.types` entry since TypeScript 6 changed the `types` default from auto-include to `[]`. |
-| `@types/gapi.client.youtube` | Thin DefinitelyTyped shim that re-points at the package above. Last substantive publish 2017. |
+| `@types/gapi.client.youtube`            | Thin DefinitelyTyped shim that re-points at the package above. Last substantive publish 2017.                                                                                                                                                                                                                                                                                   |
 
-**Recommendation: neither — write zod schemas.** Roughly three response shapes and eight fields are needed. `z.infer` yields the TypeScript type *and* runtime validation of an external API from one declaration; the gapi typings are compile-time only, and an API response is untrusted input.
+**Recommendation: neither — write zod schemas.** Roughly three response shapes and eight fields are needed. `z.infer` yields the TypeScript type _and_ runtime validation of an external API from one declaration; the gapi typings are compile-time only, and an API response is untrusted input.
 
 ### ISO-8601 duration parsing (FR-007 Shorts exclusion)
 
 `videos.list` `part=contentDetails` returns `duration` as an ISO-8601 string (e.g. `PT4M13S`).
 
-| Option | Size | Notes |
-|---|---|---|
-| `tinyduration` | **<1 KB** min+gzip | `parse()` / `serialize()` only, TypeScript-native, throws `InvalidDurationError`. Returns components; summing to seconds is on us. |
-| `iso8601-duration` | small | Ships `toSeconds()`, `parse()`, and an exported `pattern` regex. Handles fractional seconds (`PT1H30M10.5S` -> `5410.5`) and ISO 8601-2 weeks. Better fit — it does the seconds conversion. |
-| Luxon / dayjs duration plugin | large | Only justified if a date library were already needed. It is not. |
+| Option                        | Size               | Notes                                                                                                                                                                                       |
+| ----------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tinyduration`                | **<1 KB** min+gzip | `parse()` / `serialize()` only, TypeScript-native, throws `InvalidDurationError`. Returns components; summing to seconds is on us.                                                          |
+| `iso8601-duration`            | small              | Ships `toSeconds()`, `parse()`, and an exported `pattern` regex. Handles fractional seconds (`PT1H30M10.5S` -> `5410.5`) and ISO 8601-2 weeks. Better fit — it does the seconds conversion. |
+| Luxon / dayjs duration plugin | large              | Only justified if a date library were already needed. It is not.                                                                                                                            |
 
 A short regex covers YouTube's actual output (it never emits years/months/weeks for a video). Either choice is defensible: the regex is one fewer dependency, the library is one fewer edge case.
 
 ### Statistics libraries
 
-| Library | Tree-shakeable | Relevant coverage | Verdict |
-|---|---|---|---|
-| `simple-statistics` | Yes — named ESM exports only, **zero dependencies**, ISC | `mean`, `median`, `standardDeviation`, `zScore`, `quantile`, `medianAbsoluteDeviation` | Best option *if* a library is used. Its own benchmarks show ~20-30x faster `median` and `medianAbsoluteDeviation` than mathjs/jStat. |
-| `d3-array` | Yes — ESM, modular | `mean`, `median`, `variance`, `deviation`, `quantile`; ignores `undefined`/`NaN` | Acceptable, but no MAD. |
-| `mathjs` | With care | Everything, plus expression parser | **Rejected.** 9.43 MB unpacked; ~30% is Complex/BigNumber/Fraction/Unit/Matrix classes, ~25% is the expression parser. |
-| `jstat` | No — single-object import | Full distributions, hypothesis tests | Rejected — 706 kB shipped for `median()`. |
-| `@stdlib/stats` | Yes — per-function packages | Exhaustive (t-tests, KS-tests, LOWESS) | Overkill; granularity means many tiny deps. |
+| Library             | Tree-shakeable                                           | Relevant coverage                                                                      | Verdict                                                                                                                              |
+| ------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `simple-statistics` | Yes — named ESM exports only, **zero dependencies**, ISC | `mean`, `median`, `standardDeviation`, `zScore`, `quantile`, `medianAbsoluteDeviation` | Best option _if_ a library is used. Its own benchmarks show ~20-30x faster `median` and `medianAbsoluteDeviation` than mathjs/jStat. |
+| `d3-array`          | Yes — ESM, modular                                       | `mean`, `median`, `variance`, `deviation`, `quantile`; ignores `undefined`/`NaN`       | Acceptable, but no MAD.                                                                                                              |
+| `mathjs`            | With care                                                | Everything, plus expression parser                                                     | **Rejected.** 9.43 MB unpacked; ~30% is Complex/BigNumber/Fraction/Unit/Matrix classes, ~25% is the expression parser.               |
+| `jstat`             | No — single-object import                                | Full distributions, hypothesis tests                                                   | Rejected — 706 kB shipped for `median()`.                                                                                            |
+| `@stdlib/stats`     | Yes — per-function packages                              | Exhaustive (t-tests, KS-tests, LOWESS)                                                 | Overkill; granularity means many tiny deps.                                                                                          |
 
-**Recommendation: zero dependencies.** `median` is a sort plus a middle pick; MAD is the median of absolute deviations from the median. That is ~10 lines that need unit tests regardless, because *this arithmetic is the product's core hypothesis*. Owning it means tuning it without fighting a library API. If hand-rolling is rejected, `simple-statistics` is the only acceptable substitute.
+**Recommendation: zero dependencies.** `median` is a sort plus a middle pick; MAD is the median of absolute deviations from the median. That is ~10 lines that need unit tests regardless, because _this arithmetic is the product's core hypothesis_. Owning it means tuning it without fighting a library API. If hand-rolling is rejected, `simple-statistics` is the only acceptable substitute.
 
 ### Concurrency, retry, and rate limiting
 
 Binding constraint: Cloudflare allows **6 simultaneous outgoing connections per request** on both free and paid plans. With 3-5 competitors a plain `Promise.all` stays under it; a per-video fan-out would not.
 
-| Option | Assessment |
-|---|---|
-| `p-limit` | Pure JS, no Node built-ins, edge-safe. Supports runtime-mutable `limit.concurrency`, the documented pattern for backing off on 429s. Only worth adding if concurrent fetches exceed 6. |
-| `ky` | ~4 KB, fetch-based (Workers-native), built-in retry with exponential backoff, timeout, and `beforeRetry` / `beforeError` hooks. Reasonable but not required. |
-| **Native `scheduler.wait(ms)`** | **Recommended.** Workers ships an awaitable `setTimeout` equivalent, and Cloudflare's own docs provide a `fetchWithRetry` exponential-backoff-with-jitter recipe using it. Caveat: deployed timers do not advance during CPU execution (a Spectre mitigation) — fine for I/O waits, unsuitable for precise timing. |
-| Cloudflare Rate Limiting binding | Optional. `env.LIMITER.limit({key})` keyed on user ID would protect the YouTube quota from one user hammering "Analyze". Note limits are enforced **per Cloudflare location**, not globally. |
+| Option                           | Assessment                                                                                                                                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `p-limit`                        | Pure JS, no Node built-ins, edge-safe. Supports runtime-mutable `limit.concurrency`, the documented pattern for backing off on 429s. Only worth adding if concurrent fetches exceed 6.                                                                                                                             |
+| `ky`                             | ~4 KB, fetch-based (Workers-native), built-in retry with exponential backoff, timeout, and `beforeRetry` / `beforeError` hooks. Reasonable but not required.                                                                                                                                                       |
+| **Native `scheduler.wait(ms)`**  | **Recommended.** Workers ships an awaitable `setTimeout` equivalent, and Cloudflare's own docs provide a `fetchWithRetry` exponential-backoff-with-jitter recipe using it. Caveat: deployed timers do not advance during CPU execution (a Spectre mitigation) — fine for I/O waits, unsuitable for precise timing. |
+| Cloudflare Rate Limiting binding | Optional. `env.LIMITER.limit({key})` keyed on user ID would protect the YouTube quota from one user hammering "Analyze". Note limits are enforced **per Cloudflare location**, not globally.                                                                                                                       |
 
 ### LLM SDK for the FR-008 justification
 
@@ -155,13 +155,13 @@ Alternatives considered: **Workers AI** (`env.AI`) avoids the dependency but is 
 
 ### Cloudflare Workers runtime limits
 
-| Limit | Free | Paid |
-|---|---|---|
-| CPU time per HTTP request | **10 ms** | 5 min (default 30 s, via `limits.cpu_ms`) |
-| Subrequests per invocation | 50 | 10,000 (up to 10M via `limits.subrequests`) |
-| Simultaneous outgoing connections | 6 | 6 |
-| **Wall-clock duration (HTTP trigger)** | **Unlimited** | **Unlimited** |
-| Memory | 128 MB | 128 MB |
+| Limit                                  | Free          | Paid                                        |
+| -------------------------------------- | ------------- | ------------------------------------------- |
+| CPU time per HTTP request              | **10 ms**     | 5 min (default 30 s, via `limits.cpu_ms`)   |
+| Subrequests per invocation             | 50            | 10,000 (up to 10M via `limits.subrequests`) |
+| Simultaneous outgoing connections      | 6             | 6                                           |
+| **Wall-clock duration (HTTP trigger)** | **Unlimited** | **Unlimited**                               |
+| Memory                                 | 128 MB        | 128 MB                                      |
 
 Wall-clock time is unbounded as long as the client stays connected; `ctx.waitUntil()` extends work up to 30 s past the response. **CPU time excludes time awaiting `fetch()`.** So a multi-second analysis is architecturally fine — only JSON parsing of ~250 video records counts against CPU.
 
@@ -189,13 +189,13 @@ channels.list(part=contentDetails, id=<up to 50 competitor IDs>)   -> uploads pl
 
 ### 2. `outlier_score` should divide by the median, not the mean — flagged for `/10x-plan`
 
-`context/foundation/roadmap.md:32` defines the score as views relative to the channel **average** (*"wyswietlenia filmu wzgledem sredniej danego kanalu"*). Every independent source found argues for the **median**, and the argument is specific to this use case:
+`context/foundation/roadmap.md:32` defines the score as views relative to the channel **average** (_"wyswietlenia filmu wzgledem sredniej danego kanalu"_). Every independent source found argues for the **median**, and the argument is specific to this use case:
 
-> A channel with 28 videos near 10K views, one at 200K and one at 80K, has a **mean near 19K but a median near 10K**. A genuinely strong new video at 15K reads as *under-performance* against the mean.
+> A channel with 28 videos near 10K views, one at 200K and one at 80K, has a **mean near 19K but a median near 10K**. A genuinely strong new video at 15K reads as _under-performance_ against the mean.
 
-The mean has a breakdown point of 0 — one extreme value moves it arbitrarily far. The median's is 0.5. Since the product exists to analyse channels *for their outliers*, any competitor worth curating has already produced outliers that permanently inflate their mean. The metric as specified would systematically under-detect what it exists to find.
+The mean has a breakdown point of 0 — one extreme value moves it arbitrarily far. The median's is 0.5. Since the product exists to analyse channels _for their outliers_, any competitor worth curating has already produced outliers that permanently inflate their mean. The metric as specified would systematically under-detect what it exists to find.
 
-- **Statistical basis**: Leys et al., *"Detecting outliers: do not use standard deviation around the mean, use absolute deviation around the median"* (ULB) — recommends median +/- 2.5 x MAD, noting the MAD is *"totally immune to sample size"* and describing the mean/3-SD rule as *"fundamentally problematic: it is supposed to guide our outlier detection but, at the same time, the indicator itself is altered by the presence of outlying values."*
+- **Statistical basis**: Leys et al., _"Detecting outliers: do not use standard deviation around the mean, use absolute deviation around the median"_ (ULB) — recommends median +/- 2.5 x MAD, noting the MAD is _"totally immune to sample size"_ and describing the mean/3-SD rule as _"fundamentally problematic: it is supposed to guide our outlier detection but, at the same time, the indicator itself is altered by the presence of outlying values."_
 - **Ecosystem convergence**: vidIQ's Outlier Score and every analytics tool surveyed divide by channel median. One reference implementation explicitly falls back to the average only when the median is unavailable.
 
 **This is a PRD-level definition and therefore the user's call, not a unilateral change.** It is a one-word change in the formula with a large effect on output quality, and far cheaper to decide before S-03 persists scores computed the other way.
@@ -206,7 +206,7 @@ Cheap to implement, expensive to discover late:
 
 1. **Minimum video age of 7-14 days.** Launch-week spikes produce apparent 4x outliers that settle to ~1.2x by day ten. Without this filter the top-ranked opportunity is frequently just a video published two days ago.
 2. **Minimum sample of ~10-20 comparable videos** before a baseline is trustworthy; below that the median itself is volatile. Warrants an explicit "not enough data for this competitor" state rather than a garbage score.
-3. **Separate baselines for Shorts and long-form.** Already implied by FR-007, but the ordering matters: Shorts must be filtered out *before* computing the baseline, not merely before ranking.
+3. **Separate baselines for Shorts and long-form.** Already implied by FR-007, but the ordering matters: Shorts must be filtered out _before_ computing the baseline, not merely before ranking.
 
 Threshold conventions useful for FR-008 justification copy: **>=2x** worth investigating, **>=3x** strong, **>=5x** validated demand, **>=10x** breakout. Typical channels produce a 2x+ outlier on roughly 5-10% of uploads.
 
@@ -217,7 +217,7 @@ S-02's risk note treats the multi-API integration as the highest-risk element. O
 ## Historical Context (from prior changes)
 
 - `context/changes/channel-profile-data-model/plan.md` — established the `channel_profiles` table with per-owner RLS and a `unique` constraint on `user_id` (one profile per user), `user_id default auth.uid()`. S-02 reads the competitor ID list from here.
-- `context/changes/channel-profile-data-model/plan-brief.md` — notes *"No test runner exists anywhere in the repo."* This matters for S-02: the scoring function is the first piece of genuinely testable pure logic in the project, and the argument for hand-rolling the maths assumes it will be unit-tested. Establishing a test runner may need to be in scope.
+- `context/changes/channel-profile-data-model/plan-brief.md` — notes _"No test runner exists anywhere in the repo."_ This matters for S-02: the scoring function is the first piece of genuinely testable pure logic in the project, and the argument for hand-rolling the maths assumes it will be unit-tested. Establishing a test runner may need to be in scope.
 - `context/changes/channel-profile-crud/plan.md` — established the `src/types.ts` -> generated `Database` type pattern and the typed Supabase client, plus the dashboard dialog UI pattern that the Analyze trigger will likely sit beside.
 
 ## Related Research
@@ -229,7 +229,7 @@ S-02's risk note treats the multi-API integration as the highest-risk element. O
 
 1. **RESOLVED 2026-09-11 → median.** User decision recorded in [`research.md`](./research.md) (Follow-up, D2); FR-008 in the PRD and `roadmap.md:32` still specify the mean and need reconciling. ~~**Mean vs median for `outlier_score`** — Owner: user. **Block: yes for `/10x-plan`.**~~ A PRD-level definition change; see Architecture Insights #2. Everything downstream (S-03 persisted scores) depends on it.
 2. **Which Cloudflare Workers plan is this project on?** — Owner: user. Block: no. Could not be determined from the repo. Free-plan 10 ms CPU is a genuine risk for parsing ~250 video records; paid removes the concern entirely.
-3. **Time-window parameter** (how many days/months of uploads form the baseline) — Owner: user. Block: no. Pre-existing Unknown from `roadmap.md:126`. Research suggests a *count*-based window (last 20-50 comparable uploads) is more stable than a *date*-based one, since upload cadence varies per channel.
+3. **Time-window parameter** (how many days/months of uploads form the baseline) — Owner: user. Block: no. Pre-existing Unknown from `roadmap.md:126`. Research suggests a _count_-based window (last 20-50 comparable uploads) is more stable than a _date_-based one, since upload cadence varies per channel.
 4. **Shorts duration threshold** — Owner: user. Block: no. `contentDetails.duration` gives an exact figure, but the Shorts cutoff is a heuristic (<=60s historically, <=3min for newer Shorts), not an API flag.
 5. **Should responses be cached** (KV or similar) to conserve quota across repeat analyses? — Owner: user. Block: no. Not researched in depth; at ~650 runs/day the quota is unlikely to bind for an MVP, so this is probably post-MVP.
 6. **Test runner** — Owner: user. Block: no. The recommendation to hand-roll the scoring maths presupposes unit tests; none exist in the repo yet.
@@ -243,4 +243,4 @@ External research via exa.ai, 2026-09-11:
 - Anthropic — [TypeScript SDK runtime support](https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/typescript); [anthropic-sdk-typescript#292](https://github.com/anthropics/anthropic-sdk-typescript/issues/292) (fixed v0.17.0), [#460](https://github.com/anthropics/anthropic-sdk-typescript/issues/460), [#508](https://github.com/anthropics/anthropic-sdk-typescript/issues/508) (both Vertex-specific)
 - Libraries — [simple-statistics](https://github.com/simple-statistics/simple-statistics) + [benchmarks](https://github.com/simple-statistics/simple-statistics/tree/main/benchmarks); [mathjs custom bundling](https://mathjs.org/docs/custom_bundling.html); [d3-array summarize](https://d3js.org/d3-array/summarize); [tinyduration](https://github.com/MelleB/tinyduration); [iso8601-duration](https://github.com/tolu/iso8601-duration); [p-limit](https://github.com/sindresorhus/p-limit); [youtubei.js](https://github.com/LuanRT/YouTube.js)
 - Scraper landscape — [Scrapfly, "The 6 Best Open-Source YouTube Scrapers (2026)"](https://scrapfly.io/blog/posts/best-open-source-youtube-scrapers)
-- Outlier methodology — Leys et al., *"Detecting outliers: do not use standard deviation around the mean, use absolute deviation around the median"* (ULB); [Outlieo, "What is a YouTube outlier?"](https://outlieo.xyz/learn/what-is-a-youtube-outlier); [OverseerOS, "YouTube Outlier Benchmark Report 2026"](https://www.overseeros.com/blog/youtube-outlier-benchmark-report)
+- Outlier methodology — Leys et al., _"Detecting outliers: do not use standard deviation around the mean, use absolute deviation around the median"_ (ULB); [Outlieo, "What is a YouTube outlier?"](https://outlieo.xyz/learn/what-is-a-youtube-outlier); [OverseerOS, "YouTube Outlier Benchmark Report 2026"](https://www.overseeros.com/blog/youtube-outlier-benchmark-report)

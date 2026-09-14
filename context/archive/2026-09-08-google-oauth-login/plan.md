@@ -19,6 +19,7 @@ Add Google OAuth sign-in alongside the existing, fully-working email+password fl
 ## Desired End State
 
 A user on `/auth/signin` or `/auth/signup` sees a "Continue with Google" button above the existing password form. Clicking it:
+
 1. Redirects to Google's consent screen (via Supabase's hosted `/auth/v1/authorize` endpoint).
 2. On approval, Google redirects to Supabase's fixed callback, which redirects to our app's `/api/auth/callback?code=...`.
 3. Our callback route exchanges the code for a session (setting the same cookies the password flow uses) and redirects to `/`.
@@ -83,7 +84,7 @@ Add the two server routes that carry out the OAuth handshake, and get the extern
 
 **Intent**: `npm run lint` is a Success Criterion on both phases of this plan but currently fails repo-wide (1022 pre-existing `prettier/prettier` CRLF errors, unrelated to anything this plan otherwise touches). Fixing it here, once, unblocks both phases' lint criterion and stops it from silently blocking every future change too.
 
-**Contract**: `.gitattributes` declares `* text=auto eol=lf` so Git normalizes line endings to LF in the working tree going forward, regardless of a given contributor's `core.autocrlf`. Existing tracked files are re-normalized to match (`git add --renormalize .` after the `.gitattributes` addition, or equivalent — `npm run format` alone does not rewrite files ESLint doesn't already touch, so re-normalization must happen at the Git layer, not just the formatter). `.scaffold` files are included in this pass for simplicity even though Phase 2 (Change 4) deletes them outright — normalizing then deleting is harmless, and excluding them would add exclusion logic for no benefit. No file *content* changes beyond line-ending bytes; this is not a formatting pass.
+**Contract**: `.gitattributes` declares `* text=auto eol=lf` so Git normalizes line endings to LF in the working tree going forward, regardless of a given contributor's `core.autocrlf`. Existing tracked files are re-normalized to match (`git add --renormalize .` after the `.gitattributes` addition, or equivalent — `npm run format` alone does not rewrite files ESLint doesn't already touch, so re-normalization must happen at the Git layer, not just the formatter). `.scaffold` files are included in this pass for simplicity even though Phase 2 (Change 4) deletes them outright — normalizing then deleting is harmless, and excluding them would add exclusion logic for no benefit. No file _content_ changes beyond line-ending bytes; this is not a formatting pass.
 
 ### Success Criteria:
 

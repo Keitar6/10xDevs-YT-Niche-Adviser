@@ -28,8 +28,8 @@ scripted curl, run locally, never in CI; one production verification criterion
 was formally downgraded to "won't-do" after the fact
 (`context/archive/2026-09-13-channel-profile-avatar/change.md:62-66`); and
 `context/archive/2026-09-13-save-and-view-opportunities/plan-brief.md:97-98`
-states the gap outright: *"a future migration that weakens a policy would not be
-caught automatically."*
+states the gap outright: _"a future migration that weakens a policy would not be
+caught automatically."_
 
 **This is therefore a pinning job, not a remediation job.** No phase below is
 expected to find a bug. A phase that goes red on first run means the test is
@@ -40,13 +40,13 @@ wrong, not the policy — investigate in that order.
 The riskiest mechanics were run against the live local stack before this plan
 was written, so no phase carries a "does this work?" branch:
 
-| Question | Result |
-|---|---|
-| Does `set local request.jwt.claim.sub` drive `auth.uid()`? | **Yes**, on this PG 17.6 stack. The JSON `request.jwt.claims` form also works. Research's open question #1 is closed. |
-| Does the full protocol run? | **Yes** — a 4-assertion pgTAP probe (oracle guard → cross-user emptiness → denied insert → row intact) passed `Result: PASS`, then was deleted. |
-| Does a denied write abort the test transaction? | **Denied `UPDATE`/`DELETE` fail silently (`UPDATE 0`). A denied `INSERT` raises `42501` and aborts the transaction.** `throws_ok` survives it via its internal subtransaction — verified. |
-| Is an `enable pgtap` migration required? | **No.** `select … from pg_extension where extname='pgtap'` returns zero rows after a run; the extension is created and rolled back per file. |
-| Can Vitest import a route handler today? | **No.** Every route transitively imports `astro:env/server`, and `analyze.ts` / `avatar/generate.ts` also import `cloudflare:workers`. Both must resolve before any handler can be imported. |
+| Question                                                   | Result                                                                                                                                                                                       |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Does `set local request.jwt.claim.sub` drive `auth.uid()`? | **Yes**, on this PG 17.6 stack. The JSON `request.jwt.claims` form also works. Research's open question #1 is closed.                                                                        |
+| Does the full protocol run?                                | **Yes** — a 4-assertion pgTAP probe (oracle guard → cross-user emptiness → denied insert → row intact) passed `Result: PASS`, then was deleted.                                              |
+| Does a denied write abort the test transaction?            | **Denied `UPDATE`/`DELETE` fail silently (`UPDATE 0`). A denied `INSERT` raises `42501` and aborts the transaction.** `throws_ok` survives it via its internal subtransaction — verified.    |
+| Is an `enable pgtap` migration required?                   | **No.** `select … from pg_extension where extname='pgtap'` returns zero rows after a run; the extension is created and rolled back per file.                                                 |
+| Can Vitest import a route handler today?                   | **No.** Every route transitively imports `astro:env/server`, and `analyze.ts` / `avatar/generate.ts` also import `cloudflare:workers`. Both must resolve before any handler can be imported. |
 
 ## Desired End State
 
@@ -64,7 +64,7 @@ stack running; and by deliberately breaking a policy (`alter policy … using
 ### Key Discoveries
 
 - **The oracle problem has a pgTAP-native form.** If `auth.uid()` returns NULL
-  for *both* impersonated users, every "stranger sees nothing" assertion passes
+  for _both_ impersonated users, every "stranger sees nothing" assertion passes
   vacuously. Phase 1 exists solely to make that impossible.
 - **F5 is the most reusable prior artifact.**
   `context/archive/2026-09-13-save-and-view-opportunities/reviews/plan-review.md:80-87`
@@ -77,7 +77,7 @@ stack running; and by deliberately breaking a policy (`alter policy … using
   zero rows purely because no policy matches it.
 - **`content_opportunities`' UPDATE policy has no caller.** No route issues an
   UPDATE against that table; S-06 introduces the first one. Phase 2 proves the
-  ownership guarantee on that path *before* the path exists.
+  ownership guarantee on that path _before_ the path exists.
 - **Storage ownership is the first path segment.** All four `avatars` policies
   use `(storage.foldername(name))[1]`, so test objects must be written at
   `<user_id>/<filename>` — a fixture written at the bucket root would make every
@@ -89,21 +89,21 @@ stack running; and by deliberately breaking a policy (`alter policy … using
 ## What We're NOT Doing
 
 - **No hardening migration.** No `FORCE ROW LEVEL SECURITY`, no `REVOKE` for
-  `anon`. The roadmap's F-03 outcome reads as *assert-only*, and adding a
+  `anon`. The roadmap's F-03 outcome reads as _assert-only_, and adding a
   `REVOKE` against Supabase's implicit Data-API grants risks breaking PostgREST
   paths not exercised locally. The current effect is asserted; the seam is
   recorded in "Open Risks" rather than closed.
 - **No `service_role` or table-owner assertions.** `service_role` bypasses RLS
   by design — asserting that is asserting a platform truth that can never fail
-  for a reason anyone cares about. The invariant that matters, *no service-role
-  client exists in this codebase*, is pinned in Phase 4 instead.
+  for a reason anyone cares about. The invariant that matters, _no service-role
+  client exists in this codebase_, is pinned in Phase 4 instead.
 - **No coverage of the avatar signed-URL read path.** `createSignedUrl` is a
   distinct authorization mechanism from `avatars_select_own`; a DB-level test
   cannot reach it, and covering it at the route layer would mean asserting on
   the argument passed to a stubbed storage client. Scoped out explicitly and
   added to `test-plan.md` §7, consistent with §7's existing exclusion of avatar
   surfaces on blast-radius grounds.
-- **No `/api/auth/*` route tests.** Those five handlers *establish* the session
+- **No `/api/auth/*` route tests.** Those five handlers _establish_ the session
   rather than consume it; they share no contract with the seven data-touching
   handlers and would dilute the table-driven pattern into five one-offs.
 - **No CI wiring.** `test-plan.md` §5 already defers the placement decision to
@@ -140,7 +140,7 @@ last step is the one `test-plan.md` §2 insists on and that naive suites omit.
 **Denied writes fail in two different ways, and the difference decides how each
 assertion is written.** A denied `UPDATE` or `DELETE` matches zero rows and
 returns silently (`UPDATE 0`) — assert with `is`/`results_eq` on the affected
-count *and* pair it with a row-intactness check, because zero rows alone is not
+count _and_ pair it with a row-intactness check, because zero rows alone is not
 proof. A denied `INSERT` raises SQLSTATE `42501` and **aborts the enclosing
 transaction**, taking every later assertion in the file with it. Denied inserts
 must therefore go through `throws_ok`, whose internal PL/pgSQL exception handler
@@ -151,7 +151,7 @@ and the following assertion ran normally.
 **Impersonation is per-statement-block, not per-connection.** `set local role`
 and `set local request.jwt.claim.sub` are scoped to the enclosing transaction,
 so switching users mid-file is just re-issuing the claim. Switching to `anon`
-requires `set local role anon`; returning to a user requires *both* the role and
+requires `set local role anon`; returning to a user requires _both_ the role and
 the claim again. The verified form:
 
 ```sql
@@ -252,7 +252,7 @@ verification passes, pause here for manual confirmation before proceeding.
 
 Prove per-verb, per-role isolation on both tables, including the row-intactness
 assertion that distinguishes this suite from a naive one, and assert the policy
-*expressions* rather than counting policies.
+_expressions_ rather than counting policies.
 
 ### Changes Required
 
@@ -419,7 +419,7 @@ that rationale no longer holds.
 **File**: `src/pages/api/routes.test.ts`
 
 **Intent**: Prove, one case per handler, that a caller with no session gets a
-401 carrying no user data. Exhaustiveness *is* the value here —
+401 carrying no user data. Exhaustiveness _is_ the value here —
 `test-plan.md` §2 names "testing one representative route and assuming the rest
 follow" as the anti-pattern for this risk.
 
@@ -443,7 +443,7 @@ and `POST /api/opportunities` — invoke with a session for user A and a body
 carrying an extra `user_id` set to a stranger's UUID, with `@/lib/supabase`
 module-mocked so `createClient` returns a recording fake. Assert the row handed
 to `insert` carries A's id. For `opportunities`, note that
-`src/pages/api/opportunities.ts:43` spreads the parsed body *before* setting
+`src/pages/api/opportunities.ts:43` spreads the parsed body _before_ setting
 `user_id`, so the session value wins by construction — the test pins that
 ordering. The remaining five handlers read no owner field at all (`analyze` and
 `avatar/generate` read no body; `avatar` POST reads raw bytes); the table should
@@ -482,7 +482,7 @@ behavioural level but silently makes every route trust an unverified token.
 **File**: `src/lib/no-privileged-client.test.ts`
 
 **Intent**: Pin the invariant the entire plan rests on. If a service-role client
-ever appears, RLS drops from *guarantee* to *decoration* and every pgTAP
+ever appears, RLS drops from _guarantee_ to _decoration_ and every pgTAP
 assertion in Phases 1–3 stops describing production.
 
 **Contract**: Walk `src/**` and fail on `service_role`, `serviceRole` or

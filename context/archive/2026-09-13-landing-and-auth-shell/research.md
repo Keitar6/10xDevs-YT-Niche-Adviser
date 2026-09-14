@@ -24,7 +24,7 @@ last_updated_by: Mateusz
 
 Internal research for roadmap slice **S-04** (`landing-and-auth-shell`, PRD FR-013 + FR-014): what does the codebase already do for (a) the landing surface still advertising the starter template, and (b) sign-in / sign-up / sign-out, which must move from standalone routes into a dialog consistent with the existing channel-profile dialog?
 
-This answers *"what does our codebase already do, and what does it force on the plan"* — not *"what should we build with"*. There is no external counterpart for this slice: it adds no library, no secret, no integration.
+This answers _"what does our codebase already do, and what does it force on the plan"_ — not _"what should we build with"_. There is no external counterpart for this slice: it adds no library, no secret, no integration.
 
 ## Summary
 
@@ -34,9 +34,9 @@ FR-013 is nearly trivial. FR-014 is not, and the gap between them is the whole s
 
 **FR-014 (auth in a dialog)** collides with the current architecture in three specific ways, each already documented as a hard-won lesson in this repo:
 
-1. **The auth forms are native full-page POSTs.** `SignInForm.tsx:43` and `SignUpForm.tsx:66` are `<form method="POST" action="/api/auth/signin">`; the React `onSubmit` only calls `preventDefault()` when *client* validation fails. Inside a Radix dialog, a native submit navigates the page and destroys the dialog. They must become `preventDefault()` + `fetch` + JSON — which in turn means `/api/auth/signin` and `/api/auth/signup` must stop answering with `302 → ?error=` and start answering with JSON, mirroring `/api/profile`.
+1. **The auth forms are native full-page POSTs.** `SignInForm.tsx:43` and `SignUpForm.tsx:66` are `<form method="POST" action="/api/auth/signin">`; the React `onSubmit` only calls `preventDefault()` when _client_ validation fails. Inside a Radix dialog, a native submit navigates the page and destroys the dialog. They must become `preventDefault()` + `fetch` + JSON — which in turn means `/api/auth/signin` and `/api/auth/signup` must stop answering with `302 → ?error=` and start answering with JSON, mirroring `/api/profile`.
 2. **All error state today lives in the URL.** Every failure path redirects to `/auth/{signin,signup}?error=<encoded message>`, which the Astro page reads once at SSR (`signin.astro:6`) and passes down as `serverError`. A dialog on an arbitrary page has no per-request read point, so error state must move into the fetch response body and React state.
-3. **Google OAuth cannot be contained in a dialog at all.** `google.ts:20` hands Supabase `redirectTo: ${context.url.origin}/api/auth/callback?origin=${origin}`, and the browser leaves the app for Google's consent screen. The `origin` param is an allowlist of exactly `"signin" | "signup"` (`google.ts:4`, `callback.ts:4`) — it exists only to pick which *page* to show an error on. Once those pages stop being the auth surface, that param needs a different meaning (return path, or "reopen the dialog in state X"). **There is no `next`/return-path plumbing anywhere in the codebase**: `callback.ts:26`, `signin.ts:19` and `signout.ts:9` all hardcode `/`, and `middleware.ts:20` redirects to `/auth/signin` with no memory of where the user was headed.
+3. **Google OAuth cannot be contained in a dialog at all.** `google.ts:20` hands Supabase `redirectTo: ${context.url.origin}/api/auth/callback?origin=${origin}`, and the browser leaves the app for Google's consent screen. The `origin` param is an allowlist of exactly `"signin" | "signup"` (`google.ts:4`, `callback.ts:4`) — it exists only to pick which _page_ to show an error on. Once those pages stop being the auth surface, that param needs a different meaning (return path, or "reopen the dialog in state X"). **There is no `next`/return-path plumbing anywhere in the codebase**: `callback.ts:26`, `signin.ts:19` and `signout.ts:9` all hardcode `/`, and `middleware.ts:20` redirects to `/auth/signin` with no memory of where the user was headed.
 
 Two decisions from previous slices are load-bearing and non-negotiable here:
 
@@ -55,14 +55,14 @@ One structural surprise worth flagging early: **`Topbar.astro` is not part of `L
 
 Visible starter copy, exhaustively:
 
-| Location | Content |
-|---|---|
-| `src/layouts/Layout.astro:11` | `const { title = "10x Astro Starter" } = Astro.props;` — the `<title>` for `/` |
-| `src/components/Welcome.astro:35` | H1 hero: `10x Astro Starter` |
-| `src/components/Welcome.astro:37-39` | Subcopy: "A production-ready starter with authentication, modern tooling, and a cosmic developer experience." |
-| `src/components/Welcome.astro:74-77` | Card 1: "Authentication Ready" / Supabase auth out of the box |
-| `src/components/Welcome.astro:97-100` | Card 2: "Modern Stack" / "Astro 5, React 19, Tailwind 4…" — also factually stale, the repo is Astro 6 |
-| `src/components/Welcome.astro:119-122` | Card 3: "Developer Experience" / ESLint, Prettier, pre-commit hooks |
+| Location                               | Content                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `src/layouts/Layout.astro:11`          | `const { title = "10x Astro Starter" } = Astro.props;` — the `<title>` for `/`                                |
+| `src/components/Welcome.astro:35`      | H1 hero: `10x Astro Starter`                                                                                  |
+| `src/components/Welcome.astro:37-39`   | Subcopy: "A production-ready starter with authentication, modern tooling, and a cosmic developer experience." |
+| `src/components/Welcome.astro:74-77`   | Card 1: "Authentication Ready" / Supabase auth out of the box                                                 |
+| `src/components/Welcome.astro:97-100`  | Card 2: "Modern Stack" / "Astro 5, React 19, Tailwind 4…" — also factually stale, the repo is Astro 6         |
+| `src/components/Welcome.astro:119-122` | Card 3: "Developer Experience" / ESLint, Prettier, pre-commit hooks                                           |
 
 Non-visible leftovers in the same family: `README.md:1,3,5,9-14,25-27` (title, `public/template.png` screenshot, the starter's clone URL), and `src/lib/config-status.ts:16`, which points users at `https://github.com/przeprogramowani/10x-astro-starter#supabase-configuration` from a **live runtime banner** — that one is user-visible when Supabase is unconfigured, so it belongs in scope even though it is not landing copy.
 
@@ -100,13 +100,13 @@ read back once at SSR time (`signin.astro:6`, `signup.astro:6`) and rendered by 
 
 **Success paths** (all use Astro's default 302; none set a status explicitly):
 
-| Endpoint | On success |
-|---|---|
-| `POST /api/auth/signin:19` | `redirect("/")` |
-| `POST /api/auth/signup:19` | `redirect("/auth/confirm-email")` — unconditional, regardless of whether confirmation is actually required |
-| `POST /api/auth/google:33` | `redirect(data.url)` → Google consent |
-| `GET /api/auth/callback:26` | `redirect("/")` |
-| `POST /api/auth/signout:9` | `redirect("/")` |
+| Endpoint                    | On success                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `POST /api/auth/signin:19`  | `redirect("/")`                                                                                            |
+| `POST /api/auth/signup:19`  | `redirect("/auth/confirm-email")` — unconditional, regardless of whether confirmation is actually required |
+| `POST /api/auth/google:33`  | `redirect(data.url)` → Google consent                                                                      |
+| `GET /api/auth/callback:26` | `redirect("/")`                                                                                            |
+| `POST /api/auth/signout:9`  | `redirect("/")`                                                                                            |
 
 `src/pages/auth/confirm-email.astro:4-18` is a static dead-end: it branches only on `import.meta.env.DEV` to say either "you can sign in now" (local Supabase auto-confirms) or "check your email", and links back to `/auth/signin:31`. It has no session awareness and no polling.
 
@@ -131,11 +131,11 @@ const { data, error } = await supabase.auth.signInWithOAuth({
 - `origin` is a two-value allowlist re-validated on the way back (`callback.ts:4,8`). It exists **only for error routing** — `callback.ts:26` ignores it entirely on success and sends everyone to `/`. It was added as the fix for plan-review finding F2 in F-01 (errors from the signup page used to land on signin).
 - `prompt: "select_account"` was added deliberately: without it, a returning user is silently re-authenticated into the same Google account because Google's SSO cookie outlives this app's sign-out (`context/archive/2026-09-08-google-oauth-login/change.md:15`).
 - **Open gap carried over from F-01**: Google's own `?error=access_denied&error_description=…` on consent denial is never read; `callback.ts:11-13` falls through to "Missing OAuth code". This was impl-review finding **F1**, consciously SKIPPED, and the S-02 research flagged it as a recurring shape ("a third-party provider's own error code going unsurfaced"). S-04 rewrites this surface and should decide explicitly whether to keep carrying it.
-- `GoogleSignInButton.astro` is intentionally a plain Astro `<form method="POST">` with a hidden `origin` input and no JS (`plan.md:12,118` of F-01) — justified because it is a pure full-page-redirect trigger. That justification survives a move into a dialog (the redirect is unavoidable), but the component now has to be renderable *inside* a React island, which an `.astro` file cannot be. Either the markup is duplicated in TSX or the dialog is composed in Astro with a React island inside it.
+- `GoogleSignInButton.astro` is intentionally a plain Astro `<form method="POST">` with a hidden `origin` input and no JS (`plan.md:12,118` of F-01) — justified because it is a pure full-page-redirect trigger. That justification survives a move into a dialog (the redirect is unavoidable), but the component now has to be renderable _inside_ a React island, which an `.astro` file cannot be. Either the markup is duplicated in TSX or the dialog is composed in Astro with a React island inside it.
 
 ### D. The dialog pattern to copy
 
-`src/components/profile/ProfileDialog.tsx` is the reference implementation and is self-contained: `useState(false)` at `:12`, wired at `:24` as `<Dialog open={open} onOpenChange={setOpen}>`, trigger is `DialogTrigger asChild` around a plain button at `:25-28`. The Astro side passes only *data* (`Topbar.astro:29` — `<ProfileDialog initialProfile={profile} loadFailed={!!profileError} client:load />`), never open state. Radix supplies focus trap, ESC, overlay-dismiss, animations and the corner close button (`ui/dialog.tsx:29,51,57-65`).
+`src/components/profile/ProfileDialog.tsx` is the reference implementation and is self-contained: `useState(false)` at `:12`, wired at `:24` as `<Dialog open={open} onOpenChange={setOpen}>`, trigger is `DialogTrigger asChild` around a plain button at `:25-28`. The Astro side passes only _data_ (`Topbar.astro:29` — `<ProfileDialog initialProfile={profile} loadFailed={!!profileError} client:load />`), never open state. Radix supplies focus trap, ESC, overlay-dismiss, animations and the corner close button (`ui/dialog.tsx:29,51,57-65`).
 
 Notably, **it does not close on success** (`ProfileDialog.tsx:36-38` only updates local state) — the form shows an inline green banner instead.
 

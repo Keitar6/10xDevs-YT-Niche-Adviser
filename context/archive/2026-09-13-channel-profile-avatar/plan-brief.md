@@ -5,7 +5,7 @@
 
 ## What & Why
 
-The channel profile carries a niche, a sub-niche and three to five competitors, but nothing visual — the app shell shows an email address and a text link. FR-015 asks for an avatar the user either uploads or generates from their own niche, so the profile reads as *theirs* rather than as a row in a form.
+The channel profile carries a niche, a sub-niche and three to five competitors, but nothing visual — the app shell shows an email address and a text link. FR-015 asks for an avatar the user either uploads or generates from their own niche, so the profile reads as _theirs_ rather than as a row in a form.
 
 ## Starting Point
 
@@ -17,17 +17,17 @@ A signed-in user opens the profile dialog and either drops in an image or clicks
 
 ## Key Decisions Made
 
-| Decision | Choice | Why | Source |
-| --- | --- | --- | --- |
-| Image provider | Cloudflare Workers AI `flux-1-schnell` | ~$0.0005/image and **no new secret** — the binding is authorized by the Worker, removing the six-step plumbing chain the roadmap flagged as this slice's main risk | Research |
-| Bucket access | Private, four per-operation policies, `<user_id>/` folder | Roadmap requires owner-only; replicates the F-02 pattern rather than inventing one | Plan |
-| Column contract | `avatar_path`, not `avatar_url` | Signed URLs expire, so a persisted URL would rot; store the path and sign on read | Research |
-| Upload transport | Raw request body, never `FormData` | S-01 abandoned `FormData` after a browser extension clobbered the global constructor; binary can't go through JSON either | Research |
-| Sizing | Normalize to 512×512 | Supabase transforms are Pro-only and the 10ms CPU cap rules out in-Worker resizing; client canvas handles uploads, generation requests 512 natively | Plan |
-| Prompt safety | Templated with a length cap, no moderation | The image is private to its owner, so the blast radius of a steered prompt is their own account | Plan |
-| Lifecycle | Replace and remove, old object deleted | No orphaned objects accumulate, and the user is never stuck with an image they regret | Plan |
-| Private read | Signed URL in `Topbar.astro`, ~1h | No extra Worker invocation per image; an hour outlives any realistic page session | Plan |
-| Testing | Unit tests for pure logic, manual for DB/storage | Matches every prior slice; no Supabase mocking convention exists to build on | Plan |
+| Decision         | Choice                                                    | Why                                                                                                                                                                | Source   |
+| ---------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| Image provider   | Cloudflare Workers AI `flux-1-schnell`                    | ~$0.0005/image and **no new secret** — the binding is authorized by the Worker, removing the six-step plumbing chain the roadmap flagged as this slice's main risk | Research |
+| Bucket access    | Private, four per-operation policies, `<user_id>/` folder | Roadmap requires owner-only; replicates the F-02 pattern rather than inventing one                                                                                 | Plan     |
+| Column contract  | `avatar_path`, not `avatar_url`                           | Signed URLs expire, so a persisted URL would rot; store the path and sign on read                                                                                  | Research |
+| Upload transport | Raw request body, never `FormData`                        | S-01 abandoned `FormData` after a browser extension clobbered the global constructor; binary can't go through JSON either                                          | Research |
+| Sizing           | Normalize to 512×512                                      | Supabase transforms are Pro-only and the 10ms CPU cap rules out in-Worker resizing; client canvas handles uploads, generation requests 512 natively                | Plan     |
+| Prompt safety    | Templated with a length cap, no moderation                | The image is private to its owner, so the blast radius of a steered prompt is their own account                                                                    | Plan     |
+| Lifecycle        | Replace and remove, old object deleted                    | No orphaned objects accumulate, and the user is never stuck with an image they regret                                                                              | Plan     |
+| Private read     | Signed URL in `Topbar.astro`, ~1h                         | No extra Worker invocation per image; an hour outlives any realistic page session                                                                                  | Plan     |
+| Testing          | Unit tests for pure logic, manual for DB/storage          | Matches every prior slice; no Supabase mocking convention exists to build on                                                                                       | Plan     |
 
 ## Scope
 
@@ -55,13 +55,13 @@ Nothing bypasses RLS — the server holds the caller's cookie-scoped client, so 
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Data layer | Column, bucket, four storage policies, regenerated types | A wrong RLS predicate silently leaks avatars — caught by the two-user check |
-| 2. Pure service module | Shared bounds, prompt template, path scheme, unit tests | Low — no I/O |
-| 3. Upload end-to-end | **A complete, shippable avatar feature** | First binary handling in the repo; replace-ordering must not lose the pointer |
-| 4. AI generation | Binding, generate route, rate limit, Generate button | Whether `env.AI` is reachable under `astro dev` — the one unverified assumption |
-| 5. Deploy | Schema in the hosted project, smoke test on Workers | First-ever `supabase db push`; applies all three migrations at once |
+| Phase                  | What it delivers                                         | Key risk                                                                        |
+| ---------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1. Data layer          | Column, bucket, four storage policies, regenerated types | A wrong RLS predicate silently leaks avatars — caught by the two-user check     |
+| 2. Pure service module | Shared bounds, prompt template, path scheme, unit tests  | Low — no I/O                                                                    |
+| 3. Upload end-to-end   | **A complete, shippable avatar feature**                 | First binary handling in the repo; replace-ordering must not lose the pointer   |
+| 4. AI generation       | Binding, generate route, rate limit, Generate button     | Whether `env.AI` is reachable under `astro dev` — the one unverified assumption |
+| 5. Deploy              | Schema in the hosted project, smoke test on Workers      | First-ever `supabase db push`; applies all three migrations at once             |
 
 **Prerequisites:** S-01 complete (a saved profile supplies the generation input); local Supabase running; Cloudflare account already wired for deploys.
 **Estimated effort:** ~2–3 sessions across five phases, with phases 1–2 short and phase 3 the bulk.

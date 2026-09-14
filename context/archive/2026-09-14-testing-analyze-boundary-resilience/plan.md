@@ -4,7 +4,7 @@
 
 Phase 1 of `context/foundation/test-plan.md` covers Risks #1 (the LLM
 justification boundary) and #2 (the YouTube quota/error boundary). Research
-established that both risks are already *largely defended in production code*
+established that both risks are already _largely defended in production code_
 and that **none of that behaviour is covered by a single test** — there is no
 `justify.test.ts` and no `youtube.test.ts` in the repo.
 
@@ -17,7 +17,7 @@ fix the four places where the claim and the code disagree.
 **What holds today** (verified in research, re-verified in this session):
 
 - `opportunities` is materialized with `justification: null` at
-  `analyze.ts:166` *before* the LLM call, and the failure branch never
+  `analyze.ts:166` _before_ the LLM call, and the failure branch never
   reassigns it. Scores provably survive a justification failure by
   construction.
 - `justifyOpportunities` returns a `JustifyResult` sentinel on every path; the
@@ -31,13 +31,13 @@ fix the four places where the claim and the code disagree.
 **What does not hold** — five gaps. G1–G4 come from research; G5 is new to this
 session:
 
-| # | Gap | Where | Risk |
-|---|-----|-------|------|
-| G1 | An **empty-string** justification is reported as *available* and renders as *nothing* | `analyze.ts:172-178` + `OpportunityList.tsx:62` | #1 |
-| G2 | Per-competitor `transport`/`malformed` failures fold into a bare `unresolved: string[]` with no reason code, and the UI then reports them to the user as **"Not found on YouTube"** | `youtube.ts:505-519`, `types.ts:52`, `AnalyzePanel.tsx:141-148` | #2 |
-| G3 | **No top-level try/catch** in the route; `analyze.ts:108` re-throws non-`YouTubeError` into Astro's generic 500 **HTML** page, which the client cannot read as `{ error }` | `analyze.ts:46-190` | #1, #2 |
-| G4 | `stop_reason: "max_tokens"` is never checked | `justify.ts:123-133` | #1 |
-| G5 | Truncated / wrong-shape JSON **throws** `AnthropicError` rather than yielding `parsed_output === null`, so it misses all three typed branches and lands in the generic fallback | `justify.ts:122-148` | #1 |
+| #   | Gap                                                                                                                                                                                 | Where                                                           | Risk   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------ |
+| G1  | An **empty-string** justification is reported as _available_ and renders as _nothing_                                                                                               | `analyze.ts:172-178` + `OpportunityList.tsx:62`                 | #1     |
+| G2  | Per-competitor `transport`/`malformed` failures fold into a bare `unresolved: string[]` with no reason code, and the UI then reports them to the user as **"Not found on YouTube"** | `youtube.ts:505-519`, `types.ts:52`, `AnalyzePanel.tsx:141-148` | #2     |
+| G3  | **No top-level try/catch** in the route; `analyze.ts:108` re-throws non-`YouTubeError` into Astro's generic 500 **HTML** page, which the client cannot read as `{ error }`          | `analyze.ts:46-190`                                             | #1, #2 |
+| G4  | `stop_reason: "max_tokens"` is never checked                                                                                                                                        | `justify.ts:123-133`                                            | #1     |
+| G5  | Truncated / wrong-shape JSON **throws** `AnthropicError` rather than yielding `parsed_output === null`, so it misses all three typed branches and lands in the generic fallback     | `justify.ts:122-148`                                            | #1     |
 
 ### The SDK spike (settles research Open Question #1)
 
@@ -45,7 +45,7 @@ Research deferred one question that decided whether this phase touches
 production code at all. **Settled: it does not need to.**
 
 `justify.ts:108` constructs `new Anthropic()` **per call**, inside
-`justifyOpportunities`. The SDK resolves the transport in the *constructor* —
+`justifyOpportunities`. The SDK resolves the transport in the _constructor_ —
 `client.ts:655` runs `this.fetch = options.fetch ?? Shims.getDefaultFetch()`,
 and `getDefaultFetch()` (`internal/shims.ts:11-18`) reads the `fetch` global at
 that moment. It is not captured at module import.
@@ -57,7 +57,7 @@ is unnecessary, and no mocking library needs installing.
 ### The SDK spike also corrects research §1
 
 Research asserted that empty `content`, a non-`text` block, truncated JSON, a
-prose refusal, and wrong-key JSON *all* funnel into `parsed_output == null`.
+prose refusal, and wrong-key JSON _all_ funnel into `parsed_output == null`.
 **Two of those five do not.**
 
 `messages.parse()` is `create().then(parseMessage)`
@@ -70,7 +70,7 @@ those.
 Consequences, each of which becomes a named test:
 
 - **Truncated JSON** and **wrong-key JSON** → throw. `AnthropicError` is the
-  *parent* of `APIError` (`core/error.ts:4-10`), so it matches none of the
+  _parent_ of `APIError` (`core/error.ts:4-10`), so it matches none of the
   three typed branches and falls to
   `"Justifications could not be generated."` (**G5**)
 - `parsed_output === null` is reachable only for an **empty content array** or a
@@ -114,8 +114,8 @@ When this plan is complete:
   blank card.
 - A justification that is empty or whitespace is reported as **absent**, not as
   available, and the run says so.
-- A competitor whose fetch failed is distinguishable in the payload *and on
-  screen* from a competitor ID that does not exist on YouTube.
+- A competitor whose fetch failed is distinguishable in the payload _and on
+  screen_ from a competitor ID that does not exist on YouTube.
 - Any unexpected throw inside `POST /api/analyze` returns `{ error }` JSON with
   a 500, never Astro's HTML error page.
 - `context/foundation/test-plan.md` §6.2 and §6.6 carry the pattern this phase
@@ -139,7 +139,7 @@ the manual checks named per phase.
   `/api/profile.ts:60-61`; `fetchCompetitorVideos` (`youtube.ts:469-519`)
   returns another consumed by `analyze.ts:114`. **Only the second changes.**
 - `AnalyzePanel.tsx:141-148` already renders unresolved ids under the copy
-  *"Not found on YouTube"* — so today a transport-failed competitor is actively
+  _"Not found on YouTube"_ — so today a transport-failed competitor is actively
   **mis-reported** to the user. G2 is a wrong statement on screen, not merely a
   missing field.
 - `saveOpportunitySchema` is already `z.string().max(2000).nullable()`
@@ -153,7 +153,7 @@ the manual checks named per phase.
 ## What We're NOT Doing
 
 - **No route-level tests.** `analyze.ts` imports `astro:env/server` and
-  `cloudflare:workers` at module scope and uses `@/` for *value* imports; testing
+  `cloudflare:workers` at module scope and uses `@/` for _value_ imports; testing
   it needs both virtual modules mocked plus alias config plus a widened
   `include`. We extract the testable logic instead (Phase 3). The route's own
   wiring is verified by hand.
@@ -193,7 +193,7 @@ hand, grouped deliberately so the manual verification happens once.
 ## Critical Implementation Details
 
 **`vi.stubGlobal` and `unstubGlobals`.** Vitest's `unstubGlobals` defaults to
-**false**, so stubs do *not* auto-reset between tests. Either set
+**false**, so stubs do _not_ auto-reset between tests. Either set
 `unstubGlobals: true` in `vitest.config.ts` or call `vi.unstubAllGlobals()` in
 an `afterEach`. Research assumed the auto-reset was already on; it is not.
 Prefer the explicit `afterEach` so the config stays untouched (see
@@ -204,7 +204,7 @@ reads `headers`, and inspects `status` on the object it gets back. A duck-typed
 `{ ok, status, json }` will not survive it. Construct
 `new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } })`.
 
-**A `Response` body is single-use.** A fake that returns the *same* `Response`
+**A `Response` body is single-use.** A fake that returns the _same_ `Response`
 instance for two calls fails the second with a "body already read" error.
 `youtube.ts` issues three sequential calls per channel
 (`channels.list → playlistItems.list → videos.list`), so the fake must build a
@@ -309,7 +309,7 @@ future reader does not re-run the spike.
 
 #### Manual Verification
 
-- Confirm the truncated-JSON and wrong-key-JSON tests fail with the *old*
+- Confirm the truncated-JSON and wrong-key-JSON tests fail with the _old_
   message before the G5 branch is added — proof the test can fail for the right
   reason, and that G5 is real rather than inferred from reading the SDK
 
@@ -390,7 +390,7 @@ Cases:
 
 - 403 + `reason: "quotaExceeded"` → throws `YouTubeError` with
   `failure.kind === "quota"`
-- 403 *without* that reason, and 400, and 401 → `kind: "auth"`
+- 403 _without_ that reason, and 400, and 401 → `kind: "auth"`
 - 500 → `kind: "transport"`, message naming the status
 - `fetch` rejecting with a `TimeoutError` `DOMException` → `kind: "transport"`
   with the timeout wording; a plain rejection → the unreachable wording
@@ -458,7 +458,7 @@ stays directly testable.
 
 **The rule this phase changes**: a justification counts as present only when it
 is non-empty **after trimming**. `""` and `"   "` become `null`; a single
-character counts as present. The trimmed value is *not* substituted for the
+character counts as present. The trimmed value is _not_ substituted for the
 original — trimming decides presence, it does not rewrite model output. This
 closes the `?? null` / `!== null` chain at `analyze.ts:172-178` that today lets
 `""` report as available while `OpportunityList.tsx:62`'s truthy check renders
@@ -491,7 +491,7 @@ returning `"   "`** → same; a single-character justification → present;
 `ok: false` → every row `null`, `available: false`, the provider's message
 carried through verbatim; empty ranked input → empty output, no crash; and that
 row order and every scored field survive the merge untouched — the Risk #1
-requirement that *the scores survived into the user-visible payload*, which the
+requirement that _the scores survived into the user-visible payload_, which the
 test plan names as the thing a "nothing threw" assertion fails to prove.
 
 ### Success Criteria
@@ -539,8 +539,7 @@ fails and it collapses to `"The analysis failed (HTTP 500)."`
 
 **Contract**: The handler body is wrapped in a try/catch whose catch
 `console.error`s the real error — reaching Workers Logs, the project's only
-diagnostic channel — and returns `jsonError` with a fixed generic message and a
-500. This mirrors the existing `channel_profiles` failure handling at
+diagnostic channel — and returns `jsonError` with a fixed generic message and a 500. This mirrors the existing `channel_profiles` failure handling at
 `analyze.ts:84-89` exactly, including its `eslint-disable-next-line no-console`
 comment. The narrow `YouTubeError` catch at `analyze.ts:100-109` stays where it
 is; its 429/502 mapping is the specific case and must not be swallowed by the

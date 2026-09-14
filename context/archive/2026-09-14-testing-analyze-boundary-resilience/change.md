@@ -12,7 +12,7 @@ archived_at: 2026-09-14T06:25:57Z
 <!-- Free-form notes for this change: links, ad-hoc context, decisions that don't belong in research/frame/plan. -->
 
 - **Research Open Question #1 is closed: no production transport seam is
-  needed.** The Anthropic SDK resolves `fetch` in the *client constructor* —
+  needed.** The Anthropic SDK resolves `fetch` in the _client constructor_ —
   `node_modules/@anthropic-ai/sdk/src/client.ts:655` runs
   `this.fetch = options.fetch ?? Shims.getDefaultFetch()`, and
   `src/internal/shims.ts:11-18` reads the `fetch` global at that moment rather
@@ -48,7 +48,7 @@ archived_at: 2026-09-14T06:25:57Z
   `node_modules`), `npx astro sync` (no `.astro/types.d.ts`), and a copy of
   `.dev.vars` / `.env` from the main checkout — both are gitignored
   (`.gitignore:17,21`), so their absence makes `config-status.ts` report
-  Supabase, YouTube *and* Anthropic as unconfigured. That banner is the
+  Supabase, YouTube _and_ Anthropic as unconfigured. That banner is the
   expected symptom of a missing file, not a code fault; Astro reads
   `astro:env/server` at startup, so the dev server needs a full restart after
   the copy rather than a hot reload.

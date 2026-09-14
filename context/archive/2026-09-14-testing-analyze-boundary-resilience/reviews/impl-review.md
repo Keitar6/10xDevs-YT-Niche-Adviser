@@ -1,4 +1,5 @@
 <!-- IMPL-REVIEW-REPORT -->
+
 # Implementation Review: Analyze-pipeline Boundary Resilience
 
 - **Plan**: context/changes/testing-analyze-boundary-resilience/plan.md
@@ -9,23 +10,23 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| Plan Adherence | WARNING |
-| Scope Discipline | PASS |
-| Safety & Quality | WARNING |
-| Architecture | PASS |
+| Dimension           | Verdict |
+| ------------------- | ------- |
+| Plan Adherence      | WARNING |
+| Scope Discipline    | PASS    |
+| Safety & Quality    | WARNING |
+| Architecture        | PASS    |
 | Pattern Consistency | WARNING |
-| Success Criteria | PASS |
+| Success Criteria    | PASS    |
 
 ## Automated verification (re-run during this review)
 
-| Check | Result |
-|---|---|
-| `npm test` | PASS — 8 files, 110 tests |
-| `npm run lint` | PASS — clean |
+| Check             | Result                                                                        |
+| ----------------- | ----------------------------------------------------------------------------- |
+| `npm test`        | PASS — 8 files, 110 tests                                                     |
+| `npm run lint`    | PASS — clean                                                                  |
 | `npx astro check` | PASS — 0 errors, 0 warnings (4 hints, all pre-existing in `eslint.config.js`) |
-| `npm run build` | PASS — server built in 13.06s |
+| `npm run build`   | PASS — server built in 13.06s                                                 |
 
 Manual items 1.5, 2.6, 2.7, 3.6, 4.5–4.8 are all `[x]`. Item 1.5 carries written
 evidence in `change.md:24-29` (the truncated/wrong-key cases were observed failing
@@ -55,9 +56,9 @@ tests `trim().length > 0` only, with no length floor; `maxRetries: 0` is intact 
   `failedToLoad.length > 0`, never on whether a ranking exists. When every
   competitor transport-fails, `fetched.channels.length === 0`, `analyze.ts:177`
   returns `emptyResult`, and the panel renders the warning
-  *"…so the ranking below covers the remaining competitors"* immediately above the
-  empty-state notice carrying `empty_reason` = *"None of your 3 competitor channels
-  could be analysed. Their data could not be loaded this run: …"*. Two adjacent,
+  _"…so the ranking below covers the remaining competitors"_ immediately above the
+  empty-state notice carrying `empty_reason` = _"None of your 3 competitor channels
+  could be analysed. Their data could not be loaded this run: …"_. Two adjacent,
   contradicting notices, and the warning's claim is false — there is no ranking and
   no remaining competitor. The same contradiction appears whenever
   `opportunities.length === 0` for any reason (all-skipped at `analyze.ts:204`,
@@ -122,11 +123,11 @@ tests `trim().length > 0` only, with no length floor; `maxRetries: 0` is intact 
 - **Dimension**: Plan Adherence
 - **Detail**: Phase 4 updated §6.2, §6.6 and the §3 status row exactly as specified,
   but three forward-references elsewhere in the same documents now state the
-  opposite of what landed. `test-plan.md:103` still says *"§3 Phase 1 widens it"*
+  opposite of what landed. `test-plan.md:103` still says _"§3 Phase 1 widens it"_
   about `vitest.config.ts`'s `include` — the plan explicitly ruled that out and the
   file is unchanged. `test-plan.md:104` still lists boundary faking as
-  *"none yet — see §3 Phase 1 … Phase 1 chooses between the runner's built-in fetch
-  stubbing and a dedicated interceptor"* — that choice was made and is documented in
+  _"none yet — see §3 Phase 1 … Phase 1 chooses between the runner's built-in fetch
+  stubbing and a dedicated interceptor"_ — that choice was made and is documented in
   §6.2. `test-plan.md:128` repeats the include-widening claim. Separately,
   `roadmap.md:53` and `:108` mark F-04 `in-progress` while `test-plan.md:83` marks
   the same phase `complete`.
@@ -166,13 +167,13 @@ tests `trim().length > 0` only, with no length floor; `maxRetries: 0` is intact 
 - **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Pattern Consistency
 - **Location**: src/pages/api/analyze.ts:96
-- **Detail**: The new top-level catch comments *"Same handling as the profile read
-  failure below"*, but the profile branch logs `error.message` only
+- **Detail**: The new top-level catch comments _"Same handling as the profile read
+  failure below"_, but the profile branch logs `error.message` only
   (`analyze.ts:143`) while the new one logs the whole `error`. Logging the full
   object is the better choice for an unknown throw — you want the stack — so the
   code is right and the comment is wrong. Everything else does mirror the existing
   branch exactly, including the `eslint-disable-next-line no-console -- deliberate:
-  no logger exists yet` form the plan called for.
+no logger exists yet` form the plan called for.
 - **Fix**: Amend the comment to say it mirrors the shape but logs the full error
   deliberately, since the throw is unknown here.
 - **Decision**: FIXED — analyze.ts:93-96 now states the deliberate difference (full error vs `error.message`) instead of claiming parity.
@@ -185,7 +186,7 @@ tests `trim().length > 0` only, with no length floor; `maxRetries: 0` is intact 
 - **Location**: src/types.ts:51
 - **Detail**: `/** Of those, the ones 'channels.list' returned a usable channel for. */`
   describes `resolved`, but `analyze.ts:168` sets it to `fetched.channels.length`,
-  which excludes channels that resolved from `channels.list` and *then* transport-
+  which excludes channels that resolved from `channels.list` and _then_ transport-
   failed. Pre-existing wording, but the new reason codes make the gap observable: a
   channel can now be absent from `resolved` **and** carry `reason: "transport"` in
   `unresolved`, which the doc implies is impossible. `AnalyzePanel.tsx:145` renders

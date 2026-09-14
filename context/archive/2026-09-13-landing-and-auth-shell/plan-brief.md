@@ -17,19 +17,19 @@ A visitor on `/` reads what the product does — curate 3–5 competitors, get a
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) | Source |
-| --- | --- | --- | --- |
-| Fate of `/auth/*` routes | Redirect shims to `/?auth=signin\|signup` | Bookmarks and the middleware guard keep working while only one auth idiom survives. | Plan |
-| Auth API response shape | JSON via `jsonError`, zod-validated | A dialog has no SSR read point for `?error=`; mirrors the proven `/api/profile` contract and fixes a CLAUDE.md violation. | Plan |
-| Sign-out | Stays a bare form POST | A one-click action that already works, needs no JS, and has no error state worth a dialog — FR-014 knowingly left partly unmet. | Plan |
-| Post-signup | In-dialog "check your email" state | Keeps the whole flow on the current page; `confirm-email.astro` becomes dead code and is deleted. | Plan |
-| Shell centralization | `Layout` owns ground + topbar + slot | One shell definition; no page can forget the ground or the auth entry point. | Plan |
-| Metadata scope | Description + `og:*` + `twitter:*` + OG image | The head is empty today, so sharing a link currently previews as nothing. | Plan |
-| Copy language | English | The codebase is uniformly English; the lone Polish outlier in `config-status.ts` gets translated. | Plan |
-| Starter cleanup | README, `template.png`, `LibBadge`, `config-status` URL | The `config-status` link is user-visible at runtime, so it is a real bug rather than cosmetics. | Plan |
-| Shell re-render after sign-in | Full navigation (`next` or reload) | `Topbar` reads `Astro.locals.user` server-side; anything cleverer duplicates auth state on the client. | Research |
-| OAuth `origin` replacement | Validated `next` relative path | The param only ever routed errors; a return path closes the gap the research found missing everywhere. | Research |
-| Google `access_denied` gap | Closed here | S-04 rewrites exactly that error surface, so closing F-01's skipped finding F1 is cheap now and awkward later. | Research |
+| Decision                      | Choice                                                  | Why (1 sentence)                                                                                                                | Source   |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Fate of `/auth/*` routes      | Redirect shims to `/?auth=signin\|signup`               | Bookmarks and the middleware guard keep working while only one auth idiom survives.                                             | Plan     |
+| Auth API response shape       | JSON via `jsonError`, zod-validated                     | A dialog has no SSR read point for `?error=`; mirrors the proven `/api/profile` contract and fixes a CLAUDE.md violation.       | Plan     |
+| Sign-out                      | Stays a bare form POST                                  | A one-click action that already works, needs no JS, and has no error state worth a dialog — FR-014 knowingly left partly unmet. | Plan     |
+| Post-signup                   | In-dialog "check your email" state                      | Keeps the whole flow on the current page; `confirm-email.astro` becomes dead code and is deleted.                               | Plan     |
+| Shell centralization          | `Layout` owns ground + topbar + slot                    | One shell definition; no page can forget the ground or the auth entry point.                                                    | Plan     |
+| Metadata scope                | Description + `og:*` + `twitter:*` + OG image           | The head is empty today, so sharing a link currently previews as nothing.                                                       | Plan     |
+| Copy language                 | English                                                 | The codebase is uniformly English; the lone Polish outlier in `config-status.ts` gets translated.                               | Plan     |
+| Starter cleanup               | README, `template.png`, `LibBadge`, `config-status` URL | The `config-status` link is user-visible at runtime, so it is a real bug rather than cosmetics.                                 | Plan     |
+| Shell re-render after sign-in | Full navigation (`next` or reload)                      | `Topbar` reads `Astro.locals.user` server-side; anything cleverer duplicates auth state on the client.                          | Research |
+| OAuth `origin` replacement    | Validated `next` relative path                          | The param only ever routed errors; a return path closes the gap the research found missing everywhere.                          | Research |
+| Google `access_denied` gap    | Closed here                                             | S-04 rewrites exactly that error surface, so closing F-01's skipped finding F1 is cheap now and awkward later.                  | Research |
 
 ## Scope
 
@@ -43,12 +43,12 @@ Mechanically this is a migration of the page-level auth idiom (native POST → r
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. JSON auth contract | Routes + forms flip to fetch/JSON atomically; `next` plumbing; `access_denied` fixed | Auth regression — the whole slice's risk is concentrated here |
-| 2. Auth dialog | `AuthDialog` mounted in `Topbar`; Google TSX button; URL-param + `data-auth-open` entry points | Radix/React-19 form-action trap; dialog aborting an in-flight fetch |
-| 3. Centralize the shell | `Layout` owns ground + topbar; auth pages become shims; dead files deleted | Gradient seam or double top bar; deletes the fallback pages |
-| 4. Content + cleanup | Landing copy, metadata, OG image, starter residue removed | None behavioral — OG image is the only produced asset |
+| Phase                   | What it delivers                                                                               | Key risk                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1. JSON auth contract   | Routes + forms flip to fetch/JSON atomically; `next` plumbing; `access_denied` fixed           | Auth regression — the whole slice's risk is concentrated here       |
+| 2. Auth dialog          | `AuthDialog` mounted in `Topbar`; Google TSX button; URL-param + `data-auth-open` entry points | Radix/React-19 form-action trap; dialog aborting an in-flight fetch |
+| 3. Centralize the shell | `Layout` owns ground + topbar; auth pages become shims; dead files deleted                     | Gradient seam or double top bar; deletes the fallback pages         |
+| 4. Content + cleanup    | Landing copy, metadata, OG image, starter residue removed                                      | None behavioral — OG image is the only produced asset               |
 
 **Prerequisites:** none technical. Roadmap sequences S-04 after S-03 by scope decision, not dependency.
 **Estimated effort:** ~3-4 sessions, one per phase; Phase 1 is the longest, Phase 4 the shortest.

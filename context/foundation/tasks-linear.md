@@ -11,13 +11,13 @@
 
 ## Milestone M-2 — active (5 issues)
 
-| Issue | Roadmap ID | Type | Title | Linear status | Priority | Labels | GitHub source |
-|-------|------------|------|-------|---------------|----------|--------|---------------|
-| [MAT-25](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-25/f-03-provable-access-control) | F-03 | Foundation | Provable access control | **Todo** | — | `roadmap-foundation` | [#22](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/22) |
-| [MAT-26](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-26/f-04-analyze-pipeline-boundary-resilience) | F-04 | Foundation | Analyze-pipeline boundary resilience | **Todo** | — | `roadmap-foundation` | [#23](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/23) |
-| [MAT-27](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-27/f-05-scoring-oracle-and-spec-conformance) | F-05 | Foundation | Scoring oracle and spec conformance | **Todo** | — | `roadmap-foundation` | [#24](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/24) |
-| [MAT-28](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-28/f-06-quality-gates-wiring) | F-06 | Foundation | Quality-gates wiring | **Backlog** | — | `roadmap-foundation` | [#25](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/25) |
-| [MAT-22](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-22/s-06-opportunity-status-transitions-fr-012) | S-06 | Slice (★ north star) | Opportunity status transitions (FR-012) | **Backlog** | **High** | `roadmap-slice` | [#18](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/18) |
+| Issue                                                                                                         | Roadmap ID | Type                 | Title                                   | Linear status | Priority | Labels               | GitHub source                                                        |
+| ------------------------------------------------------------------------------------------------------------- | ---------- | -------------------- | --------------------------------------- | ------------- | -------- | -------------------- | -------------------------------------------------------------------- |
+| [MAT-25](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-25/f-03-provable-access-control)               | F-03       | Foundation           | Provable access control                 | **Todo**      | —        | `roadmap-foundation` | [#22](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/22) |
+| [MAT-26](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-26/f-04-analyze-pipeline-boundary-resilience)  | F-04       | Foundation           | Analyze-pipeline boundary resilience    | **Todo**      | —        | `roadmap-foundation` | [#23](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/23) |
+| [MAT-27](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-27/f-05-scoring-oracle-and-spec-conformance)   | F-05       | Foundation           | Scoring oracle and spec conformance     | **Todo**      | —        | `roadmap-foundation` | [#24](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/24) |
+| [MAT-28](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-28/f-06-quality-gates-wiring)                  | F-06       | Foundation           | Quality-gates wiring                    | **Backlog**   | —        | `roadmap-foundation` | [#25](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/25) |
+| [MAT-22](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-22/s-06-opportunity-status-transitions-fr-012) | S-06       | Slice (★ north star) | Opportunity status transitions (FR-012) | **Backlog**   | **High** | `roadmap-slice`      | [#18](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/18) |
 
 **`blockedBy` relations created:** `MAT-22` blocked by `MAT-25`; `MAT-28` blocked by `MAT-25`, `MAT-26`, `MAT-27`. These mirror the roadmap's Prerequisites as real Linear relations, not just description text.
 
@@ -25,7 +25,7 @@
 
 ### MAT-22 was un-parked in place, not recreated
 
-`MAT-22` previously existed as `[Parked] Pełny workflow statusów okazji (FR-012)` in Linear state `Canceled` with label `roadmap-parked`. On 2026-09-13 it was **updated in place**: `Canceled` → `Backlog`, retitled, `roadmap-parked` → `roadmap-slice`, attached to M-2, set to High priority, and given a `blockedBy` relation on `MAT-25`. Its original parking rationale is quoted verbatim inside the description, because the reopen rests on a *different* argument rather than a reversal — see `tasks-github.md` for the full reasoning.
+`MAT-22` previously existed as `[Parked] Pełny workflow statusów okazji (FR-012)` in Linear state `Canceled` with label `roadmap-parked`. On 2026-09-13 it was **updated in place**: `Canceled` → `Backlog`, retitled, `roadmap-parked` → `roadmap-slice`, attached to M-2, set to High priority, and given a `blockedBy` relation on `MAT-25`. Its original parking rationale is quoted verbatim inside the description, because the reopen rests on a _different_ argument rather than a reversal — see `tasks-github.md` for the full reasoning.
 
 Reusing the issue rather than creating a new one keeps the decision history (park → un-park) on a single record, in both trackers.
 
@@ -35,15 +35,15 @@ Unlike GitHub, M-2's Linear issues carry **only** `roadmap-foundation` / `roadma
 
 ## Milestone M-1 — complete on the roadmap (7 deliverables, all Done)
 
-| Issue | Roadmap ID | Type | Title | Linear status | GitHub source |
-|-------|------------|------|-------|---------------|---------------|
-| [MAT-5](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-5/f-01-domkniecie-must-have-logowania-google-oauth) | F-01 | Foundation | Domknięcie must-have logowania (Google OAuth) | **Done** | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1) |
-| [MAT-6](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-6/f-02-model-danych-profilu-kanalu-rls-per-owner) | F-02 | Foundation | Model danych profilu kanału (RLS per-owner) | **Done** | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) |
-| [MAT-7](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-7/s-01-uzytkownik-tworzy-i-edytuje-profil-kanalu) | S-01 | Slice | Użytkownik tworzy i edytuje profil kanału | **Done** | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) |
-| [MAT-8](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-8/s-02-uzytkownik-uruchamia-analize-i-widzi-ranking-okazji-gwiazda) | S-02 | Slice (★) | Użytkownik uruchamia analizę i widzi ranking okazji | **Done** (High) | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) |
-| [MAT-9](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-9/s-03-uzytkownik-zapisuje-i-przeglada-okazje-contentowe) | S-03 | Slice | Użytkownik zapisuje i przegląda okazje contentowe | **Done** | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) |
-| [MAT-23](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-23/s-04-strona-glowna-mowi-o-produkcie-a-logowanie-dzieje-sie-w-dialogu) | S-04 | Slice | Strona główna mówi o produkcie, a logowanie dzieje się w dialogu | **Done** | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) |
-| [MAT-24](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-24/s-05-profil-kanalu-ma-awatar-wgrany-albo-wygenerowany) | S-05 | Slice | Profil kanału ma awatar — wgrany albo wygenerowany | **Done** | [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20) |
+| Issue                                                                                                                                   | Roadmap ID | Type       | Title                                                            | Linear status   | GitHub source                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ---------------------------------------------------------------- | --------------- | -------------------------------------------------------------------- |
+| [MAT-5](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-5/f-01-domkniecie-must-have-logowania-google-oauth)                       | F-01       | Foundation | Domknięcie must-have logowania (Google OAuth)                    | **Done**        | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1)   |
+| [MAT-6](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-6/f-02-model-danych-profilu-kanalu-rls-per-owner)                         | F-02       | Foundation | Model danych profilu kanału (RLS per-owner)                      | **Done**        | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2)   |
+| [MAT-7](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-7/s-01-uzytkownik-tworzy-i-edytuje-profil-kanalu)                         | S-01       | Slice      | Użytkownik tworzy i edytuje profil kanału                        | **Done**        | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3)   |
+| [MAT-8](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-8/s-02-uzytkownik-uruchamia-analize-i-widzi-ranking-okazji-gwiazda)       | S-02       | Slice (★)  | Użytkownik uruchamia analizę i widzi ranking okazji              | **Done** (High) | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4)   |
+| [MAT-9](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-9/s-03-uzytkownik-zapisuje-i-przeglada-okazje-contentowe)                 | S-03       | Slice      | Użytkownik zapisuje i przegląda okazje contentowe                | **Done**        | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5)   |
+| [MAT-23](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-23/s-04-strona-glowna-mowi-o-produkcie-a-logowanie-dzieje-sie-w-dialogu) | S-04       | Slice      | Strona główna mówi o produkcie, a logowanie dzieje się w dialogu | **Done**        | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) |
+| [MAT-24](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-24/s-05-profil-kanalu-ma-awatar-wgrany-albo-wygenerowany)                | S-05       | Slice      | Profil kanału ma awatar — wgrany albo wygenerowany               | **Done**        | [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20) |
 
 ### Known drift: M-1 reads 87.5 %, not 100 %
 
@@ -53,8 +53,8 @@ This was **not fixed in the M-2 opening pass**: the `linear-server` MCP `save_is
 
 ## Open, outside any milestone
 
-| Issue | Type | Title | Linear status |
-|-------|------|-------|---------------|
+| Issue                                                                                                                            | Type     | Title                                                | Linear status                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
 | [MAT-10](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-10/question-shape-notes-quality-cross-check-nie-zostal-ukonczony) | Question | Shape-notes quality cross-check nie został ukończony | Todo, non-blocking — **but still attached to M-1, see drift above** |
 
 The two Open Roadmap Questions added when M-2 opened (the end-to-end criterion contradiction, and the container-runtime gate placement) have **no mirror issues in Linear yet**.
@@ -63,32 +63,32 @@ The two Open Roadmap Questions added when M-2 opened (the end-to-end criterion c
 
 Linear state `Canceled` — mirrors GitHub's `state_reason: not_planned`. **Down from 12:** `MAT-22` left this set when it was un-parked into S-06.
 
-| Issue | Title | GitHub source |
-|-------|-------|---------------|
-| [MAT-11](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-11/parked-monitoring-newsow-z-zewnetrznych-zrodel) | Monitoring newsów z zewnętrznych źródeł | [#7](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/7) |
-| [MAT-12](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-12/parked-planer-produkcji-kanban) | Planer produkcji / kanban | [#8](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/8) |
-| [MAT-13](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-13/parked-konfigurator-workflow-edytor-thumbnail) | Konfigurator workflow (edytor, thumbnail) | [#9](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/9) |
+| Issue                                                                                                                    | Title                                            | GitHub source                                                        |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ | -------------------------------------------------------------------- |
+| [MAT-11](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-11/parked-monitoring-newsow-z-zewnetrznych-zrodel)        | Monitoring newsów z zewnętrznych źródeł          | [#7](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/7)   |
+| [MAT-12](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-12/parked-planer-produkcji-kanban)                        | Planer produkcji / kanban                        | [#8](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/8)   |
+| [MAT-13](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-13/parked-konfigurator-workflow-edytor-thumbnail)         | Konfigurator workflow (edytor, thumbnail)        | [#9](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/9)   |
 | [MAT-14](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-14/parked-niche-discovery-odkrywanie-nowych-nisz-od-zera) | Niche discovery (odkrywanie nowych nisz od zera) | [#10](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/10) |
-| [MAT-15](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-15/parked-sledzenie-analityka-wlasnego-kanalu) | Śledzenie / analityka własnego kanału | [#11](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/11) |
-| [MAT-16](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-16/parked-platnosci-i-plany-subskrypcyjne) | Płatności i plany subskrypcyjne | [#12](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/12) |
-| [MAT-17](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-17/parked-zaawansowany-uczony-model-trafnosci-niszy) | Zaawansowany, uczony model trafności niszy | [#13](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/13) |
-| [MAT-18](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-18/parked-wiele-profili-kanalow-naraz) | Wiele profili kanałów naraz | [#14](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/14) |
-| [MAT-19](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-19/parked-automatyczne-cykliczne-analizy) | Automatyczne / cykliczne analizy | [#15](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/15) |
-| [MAT-20](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-20/parked-analiza-shorts) | Analiza Shorts | [#16](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/16) |
-| [MAT-21](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-21/parked-usuwanie-profilu-kanalu-fr-005) | Usuwanie profilu kanału (FR-005) | [#17](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/17) |
+| [MAT-15](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-15/parked-sledzenie-analityka-wlasnego-kanalu)            | Śledzenie / analityka własnego kanału            | [#11](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/11) |
+| [MAT-16](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-16/parked-platnosci-i-plany-subskrypcyjne)                | Płatności i plany subskrypcyjne                  | [#12](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/12) |
+| [MAT-17](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-17/parked-zaawansowany-uczony-model-trafnosci-niszy)      | Zaawansowany, uczony model trafności niszy       | [#13](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/13) |
+| [MAT-18](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-18/parked-wiele-profili-kanalow-naraz)                    | Wiele profili kanałów naraz                      | [#14](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/14) |
+| [MAT-19](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-19/parked-automatyczne-cykliczne-analizy)                 | Automatyczne / cykliczne analizy                 | [#15](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/15) |
+| [MAT-20](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-20/parked-analiza-shorts)                                 | Analiza Shorts                                   | [#16](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/16) |
+| [MAT-21](https://linear.app/mateusz-yt-niche-advisor/issue/MAT-21/parked-usuwanie-profilu-kanalu-fr-005)                 | Usuwanie profilu kanału (FR-005)                 | [#17](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/17) |
 
 ## Labels in use
 
 Created as **team-scoped labels** on `Mateusz` (not workspace-wide), same names/colors/descriptions as the GitHub labels:
 
-| Label | Color | Meaning |
-|-------|-------|---------|
-| `roadmap-foundation` | `#5319e7` | Cross-cutting enabler (F-NN) — no user-visible outcome on its own |
-| `roadmap-slice` | `#0e8a16` | Vertical, user-visible capability (S-NN) |
-| `roadmap-parked` | `#cccccc` | Explicitly out of MVP scope (PRD Non-Goals / demoted nice-to-have) |
-| `status-ready` | `#0e8a16` | Defined but unused in Linear — the workflow state carries this (see "Status label note") |
-| `status-proposed` | `#fbca04` | Defined but unused in Linear — the workflow state carries this |
-| `question` | `#d876e3` | Open roadmap question, not yet a plannable item |
+| Label                | Color     | Meaning                                                                                  |
+| -------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| `roadmap-foundation` | `#5319e7` | Cross-cutting enabler (F-NN) — no user-visible outcome on its own                        |
+| `roadmap-slice`      | `#0e8a16` | Vertical, user-visible capability (S-NN)                                                 |
+| `roadmap-parked`     | `#cccccc` | Explicitly out of MVP scope (PRD Non-Goals / demoted nice-to-have)                       |
+| `status-ready`       | `#0e8a16` | Defined but unused in Linear — the workflow state carries this (see "Status label note") |
+| `status-proposed`    | `#fbca04` | Defined but unused in Linear — the workflow state carries this                           |
+| `question`           | `#d876e3` | Open roadmap question, not yet a plannable item                                          |
 
 Note: the workspace also ships three unrelated default labels (`Feature`, `Bug`, `Improvement`) from Linear's onboarding — not part of the roadmap mirror, left untouched. Four unrelated onboarding issues (`MAT-1`–`MAT-4`) also pre-existed in the team and were left as-is.
 

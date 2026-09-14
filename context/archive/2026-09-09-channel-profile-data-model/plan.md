@@ -22,7 +22,7 @@ The `channel_profiles` table exists in Supabase Postgres (local dev, verified th
 
 ### Key Discoveries:
 
-- Roadmap explicitly assigns 3–5 competitor-ID *count* validation to S-01's risk ("główne ryzyko to walidacja formatu i liczby ID konkurentów"), not to this Foundation slice — so this migration intentionally leaves `competitor_channel_ids` uncapped at the DB level.
+- Roadmap explicitly assigns 3–5 competitor-ID _count_ validation to S-01's risk ("główne ryzyko to walidacja formatu i liczby ID konkurentów"), not to this Foundation slice — so this migration intentionally leaves `competitor_channel_ids` uncapped at the DB level.
 - "One profile per user" is an explicit MVP assumption in the PRD (`Założenie MVP: jeden profil kanału na użytkownika`) — enforced here via a `unique` constraint on `user_id`, not just app logic.
 
 ## What We're NOT Doing
@@ -149,7 +149,7 @@ create trigger channel_profiles_set_updated_at
 #### Manual Verification:
 
 - Two local test users signed up; user A can insert and then read their own `channel_profiles` row via direct REST calls (`apikey` + `Authorization: Bearer <access_token>` against `{SUPABASE_URL}/rest/v1/channel_profiles`)
-- User B's REST read of the *same row* (by `id` or unfiltered list) returns zero rows — isolation confirmed from the other side too
+- User B's REST read of the _same row_ (by `id` or unfiltered list) returns zero rows — isolation confirmed from the other side too
 - A second insert attempt using user A's own `user_id` again is rejected (unique-constraint violation) — confirms the one-profile-per-user assumption is enforced at the DB level, not just assumed
 - An UPDATE to user A's row (e.g. changing `niche`) results in `updated_at` advancing without the request setting it explicitly — confirms the trigger fires
 

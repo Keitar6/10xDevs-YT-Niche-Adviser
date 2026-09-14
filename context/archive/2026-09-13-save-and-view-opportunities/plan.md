@@ -53,7 +53,7 @@ one, and any surface that lists them.
 
 **Key constraint discovered:** `outlier_score` drifts between runs. S-02 measured it
 live — two consecutive runs of the same profile moved a score `1.7796 → 1.7797` on zero
-new views, and one row's score *fell* on +0 views, because the channel median shifts
+new views, and one row's score _fell_ on +0 views, because the channel median shifts
 underneath it (`context/changes/analyze-and-rank-opportunities/change.md`, Phase 4
 pre-verification 4.5). A saved opportunity therefore cannot be a reference to a video:
 the number the user decided on would silently become a different number.
@@ -84,7 +84,7 @@ browser pass through save → reload → re-analyze → remove.
   even though RLS already scopes the query, "because relying on RLS alone hides the intent."
 - Score formatting lives in `src/components/analyze/OpportunityList.tsx:9-16` and will be
   needed by a second component — it has to move before it gets copied.
-- Rate limiters in `wrangler.jsonc` exist to guard *external* budgets (YouTube quota,
+- Rate limiters in `wrangler.jsonc` exist to guard _external_ budgets (YouTube quota,
   Workers AI neurons). Saving spends only Postgres, so this slice adds no limiter.
 
 ## What We're NOT Doing
@@ -121,7 +121,7 @@ while `dashboard.astro` still server-renders the first paint from the database.
 ## Critical Implementation Details
 
 **Numeric column types.** `outlier_score` and `channel_median` are `double precision`, not
-`numeric`. The value being stored *is* an IEEE double — it is the result of
+`numeric`. The value being stored _is_ an IEEE double — it is the result of
 `video.view_count / channelMedian` in `src/lib/services/scoring.ts:207`. Declaring it
 `numeric` would claim a decimal exactness the value never had, and supabase-js types both
 as `number` regardless, so nothing is gained. `view_count` is `bigint`: YouTube view counts
@@ -142,7 +142,7 @@ than that note implies.
 **Duplicate saves.** The idempotent path depends on catching Postgres error code `23505`
 (unique violation) from the insert and re-selecting the existing row. Supabase's
 `upsert({ ignoreDuplicates: true })` will not work here: it compiles to
-`ON CONFLICT DO NOTHING`, which returns *no* row on conflict, leaving nothing to hand back
+`ON CONFLICT DO NOTHING`, which returns _no_ row on conflict, leaving nothing to hand back
 to the client.
 
 ## Phase 1: Data model — `content_opportunities` + RLS
@@ -210,6 +210,7 @@ mirroring what `channel-profile.ts` does for profiles. Client-safe — no `astro
 import — because the dashboard island imports the row type.
 
 **Contract**: Exports
+
 - `saveOpportunitySchema` — a zod object over the `AnalyzeOpportunity` fields. Bounds that
   keep garbage out of the table and out of `Intl.NumberFormat`: `video_id`/`channel_id`
   non-empty and length-capped, `title` capped (~500), `justification` nullable and capped
@@ -404,7 +405,7 @@ exist yet; removals by row `id`, because that is what `onRemove` receives. Deriv
   **merges** the returned row into the saved list by `id` (replace in place when already
   present, otherwise prepend) and fires a success toast, on failure fires an error toast and
   leaves the button idle, and clears the pending id in `finally`. Merge rather than prepend
-  because the route is idempotent and hands back the *existing* row for a repeat save: a
+  because the route is idempotent and hands back the _existing_ row for a repeat save: a
   second tab, or an SSR list that loaded before another tab saved, would otherwise prepend a
   row already in the array — a duplicate `id`, which is a React key collision and a visibly
   doubled row. The button is **pending-then-confirmed**, never optimistic: nothing is shown
@@ -447,6 +448,7 @@ slice's snapshot decision — a **`Saved <date>`** label making explicit that th
 as of that date, not current.
 
 Four distinct states, never a blank panel:
+
 - `loadFailed` → "Your saved opportunities could not be loaded. Refresh to try again."
 - no rows → "Nothing saved yet — run an analysis and save the opportunities you want to keep."
 - a row mid-removal → its remove control disabled with a spinner.

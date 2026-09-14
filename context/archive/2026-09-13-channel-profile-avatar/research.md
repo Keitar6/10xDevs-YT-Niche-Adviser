@@ -36,7 +36,7 @@ Scope confirmed with the user: include an external image-generation provider com
 
 2. **Recommended provider: Cloudflare Workers AI `@cf/black-forest-labs/flux-1-schnell`** — ≈ **$0.00063 per 1024×1024 image** (57.6 neurons at $0.011/1k), ~173 free images/day on the free allocation, and — decisively — **no new secret at all**. The binding is authorized by the Worker itself, which deletes the entire six-step secret-plumbing chain the roadmap flagged as this slice's main risk (`context/foundation/roadmap.md:184`). The repo already reads a Cloudflare binding this exact way: `import { env } from "cloudflare:workers"` at `src/pages/api/analyze.ts:15,56`. Third-party alternatives cost 5×–70× more and, for the OpenAI family, are far too slow (30–42 s measured).
 
-3. **`@anthropic-ai/sdk` cannot be reused here** — it is a text/LLM SDK with no image-generation endpoint. `src/lib/services/justify.ts` remains the *structural* template (per-call client, typed `{ok}` result, ordered error branches), not the transport.
+3. **`@anthropic-ai/sdk` cannot be reused here** — it is a text/LLM SDK with no image-generation endpoint. `src/lib/services/justify.ts` remains the _structural_ template (per-call client, typed `{ok}` result, ordered error branches), not the transport.
 
 4. **`avatar_url` is the wrong column contract for a private bucket.** A private Supabase bucket is read via `createSignedUrl`, which **expires** — persisting a URL would rot. Store the **object path** (`<user_id>/avatar.png`) and sign on read in `Topbar.astro`. PRD `prd.md:127` says "`avatar_url`"; recommend `avatar_path`, or keep the name and document that it holds a path.
 
@@ -77,13 +77,13 @@ using (bucket_id = 'avatars' and (select auth.uid()::text) = (storage.foldername
 
 The degradation ladder has three rungs already in use:
 
-| Depth | Example | Behaviour |
-|---|---|---|
-| Hard fail | `src/pages/api/analyze.ts:64-66` | missing `YOUTUBE_API_KEY` → 500, feature cannot run |
-| Soft degrade | `src/pages/api/analyze.ts:163-182` | missing `ANTHROPIC_API_KEY` → still 200, `summary.justifications_available: false` + `justifications_error` |
-| Partial capability | `src/pages/api/profile.ts:58-89` | missing key → handles rejected, literal IDs still accepted; "profile editing keeps working" |
+| Depth              | Example                            | Behaviour                                                                                                   |
+| ------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Hard fail          | `src/pages/api/analyze.ts:64-66`   | missing `YOUTUBE_API_KEY` → 500, feature cannot run                                                         |
+| Soft degrade       | `src/pages/api/analyze.ts:163-182` | missing `ANTHROPIC_API_KEY` → still 200, `summary.justifications_available: false` + `justifications_error` |
+| Partial capability | `src/pages/api/profile.ts:58-89`   | missing key → handles rejected, literal IDs still accepted; "profile editing keeps working"                 |
 
-`src/lib/config-status.ts` is the registry; `src/layouts/Layout.astro:24-38` renders one banner per missing config automatically. **FR-015's required behaviour — degrade to upload-only when generation is unavailable — is the "partial capability" rung.** Choosing Workers AI changes the *shape* of this check: there is no key to test, so the guard becomes "is the `AI` binding present?" rather than "is the secret set" — simpler, but it still needs a `configStatuses` entry or an equivalent so the UI can hide/disable the Generate button.
+`src/lib/config-status.ts` is the registry; `src/layouts/Layout.astro:24-38` renders one banner per missing config automatically. **FR-015's required behaviour — degrade to upload-only when generation is unavailable — is the "partial capability" rung.** Choosing Workers AI changes the _shape_ of this check: there is no key to test, so the guard becomes "is the `AI` binding present?" rather than "is the secret set" — simpler, but it still needs a `configStatuses` entry or an equivalent so the UI can hide/disable the Generate button.
 
 Pure service modules must **not** import `astro:env/server` — secrets are passed in as parameters (documented at `src/lib/services/youtube-ids.ts:5` and `src/lib/services/scoring.ts:4`; applied at `src/pages/api/profile.ts:60`).
 
@@ -97,14 +97,14 @@ Grep across `src/` for `formdata|multipart|base64|blob|arraybuffer` found **no f
 
 Anthropic has no image API, so this is a genuinely new provider decision. Latency figures below are from an independent 33-model benchmark (komelin.com, updated 2026-07-10); prices are per 1024-class image.
 
-| Option | Price/image | Latency | New secret? | Workers fit |
-|---|---|---|---|---|
-| **CF Workers AI `flux-1-schnell`** | **≈$0.00063** (4.8 neurons/tile + 9.6/step) | seconds (schnell = 4 steps) | **none** — binding | native binding, same idiom as `RATE_LIMITER` |
-| CF Workers AI `leonardo/phoenix-1.0` | ≈$0.023/1024px | — | none | same; better text-in-image, ~37× costlier |
-| fal.ai / Replicate FLUX schnell | $0.003 | ~3–9 s | yes | plain `fetch` + bearer |
-| `bfl/flux-2-klein-9b` | $0.015 | **2.9 s** (fastest benchmarked) | yes | plain `fetch` |
-| Google Imagen 4 Fast | $0.02 | 5.7 s | yes (GCP/Vertex setup) | REST |
-| OpenAI `gpt-image-1.5` / `-2` | $0.024–$0.045 | **32–37 s** | yes | REST, but latency disqualifies |
+| Option                               | Price/image                                 | Latency                         | New secret?            | Workers fit                                  |
+| ------------------------------------ | ------------------------------------------- | ------------------------------- | ---------------------- | -------------------------------------------- |
+| **CF Workers AI `flux-1-schnell`**   | **≈$0.00063** (4.8 neurons/tile + 9.6/step) | seconds (schnell = 4 steps)     | **none** — binding     | native binding, same idiom as `RATE_LIMITER` |
+| CF Workers AI `leonardo/phoenix-1.0` | ≈$0.023/1024px                              | —                               | none                   | same; better text-in-image, ~37× costlier    |
+| fal.ai / Replicate FLUX schnell      | $0.003                                      | ~3–9 s                          | yes                    | plain `fetch` + bearer                       |
+| `bfl/flux-2-klein-9b`                | $0.015                                      | **2.9 s** (fastest benchmarked) | yes                    | plain `fetch`                                |
+| Google Imagen 4 Fast                 | $0.02                                       | 5.7 s                           | yes (GCP/Vertex setup) | REST                                         |
+| OpenAI `gpt-image-1.5` / `-2`        | $0.024–$0.045                               | **32–37 s**                     | yes                    | REST, but latency disqualifies               |
 
 **Recommendation: `@cf/black-forest-labs/flux-1-schnell` via the Workers AI binding**, with fal.ai-hosted FLUX schnell documented as the fallback if quality or the local-dev story disappoints. Rationale: it is ~5× cheaper than the cheapest aggregator and ~70× cheaper than gpt-image; the free allocation (10,000 neurons/day) covers ~173 images/day at 1024², comfortably above MVP volume; and it removes the new-secret risk entirely — no `.dev.vars` entry, no CI `env:` block, no `wrangler secret put`, and therefore no chance of the ungated auto-deploy on `master` shipping a silently broken feature (`context/foundation/infrastructure.md`, `.github/workflows/ci.yml:25-30`).
 
@@ -116,13 +116,13 @@ Avatars are small, stylized, text-free images — precisely the workload where s
 
 **Already present, nothing to install:**
 
-| Need | Covered by | Evidence |
-|---|---|---|
-| Storage upload / signed URLs | `@supabase/supabase-js@^2.99.1` (bundles `storage-js`) | `package.json:24` |
-| Input validation | `zod@^4.4.3` | `package.json:38` |
-| Dialog / skeleton / button / card | `radix-ui` + existing `src/components/ui/` | `src/components/ui/` |
-| Toasts (if wanted) | `sonner@^2.0.8`, already mounted | `src/layouts/Layout.astro:45` |
-| Cloudflare binding access | `wrangler@^4.126.0` + `cloudflare:workers` | `src/pages/api/analyze.ts:15` |
+| Need                              | Covered by                                             | Evidence                      |
+| --------------------------------- | ------------------------------------------------------ | ----------------------------- |
+| Storage upload / signed URLs      | `@supabase/supabase-js@^2.99.1` (bundles `storage-js`) | `package.json:24`             |
+| Input validation                  | `zod@^4.4.3`                                           | `package.json:38`             |
+| Dialog / skeleton / button / card | `radix-ui` + existing `src/components/ui/`             | `src/components/ui/`          |
+| Toasts (if wanted)                | `sonner@^2.0.8`, already mounted                       | `src/layouts/Layout.astro:45` |
+| Cloudflare binding access         | `wrangler@^4.126.0` + `cloudflare:workers`             | `src/pages/api/analyze.ts:15` |
 
 **To add:**
 
@@ -189,7 +189,7 @@ Avatars are small, stylized, text-free images — precisely the workload where s
 
 ## Follow-up Research 2026-09-13
 
-Two constraints surfaced from `context/changes/channel-profile-crud/plan.md` after the body above was written. Both change *how* the upload is built, not whether it is feasible.
+Two constraints surfaced from `context/changes/channel-profile-crud/plan.md` after the body above was written. Both change _how_ the upload is built, not whether it is feasible.
 
 ### `FormData` is a known landmine in this codebase
 

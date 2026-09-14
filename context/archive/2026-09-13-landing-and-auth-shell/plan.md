@@ -74,7 +74,7 @@ Three cross-cutting mechanisms are introduced in Phase 1 and consumed by the res
 
 **`next` is an open-redirect surface.** It arrives from the query string, is threaded through Supabase's OAuth `redirectTo`, and comes back on `callback`. It must be validated at every read point, not just where it is set: accept only a value beginning with a single `/` that is not `//` or `/\` (protocol-relative and backslash-scheme forms both navigate off-origin in browsers), rejecting anything else to `/`. F-01 impl-review finding **F4** already noted that `redirectTo` reflects the incoming `Host` header on Workers; that is safe only because Google honors pre-registered URIs, and it is precisely why the app-side `next` must not become a second, unguarded redirect. Put this in one exported pure function and unit-test it — it is the only piece of this slice that is a security control rather than UI.
 
-**Order of checks in `callback.ts` is currently wrong and must be inverted.** Google returns `?error=access_denied&error_description=...` with **no** `code`, so today's `if (!code)` at `:11` fires first and reports "Missing OAuth code" for what is actually a user declining consent. Read `error`/`error_description` *before* checking for `code`.
+**Order of checks in `callback.ts` is currently wrong and must be inverted.** Google returns `?error=access_denied&error_description=...` with **no** `code`, so today's `if (!code)` at `:11` fires first and reports "Missing OAuth code" for what is actually a user declining consent. Read `error`/`error_description` _before_ checking for `code`.
 
 **Session refresh after in-dialog sign-in requires a navigation.** `Topbar` reads `Astro.locals.user` server-side, so the `Set-Cookie` from a fetch-based sign-in lands but nothing re-renders the shell. A full `window.location` navigation is the honest answer; anything cleverer duplicates auth state on the client. Navigate to the validated `next` when present, otherwise reload the current URL — which is what makes FR-014's "w obrębie bieżącej strony" true for the common case.
 
@@ -361,9 +361,11 @@ Replace the starter copy with product copy, give the app real social metadata, a
 ## Testing Strategy
 
 **Unit tests** (the only automated tests this slice adds — the repo tests pure service logic only):
+
 - `safeNextPath` — accepts `/dashboard`, `/dashboard?tab=x`; rejects `//evil.com`, `/\evil.com`, `https://evil.com`, `javascript:alert(1)`, `""`, `null`, and non-string input, each falling back to `/`.
 
 **Manual end-to-end scenarios** (no e2e harness exists; run these against `npm run dev`):
+
 1. Signed out on `/` → dialog → sign in → top bar shows email, still on `/`
 2. Signed out on `/` → dialog → switch to sign up → create account → in-dialog confirmation
 3. Signed out → `/dashboard` → bounced to `/` with dialog → sign in → **lands on `/dashboard`**

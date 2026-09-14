@@ -80,6 +80,7 @@ chronioną bez sesji → przekierowanie do logowania.
 ## Success Criteria
 
 ### Primary
+
 - Użytkownik loguje się, tworzy profil kanału (nisza, sub-nisza, 3–5 ID
   konkurentów) i po kliknięciu „Analyze" otrzymuje ranking **≥ 3** ocenionych
   okazji contentowych.
@@ -87,10 +88,12 @@ chronioną bez sesji → przekierowanie do logowania.
 - Zapisane okazje są trwałe (baza) i widoczne wyłącznie dla właściciela profilu.
 
 ### Secondary
+
 - Jednozdaniowe uzasadnienie jest na tyle trafne, że użytkownik faktycznie na
   jego podstawie wybiera temat (jakość uzasadnienia, nie tylko jego obecność).
 
 ### Guardrails
+
 - Twarda izolacja danych per-user — żaden wyciek zapisanych okazji między kontami.
 - Klik „Analyze" nigdy nie kończy się pustką bez wyjaśnienia — zawsze ranking
   albo czytelny empty/error state.
@@ -98,18 +101,22 @@ chronioną bez sesji → przekierowanie do logowania.
   aplikacji — użytkownik dostaje czytelny komunikat (graceful degradation).
 
 ## Timeline budget
+
 - mvp_weeks: 3 (przepływ uznany za odpowiednio wąski w Fazie 3).
 
 ## Functional Requirements
 
 ### Konto i dostęp
+
 - FR-001: Użytkownik może założyć konto i zalogować się (email+hasło oraz OAuth Google). Priority: must-have
   > Socrates: Kontrargument rozważony: „OAuth to nadmiar na start". Rozstrzygnięcie: zachowane — oba tory logowania w MVP (persona i tak jest w ekosystemie Google).
 - FR-002: Użytkownik widzi i zarządza wyłącznie własnymi danymi. Priority: must-have
   > Socrates: Kontrargument rozważony: „izolacja to oczywistość, nie FR". Rozstrzygnięcie: zachowane jako jawny FR obronny; dodatkowo wzmocnione guardrailem i NFR z testem.
 
 ### Profil kanału
+
 > Założenie MVP: jeden profil kanału na użytkownika. Wiele profili poza zakresem v1 (patrz Non-Goals).
+
 - FR-003: Użytkownik może utworzyć profil kanału (nisza, sub-nisza, 3–5 ID konkurentów). Priority: must-have
   > Socrates: Kontrargument rozważony: „limit 3–5 arbitralny". Rozstrzygnięcie: zachowane — 3–5 jako rekomendowany zakres kuratelowanej listy; to rdzeń insightu produktu.
 - FR-004: Użytkownik może edytować profil kanału. Priority: must-have
@@ -118,6 +125,7 @@ chronioną bez sesji → przekierowanie do logowania.
   > Socrates: Kontrargument przyjęty: „zbędne w MVP przy jednym profilu". Rozstrzygnięcie: zdemotowane do nice-to-have; edycja (FR-004) pokrywa większość potrzeb.
 
 ### Analiza
+
 - FR-006: Użytkownik może uruchomić analizę („Analyze") dla profilu kanału. Priority: must-have
   > Socrates: Kontrargument rozważony: „koszt/quota API przy ręcznym przycisku". Rozstrzygnięcie: on-demand zachowane (najprostsze dla MVP); ryzyko limitów adresowane guardrailem graceful-degradation i NFR.
 - FR-007: System pobiera ostatnie długie filmy konkurentów z okna czasowego podczas analizy, wykluczając Shorts. Priority: must-have
@@ -128,6 +136,7 @@ chronioną bez sesji → przekierowanie do logowania.
   > Socrates: Brak kontrargumentu — ranking top 5 z uzasadnieniem to rdzeń dostarczanej wartości; stoi jak jest.
 
 ### Okazje contentowe
+
 - FR-010: Użytkownik może zapisać wybraną okazję contentową (temat, score, status). Priority: must-have
   > Socrates: Brak kontrargumentu — trwały zapis wybranych okazji to jedno z kryteriów sukcesu; stoi jak jest.
 - FR-011: Użytkownik może przeglądać zapisane okazje. Priority: must-have
@@ -145,6 +154,7 @@ chronioną bez sesji → przekierowanie do logowania.
   wynikiem liczbowym (outlier_score) i jednozdaniowym uzasadnieniem
 
 #### Acceptance Criteria
+
 - Ranking jest posortowany malejąco po outlier_score.
 - Każda pozycja pokazuje temat, wynik liczbowy i jedno zdanie uzasadnienia.
 - Gdy dane konkurentów są niedostępne lub API zwraca błąd/limit, użytkownik
@@ -184,6 +194,7 @@ mógł chwycić (poza samą liczbą). Użytkownik napotyka ten wynik po kliknię
 ## Non-Goals
 
 ### Funkcjonalne (z notatki)
+
 - Monitoring newsów z zewnętrznych źródeł — inny problem, poza rdzeniem analizy konkurencji.
 - Planer produkcji / kanban — MVP kończy się na wskazaniu i zapisie okazji.
 - Konfigurator workflow (edytor, thumbnail) — nie dotyczy analizy okazji.
@@ -193,26 +204,26 @@ mógł chwycić (poza samą liczbą). Użytkownik napotyka ten wynik po kliknię
 - Zaawansowany, uczony model „trafności niszy" — MVP używa prostego, jawnego współczynnika.
 
 ### Dodatkowe (wykryte podczas shapingu)
+
 - Wiele profili kanałów naraz — jeden profil na użytkownika w v1.
 - Automatyczne / cykliczne analizy — wyłącznie on-demand (chroni quota API, upraszcza v1).
 - Analiza Shorts — MVP obejmuje tylko długie filmy.
 - Pełny workflow statusów / planer — status okazji tylko lekki (zmiana statusu jako nice-to-have).
 
 ## Forward: tech-stack
+
 > Informacyjne — NIE część schematu PRD. Do rozstrzygnięcia w kroku wyboru stacku (po /10x-prd).
+
 - Intencje technologiczne z notatki: Supabase (auth + baza), YouTube Data API v3
   (źródło danych o filmach/kanałach), Cloudflare Pages (hosting/deploy).
 - Projekt bazuje na istniejącym starterze Astro 6 SSR + React 19 + Tailwind 4 +
   shadcn/ui + Supabase (patrz CLAUDE.md).
 
 ## Forward: technical-roadmap
+
 > Informacyjne — NIE część schematu PRD. Dla kroków po wyborze stacku.
+
 - Kryterium z notatki: ≥ 1 test E2E pokrywający login → profil → analyze → wynik.
 - Pipeline CI/CD: build + testy + deploy bez ręcznej interwencji.
 - Robustność outlier_score (mediana zamiast średniej, korekta wieku filmu,
   dokładna definicja okna czasowego) — do rozważenia w v2.
-
-
-
-
-

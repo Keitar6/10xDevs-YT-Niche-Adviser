@@ -26,17 +26,17 @@ last_updated_by: Mateusz
 
 This document records the **API contract** for roadmap slice S-02: exact endpoints, request parameters, and response shapes, sourced from Google's own documentation.
 
-It deliberately does **not** cover library selection, runtime compatibility, or scoring methodology — those are in the companion document [`yt-library-research.md`](./yt-library-research.md), whose `fetch()` + `zod` recommendation this document assumes. Read that one for *what to build with*; read this one for *what the API actually returns*.
+It deliberately does **not** cover library selection, runtime compatibility, or scoring methodology — those are in the companion document [`yt-library-research.md`](./yt-library-research.md), whose `fetch()` + `zod` recommendation this document assumes. Read that one for _what to build with_; read this one for _what the API actually returns_.
 
 ## Call chain
 
-| # | Request | Reads | Notes |
-|---|---|---|---|
-| 1 | `GET /youtube/v3/channels?part=contentDetails&id=<id1,id2,...>` | `contentDetails.relatedPlaylists.uploads` | Accepts a comma-separated id list — all 3-5 competitors resolve in **one** call, not one per channel. |
-| 2 | `GET /youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=<uploadsId>&maxResults=50` | video IDs | Reverse-chronological. Page via `nextPageToken` until out of the window. |
-| 3 | `GET /youtube/v3/videos?part=snippet,contentDetails,statistics&id=<up to 50 ids>` | `statistics.viewCount`, `contentDetails.duration` | Batches 50 IDs per call. |
+| #   | Request                                                                                          | Reads                                             | Notes                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1   | `GET /youtube/v3/channels?part=contentDetails&id=<id1,id2,...>`                                  | `contentDetails.relatedPlaylists.uploads`         | Accepts a comma-separated id list — all 3-5 competitors resolve in **one** call, not one per channel. |
+| 2   | `GET /youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=<uploadsId>&maxResults=50` | video IDs                                         | Reverse-chronological. Page via `nextPageToken` until out of the window.                              |
+| 3   | `GET /youtube/v3/videos?part=snippet,contentDetails,statistics&id=<up to 50 ids>`                | `statistics.viewCount`, `contentDetails.duration` | Batches 50 IDs per call.                                                                              |
 
-Google's own revision history (2014-11-11) states the rationale for this chain over `search.list`: *"retrieving channel uploads via channels.list and playlistItems.list costs significantly less than using search.list."* This corroborates the quota table in `yt-library-research.md`.
+Google's own revision history (2014-11-11) states the rationale for this chain over `search.list`: _"retrieving channel uploads via channels.list and playlistItems.list costs significantly less than using search.list."_ This corroborates the quota table in `yt-library-research.md`.
 
 ## Response contract
 
@@ -56,7 +56,7 @@ Details that affect the zod schemas:
 
 ## Auth: API key, no OAuth
 
-Per `developers.google.com/youtube/v3/docs`: *"API keys are generally used for public data access"*, with OAuth 2.0 *"strictly required for any operations that modify user data or access private information."*
+Per `developers.google.com/youtube/v3/docs`: _"API keys are generally used for public data access"_, with OAuth 2.0 _"strictly required for any operations that modify user data or access private information."_
 
 Competitor channels are public and the analysis never acts on behalf of the user, so S-02 needs only a server-side key. This is **unrelated to F-01's Google OAuth** — different credential, different purpose. Declare it as a server-only secret in `astro:env/server` alongside `SUPABASE_KEY`.
 
@@ -67,11 +67,11 @@ A direct query for a Shorts field or filter returned **`No documentation matched
 Two consequences for FR-007:
 
 1. **The uploads playlist is unfiltered.** Shorts and long-form are interleaved, and `playlistItems.list` carries no duration. Shorts are only identifiable after step 3, so the pipeline **pays quota for Shorts it then discards**. "Fetch 50 uploads" does not mean "50 long-form videos."
-2. **Exclusion must be airtight because Shorts views are inflated.** The docs flag that as of **2025-03-31**, Shorts view counts are calculated from start/replay events with *no minimum watch time*. A Short that leaks past the filter inflates the channel-average denominator in FR-008 and suppresses every genuine outlier on that channel.
+2. **Exclusion must be airtight because Shorts views are inflated.** The docs flag that as of **2025-03-31**, Shorts view counts are calculated from start/replay events with _no minimum watch time_. A Short that leaks past the filter inflates the channel-average denominator in FR-008 and suppresses every genuine outlier on that channel.
 
 ## Quota accounting for `search.list`: two models in the docs
 
-The index returned both *"a quota cost of 1 unit ... subject to a limit of 100 calls per day"* (the newer dedicated *Search Queries* quota bucket) and the 2014 revision-history figure of *100 units*. The two differ in mechanism but converge on the same ceiling — **~20 analysis runs/day at 5 competitors** — matching the figure in `yt-library-research.md`.
+The index returned both _"a quota cost of 1 unit ... subject to a limit of 100 calls per day"_ (the newer dedicated _Search Queries_ quota bucket) and the 2014 revision-history figure of _100 units_. The two differ in mechanism but converge on the same ceiling — **~20 analysis runs/day at 5 competitors** — matching the figure in `yt-library-research.md`.
 
 **For `/10x-plan`: state the cap, not a unit number.** Quoting "100 units" risks pinning a stale accounting model. The operative rule is unchanged: `search.list` is banned from the analysis path.
 

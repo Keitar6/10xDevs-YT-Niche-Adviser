@@ -1,4 +1,5 @@
 <!-- IMPL-REVIEW-REPORT -->
+
 # Implementation Review: Channel Profile CRUD Implementation Plan
 
 - **Plan**: context/changes/channel-profile-crud/plan.md
@@ -9,14 +10,14 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| Plan Adherence | WARNING |
-| Scope Discipline | WARNING |
-| Safety & Quality | WARNING |
-| Architecture | PASS |
+| Dimension           | Verdict |
+| ------------------- | ------- |
+| Plan Adherence      | WARNING |
+| Scope Discipline    | WARNING |
+| Safety & Quality    | WARNING |
+| Architecture        | PASS    |
 | Pattern Consistency | WARNING |
-| Success Criteria | PASS |
+| Success Criteria    | PASS    |
 
 **Automated verification re-run:** `npm run lint` PASS, `npm run build` PASS (`Server built in 11.19s`). Remaining build warnings (sitemap `site` config, a CSS minify notice) are pre-existing and unrelated to this diff.
 
@@ -69,7 +70,7 @@
 - **Impact**: 🔎 MEDIUM — real tradeoff; pause to reason through it
 - **Dimension**: Safety & Quality
 - **Location**: src/components/Topbar.astro:8-11
-- **Detail**: The query destructures only `{ data: profile }`, discarding `error`. `.maybeSingle()` is the correct choice and handles the genuine zero-row case cleanly, but on a transient failure `profile` is `null` and the UI renders "Set up profile" for a user who *has* one. Because the dialog then opens empty and the save path is an upsert on the `user_id` conflict target (`profile.ts:51-55`), a user who fills it in from that state overwrites their real profile with no warning — a data-loss path, not just a mislabelled trigger. Low probability, but the failure is silent in both directions.
+- **Detail**: The query destructures only `{ data: profile }`, discarding `error`. `.maybeSingle()` is the correct choice and handles the genuine zero-row case cleanly, but on a transient failure `profile` is `null` and the UI renders "Set up profile" for a user who _has_ one. Because the dialog then opens empty and the save path is an upsert on the `user_id` conflict target (`profile.ts:51-55`), a user who fills it in from that state overwrites their real profile with no warning — a data-loss path, not just a mislabelled trigger. Low probability, but the failure is silent in both directions.
 - **Fix A ⭐ Recommended**: Capture `error` and distinguish it from the no-profile case — log it and render the trigger in a neutral/error state rather than "Set up profile", so a failed read can never be mistaken for an empty profile.
   - Strength: Removes the clobber path at its source; keeps the genuine first-time-user case unchanged.
   - Tradeoff: Adds a third trigger state to reason about in a nav strip that currently has two.

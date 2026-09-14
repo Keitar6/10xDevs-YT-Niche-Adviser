@@ -23,7 +23,7 @@ rows" assertion would have passed for everyone, owner included, and proven
 nothing. `04-avatars-bucket.test.sql` therefore sets that GUC (which
 `authenticated` is free to set itself, so the trigger is an orphaned-object
 guard, not an access-control boundary) and adds a closing assertion that user A
-*can* delete their own object — which is what makes the strangers' zero-row
+_can_ delete their own object — which is what makes the strangers' zero-row
 deletes mean "RLS denied you" rather than "nobody can delete anything".
 
 **Phase 3 criterion 3.4 (`npx supabase db reset`) was deferred during

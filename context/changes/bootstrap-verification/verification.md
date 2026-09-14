@@ -55,10 +55,10 @@ the lowest-friction path for a solo, tight-timeline build.
 
 ## Pre-scaffold verification
 
-| Signal      | Value                                        | Severity | Notes                                                             |
-| ----------- | --------------------------------------------- | -------- | ------------------------------------------------------------------ |
-| npm package | not run                                       | n/a      | `cmd_template` starts with `git clone`, no npm package to resolve |
-| GitHub repo | not run                                       | n/a      | `gh` CLI unavailable in this environment; network check skipped  |
+| Signal      | Value   | Severity | Notes                                                             |
+| ----------- | ------- | -------- | ----------------------------------------------------------------- |
+| npm package | not run | n/a      | `cmd_template` starts with `git clone`, no npm package to resolve |
+| GitHub repo | not run | n/a      | `gh` CLI unavailable in this environment; network check skipped   |
 
 ## Scaffold log
 
@@ -115,27 +115,28 @@ Note: this cwd was already an instance of the exact starter being scaffolded (fr
 
 ## Hints recorded but not acted on
 
-| Hint                     | Value           |
-| ------------------------ | ---------------- |
-| bootstrapper_confidence  | first-class      |
-| quality_override         | false            |
-| path_taken               | standard         |
-| self_check_answers       | null             |
-| team_size                | solo             |
-| deployment_target        | cloudflare-pages |
-| ci_provider              | github-actions   |
-| ci_default_flow          | auto-deploy-on-merge |
-| has_auth                 | true             |
-| has_payments             | false            |
-| has_realtime             | false            |
-| has_ai                   | true             |
-| has_background_jobs      | false            |
+| Hint                    | Value                |
+| ----------------------- | -------------------- |
+| bootstrapper_confidence | first-class          |
+| quality_override        | false                |
+| path_taken              | standard             |
+| self_check_answers      | null                 |
+| team_size               | solo                 |
+| deployment_target       | cloudflare-pages     |
+| ci_provider             | github-actions       |
+| ci_default_flow         | auto-deploy-on-merge |
+| has_auth                | true                 |
+| has_payments            | false                |
+| has_realtime            | false                |
+| has_ai                  | true                 |
+| has_background_jobs     | false                |
 
 ## Next steps
 
 Next: a future skill will set up agent context (CLAUDE.md, AGENTS.md). For now, your project is scaffolded and verified — happy hacking.
 
 Useful manual steps in the meantime:
+
 - `git init` (if you have not already) to start your own repo history — this cwd already has a `.git/`, so this is likely already done.
 - Review the `.scaffold` siblings this run created (nearly the full starter tree, since cwd was already this exact starter) and delete them once you've confirmed nothing newer landed in them — a quick `diff <file> <file>.scaffold` per file is enough, or bulk-check with `find . -name '*.scaffold'`.
 - Most `.scaffold` files here are expected to be identical or near-identical to your existing files (same starter, same version at clone time) — worth a spot check on `package.json.scaffold` and `astro.config.mjs.scaffold` in particular in case the upstream starter has since diverged from what this repo started with.
