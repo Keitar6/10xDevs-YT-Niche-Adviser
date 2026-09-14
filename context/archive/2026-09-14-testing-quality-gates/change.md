@@ -1,10 +1,10 @@
 ---
 change_id: testing-quality-gates
 title: Testing quality gates
-status: implemented
+status: archived
 created: 2026-09-14
 updated: 2026-09-14
-archived_at: null
+archived_at: 2026-09-14T13:19:16Z
 ---
 
 ## Notes
@@ -26,11 +26,19 @@ was proven by the prescribed mutation check: adding a second key to the
 `jsonError` envelope turns 8 tests red on `Object.keys(body)` at both sites.
 
 **Phase 1 · #2 — the formatting drift had moved.** The plan located it in
-`context/foundation/roadmap.md`; by implementation time the repo-wide Prettier
-pass in `736de34` had already normalised that file, and the live
-`prettier --check .` failures were the change folder's own `plan.md` and
-`plan-brief.md`. Those were normalised instead. `roadmap.md`'s only diff in this
-phase is the `planning → in-progress` status flip.
+`context/foundation/roadmap.md`; the live `prettier --check .` failures at
+implementation time were the change folder's own `plan.md` and `plan-brief.md`,
+and those were normalised instead. `roadmap.md`'s only diff in this phase is the
+`planning → in-progress` status flip.
+
+_Corrected by impl-review (F6)._ The original note credited the repo-wide
+Prettier pass in `736de34` with having already normalised `roadmap.md`. It had
+not — that commit touched 95 files and `roadmap.md` is not among them, and
+Prettier still reports `git show 4519924:context/foundation/roadmap.md` as
+drifted. What actually happened is that the drift was a single over-wide
+At-a-glance `Status` column, and the `planning → in-progress` flip above
+widened the cell from 8 to 11 characters, which made the column correct as a
+side effect. The file fell out of drift; it was never deliberately normalised.
 
 ### Gate-mutation evidence (CI run ids)
 

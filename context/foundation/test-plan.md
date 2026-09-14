@@ -100,7 +100,7 @@ date so future readers can see which lines need re-verification.
 
 | Layer                                                        | Tool                                     | Version   | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ------------------------------------------------------------ | ---------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| unit + integration                                           | Vitest                                   | 5.0       | Configured. `include` is `src/**/*.test.{ts,tsx}` — one glob over the whole tree, deliberately not an allowlist of the directories that happen to hold tests (§3 Phase 2 widened it from `src/lib/services/**` and flattened it). Eight test files: five service tests plus the route, middleware and source-scan files from §6.4                                                                                                                                                  |
+| unit + integration                                           | Vitest                                   | 5.0       | Configured. `include` is `src/**/*.test.{ts,tsx}` — one glob over the whole tree, deliberately not an allowlist of the directories that happen to hold tests (§3 Phase 2 widened it from `src/lib/services/**` and flattened it). Twelve test files / 166 tests: nine service tests plus the route, middleware and source-scan files from §6.4                                                                                                                                     |
 | network / boundary faking                                    | Vitest built-in (`vi.stubGlobal`)        | 5.0       | Settled by §3 Phase 1 under the cost × signal rule: no mocking library installed. The pattern — a real `Response` built fresh per call, `vi.unstubAllGlobals()` in `afterEach` — is written up in §6.2                                                                                                                                                                                                                                                                             |
 | database / policy tests                                      | Supabase CLI (pgTAP, `supabase test db`) | 2.116     | CLI is already a devDependency; needs Docker locally. Five files under `supabase/tests/`, 77 assertions — the harness/oracle guard plus per-verb, per-role isolation across `channel_profiles`, `content_opportunities` and the `avatars` bucket, and the policy-shape file. Wired locally **and** as the `supabase/**`-scoped `db` job in CI (§5); pattern in §6.3, gate mechanics in §6.7                                                                                        |
 | typecheck                                                    | `@astrojs/check`                         | 0.9.8     | `npm run typecheck`, wired into CI by §3 Phase 4. Runs over the whole tree, tests included, in ~14s; must follow `astro sync`. Fails on severity `error` only, so the `ts(6387)` deprecation hints from `eslint.config.js` do not block                                                                                                                                                                                                                                            |
@@ -594,6 +594,18 @@ Five traps, all of them load-bearing:
   `needs: [ci, db]` would break deploys the moment `db` skips — a skipped
   dependency skips its dependent. The ruleset gates deploy transitively, because
   every path to `master` now goes through a PR whose checks passed.
+
+  Know what that does **not** buy you, though. `ci` and `db` are unordered, so
+  on a master push touching `supabase/**`, `wrangler deploy` fires as soon as
+  `ci`'s build finishes — while `db` is still in its ~83s stack start, and
+  regardless of how `db` ends. The transitive gate is also bounded by
+  `strict_required_status_checks_policy: false`: a PR merges on checks computed
+  against the base it was opened from, not against the master tree that gets
+  deployed. Both are accepted for a single-author repo where the local
+  `npm run test:db` runs first. If a second contributor joins, revisit the
+  strict policy before revisiting the job structure — the reasoning above
+  against `needs: [ci, db]` does not change.
+
 - **`typecheck` must follow `astro sync`.** `astro check` reads the types `sync`
   generates; put it earlier and it fails on missing generated types rather than
   on your code. `format:check` goes first because it is the cheapest.
