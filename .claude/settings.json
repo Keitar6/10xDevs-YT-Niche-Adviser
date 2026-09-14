@@ -57,6 +57,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/vitest-related.sh\"",
+            "timeout": 120,
+            "statusMessage": "Running related Vitest tests"
+          }
+        ]
+      }
     ]
   }
 }
