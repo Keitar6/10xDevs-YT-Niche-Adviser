@@ -197,6 +197,12 @@ export function scoreChannel(sample: ChannelSample, now: Date): ChannelScoreResu
     // An unparseable timestamp yields NaN, which fails this comparison and
     // withholds the video from the ranking while leaving it in the baseline.
     if (!(Date.parse(video.published_at) <= rankableBefore)) continue;
+    // Same withhold-but-still-count treatment for a video with no views. The
+    // rule originates outside this module: `outlier_score` of 0 is rejected by
+    // both `z.number().gt(0)` (`content-opportunity.ts:30`) and the
+    // `check (outlier_score > 0)` on `content_opportunities`, so ranking one
+    // renders an item that then 400s on Save. It still moved the median.
+    if (video.view_count <= 0) continue;
     rankable.push({
       video_id: video.video_id,
       title: video.title,

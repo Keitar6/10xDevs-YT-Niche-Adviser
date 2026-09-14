@@ -322,6 +322,33 @@ describe("scoreChannel", () => {
     expect(result.rankable.map((o) => o.video_id)).toEqual(["a", "b", "c", "d"]);
   });
 
+  it("withholds a zero-view video from the ranking while keeping it in the baseline", () => {
+    // A 0-view video scores exactly 0, which the save boundary rejects twice
+    // over — `z.number().gt(0)` in content-opportunity.ts and the
+    // `check (outlier_score > 0)` on content_opportunities. Ranking an item
+    // that 400s on Save is the user-visible inconsistency this closes.
+    const result = scoreChannel(
+      sample([
+        video({ video_id: "zero", view_count: 0 }),
+        video({ video_id: "b", view_count: 100 }),
+        video({ video_id: "c", view_count: 200 }),
+        video({ video_id: "d", view_count: 300 }),
+        video({ video_id: "e", view_count: 400 }),
+      ]),
+      NOW,
+    );
+
+    expect(result.kind).toBe("scored");
+    if (result.kind !== "scored") return;
+    // Median over all five is 200. Over the four rankable ones it would be
+    // 250 — so this asserts the zero-view video still moved the baseline.
+    expect(result.channel_median).toBe(200);
+    expect(result.sample_size).toBe(5);
+    expect(result.rankable.map((o) => o.video_id)).toEqual(["b", "c", "d", "e"]);
+    // No opportunity may carry a score the save path cannot accept.
+    expect(result.rankable.every((o) => o.outlier_score > 0)).toBe(true);
+  });
+
   it("reports an empty sample as insufficient, with a sample size of 0", () => {
     const result = scoreChannel(sample([]), NOW);
 

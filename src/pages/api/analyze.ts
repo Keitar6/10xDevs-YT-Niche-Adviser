@@ -153,9 +153,16 @@ const runAnalysis = async (context: Parameters<APIRoute>[0]): Promise<Response> 
 
   const competitorIds = profile.competitors.map((competitor) => competitor.id);
 
+  // One clock for the whole request. The staleness cutoff inside the fetch and
+  // the recency cutoff inside `scoreChannel` are both evaluated against this
+  // instant; constructing a second `new Date()` further down would let a run
+  // straddle a boundary and score against a window it was not selected from.
+  // `fetchCompetitorVideos` exposes `now` as a parameter for exactly this.
+  const now = new Date();
+
   let fetched;
   try {
-    fetched = await fetchCompetitorVideos(competitorIds, YOUTUBE_API_KEY);
+    fetched = await fetchCompetitorVideos(competitorIds, YOUTUBE_API_KEY, now);
   } catch (err) {
     if (err instanceof YouTubeError) {
       // The quota case gets its own status as well as its own message: it is
@@ -186,7 +193,6 @@ const runAnalysis = async (context: Parameters<APIRoute>[0]): Promise<Response> 
     });
   }
 
-  const now = new Date();
   const scored = fetched.channels.map((sample) => scoreChannel(sample, now));
 
   for (const result of scored) {
@@ -215,11 +221,15 @@ const runAnalysis = async (context: Parameters<APIRoute>[0]): Promise<Response> 
   const ranked = rankOpportunities(scored, TOP_N);
 
   if (ranked.length === 0) {
-    // Distinct from the skip cases: the baselines held, but every video in the
-    // sample is still inside the recency window and so cannot be ranked yet.
+    // Distinct from the skip cases: the baselines held, but every video in
+    // them was withheld from the ranking. `scoreChannel` withholds for two
+    // reasons — too young to have a representative view count, and no views at
+    // all — and it does not report which applied. Naming only recency here
+    // would be confidently wrong for the second case, which is precisely what
+    // the guardrail forbids, so both are stated and neither is claimed.
     return emptyResult({
       ...summary,
-      empty_reason: `Every video found is newer than ${MIN_RANKABLE_AGE_DAYS} days, so none has had time to accumulate a representative view count. Try again in a few days.`,
+      empty_reason: `Every video found was held back from the ranking: a video must be at least ${MIN_RANKABLE_AGE_DAYS} days old, and must have at least one view, before it can be ranked. Try again in a few days.`,
     });
   }
 

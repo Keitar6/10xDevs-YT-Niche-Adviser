@@ -580,25 +580,25 @@ constraint has always forbidden it.
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npm test`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 No production diff in this phase
+- [x] 1.1 Unit tests pass: `npm test` — f8c3494
+- [x] 1.2 Linting passes: `npm run lint` — f8c3494
+- [x] 1.3 No production diff in this phase — f8c3494
 
 #### Manual
 
-- [x] 1.4 Mutation ledger re-run confirms M2 goes red via a median-named test
+- [x] 1.4 Mutation ledger re-run confirms M2 goes red via a median-named test — f8c3494
 
 ### Phase 2: Zero-view videos and the single clock
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm test`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Zero-view video stays in the baseline and out of `rankable`
+- [x] 2.1 Unit tests pass: `npm test`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Zero-view video stays in the baseline and out of `rankable`
 
 #### Manual
 
-- [ ] 2.4 Real analysis renders correctly, empty-state message reads correctly
+- [x] 2.4 Real analysis renders correctly, empty-state message reads correctly
 
 ### Phase 3: Extract and test the selection step
 
