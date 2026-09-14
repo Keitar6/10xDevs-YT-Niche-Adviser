@@ -580,13 +580,13 @@ constraint has always forbidden it.
 
 #### Automated
 
-- [ ] 1.1 Unit tests pass: `npm test`
-- [ ] 1.2 Linting passes: `npm run lint`
-- [ ] 1.3 No production diff in this phase
+- [x] 1.1 Unit tests pass: `npm test`
+- [x] 1.2 Linting passes: `npm run lint`
+- [x] 1.3 No production diff in this phase
 
 #### Manual
 
-- [ ] 1.4 Mutation ledger re-run confirms M2 goes red via a median-named test
+- [x] 1.4 Mutation ledger re-run confirms M2 goes red via a median-named test
 
 ### Phase 2: Zero-view videos and the single clock
 
