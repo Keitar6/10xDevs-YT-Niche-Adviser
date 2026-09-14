@@ -4,9 +4,11 @@
 // module; this file re-exports the inferred types so consumers import one path.
 
 import type { ScoredOpportunity, SkipReason } from "@/lib/services/scoring";
+import type { UnresolvedCompetitor } from "@/lib/services/youtube";
 
 export type { ChannelProfile, Competitor } from "@/lib/services/channel-profile";
 export type { ScoredOpportunity, SkipReason } from "@/lib/services/scoring";
+export type { UnresolvedCompetitor, UnresolvedReason } from "@/lib/services/youtube";
 export type { Justification } from "@/lib/services/justify";
 export type { SavedOpportunity } from "@/lib/services/content-opportunity";
 
@@ -48,8 +50,12 @@ export interface AnalyzeSummary {
   requested: number;
   /** Of those, the ones `channels.list` returned a usable channel for. */
   resolved: number;
-  /** Raw `UC…` ids that matched no live channel — unresolved channels have no title. */
-  unresolved: string[];
+  /**
+   * Competitors that produced no usable sample, each carrying why. A channel
+   * whose data failed to load this run is *not* the same as one that does not
+   * exist, and the interface must not say it is.
+   */
+  unresolved: UnresolvedCompetitor[];
   /** Resolved competitors that cleared the sample floor and the zero-median guard. */
   scored: number;
   skipped: SkippedChannel[];

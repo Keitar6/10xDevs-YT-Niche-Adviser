@@ -307,16 +307,31 @@ const VIDEOS_PER_CALL = 50;
 
 const MS_PER_DAY = 86_400_000;
 
+/**
+ * Why a competitor produced no usable sample.
+ *
+ * The distinction is the whole point: `not_found` is a statement about the
+ * user's profile that they can act on by fixing an id, while `transport` and
+ * `malformed` are statements about this one run that say nothing about whether
+ * the channel exists. Collapsing them — as a bare `string[]` did — makes the
+ * interface tell a user their channel id is wrong when YouTube simply 5xx'd.
+ */
+export type UnresolvedReason = "not_found" | "transport" | "malformed";
+
+export interface UnresolvedCompetitor {
+  /**
+   * The raw `UC…` string: an unresolved channel has no title by definition, and
+   * a failed one never got far enough to have been given one.
+   */
+  channel_id: string;
+  reason: UnresolvedReason;
+}
+
 export interface CompetitorVideosResult {
   /** One entry per competitor that resolved, in the order they were requested. */
   channels: ChannelSample[];
-  /**
-   * Requested ids that produced no usable sample — either `channels.list`
-   * returned nothing for them, or fetching their uploads failed on its own.
-   * Reported as the raw `UC…` string because an unresolved channel has no
-   * title by definition.
-   */
-  unresolved: string[];
+  /** Requested ids that produced no usable sample, each with the reason why. */
+  unresolved: UnresolvedCompetitor[];
 }
 
 interface ChannelTarget {
@@ -477,7 +492,7 @@ export async function fetchCompetitorVideos(
   const byId = new Map(items.map((item) => [item.id, item]));
 
   const targets: ChannelTarget[] = [];
-  const unresolved: string[] = [];
+  const unresolved: UnresolvedCompetitor[] = [];
   for (const channelId of requested) {
     const item = byId.get(channelId);
     // The uploads playlist is read from `relatedPlaylists`, never derived by
@@ -485,7 +500,9 @@ export async function fetchCompetitorVideos(
     // guarantee. A channel without one is unusable, so it counts as unresolved.
     const uploads = item?.contentDetails?.relatedPlaylists.uploads;
     if (item === undefined || uploads === undefined) {
-      unresolved.push(channelId);
+      // `channels.list` answered and this id was not in the answer, so this is
+      // the one case where "not found" is a claim we can actually back.
+      unresolved.push({ channel_id: channelId, reason: "not_found" });
       continue;
     }
     targets.push({ channelId: item.id, title: item.snippet?.title ?? null, uploadsPlaylistId: uploads });
@@ -505,15 +522,22 @@ export async function fetchCompetitorVideos(
     // Quota and auth failures are properties of the run, not of one competitor:
     // they will hit every remaining call too, so reporting them as a single
     // unlucky channel would be a lie. They stay fatal.
-    const reason: unknown = outcome.reason;
-    if (reason instanceof YouTubeError && (reason.failure.kind === "quota" || reason.failure.kind === "auth")) {
-      throw reason;
+    const failure: unknown = outcome.reason;
+    if (failure instanceof YouTubeError && (failure.failure.kind === "quota" || failure.failure.kind === "auth")) {
+      throw failure;
     }
 
     // Anything else is local to this competitor. Folding it into `unresolved`
     // keeps every competitor that did succeed, which is what the slice promises:
     // a failed competitor is named, not silently dropped together with the run.
-    unresolved.push(targets[index].channelId);
+    //
+    // The reason travels with it so the caller can say *this run failed to load
+    // them* rather than *they do not exist*. A rejection that is not a
+    // `YouTubeError` never reached the classification in `getJson`, so
+    // `transport` is the honest floor: something between here and YouTube broke.
+    const reason: UnresolvedReason =
+      failure instanceof YouTubeError && failure.failure.kind === "malformed" ? "malformed" : "transport";
+    unresolved.push({ channel_id: targets[index].channelId, reason });
   }
 
   return { channels, unresolved };

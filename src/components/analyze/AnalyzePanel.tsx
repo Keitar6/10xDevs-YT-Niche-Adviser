@@ -106,6 +106,12 @@ export default function AnalyzePanel({ savedVideoIds, pendingVideoIds, onSave }:
     }
   }
 
+  // Two different problems with two different remedies: a bad id is the user's
+  // to fix, a failed fetch is the run's to retry. They get their own notices.
+  const unresolved = result?.summary.unresolved ?? [];
+  const notFound = unresolved.filter((u) => u.reason === "not_found").map((u) => u.channel_id);
+  const failedToLoad = unresolved.filter((u) => u.reason !== "not_found").map((u) => u.channel_id);
+
   return (
     <section className="mt-6 w-full rounded-2xl border border-white/10 bg-white/5 p-6 text-white backdrop-blur-xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -141,9 +147,19 @@ export default function AnalyzePanel({ savedVideoIds, pendingVideoIds, onSave }:
             {result.summary.resolved < result.summary.requested ? (
               <Notice tone="warning">
                 Resolved {result.summary.resolved} of {result.summary.requested} competitor channels.
-                {result.summary.unresolved.length > 0
-                  ? ` Not found on YouTube: ${result.summary.unresolved.join(", ")}.`
-                  : ""}
+                {notFound.length > 0 ? ` Not found on YouTube: ${notFound.join(", ")}.` : ""}
+              </Notice>
+            ) : null}
+
+            {/*
+              Kept separate from the notice above on purpose. These channels
+              exist — their data just failed to load this run — and folding them
+              into "not found" would tell the user to fix an id that is fine.
+            */}
+            {failedToLoad.length > 0 ? (
+              <Notice tone="warning">
+                Could not load data for {failedToLoad.join(", ")} this run, so the ranking below covers the remaining
+                competitors. Try again shortly.
               </Notice>
             ) : null}
 

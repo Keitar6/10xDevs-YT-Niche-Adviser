@@ -19,7 +19,13 @@ import { parseChannelProfile } from "@/lib/services/channel-profile";
 import { justifyOpportunities } from "@/lib/services/justify";
 import { MIN_RANKABLE_AGE_DAYS, rankOpportunities, scoreChannel } from "@/lib/services/scoring";
 import { fetchCompetitorVideos, YouTubeError } from "@/lib/services/youtube";
-import type { AnalyzeOpportunity, AnalyzeResponse, AnalyzeSummary, SkippedChannel } from "@/types";
+import type {
+  AnalyzeOpportunity,
+  AnalyzeResponse,
+  AnalyzeSummary,
+  SkippedChannel,
+  UnresolvedCompetitor,
+} from "@/types";
 
 /** Mirrors the `simple` block of the `RATE_LIMITER` binding in wrangler.jsonc. */
 const RATE_LIMIT = 5;
@@ -41,6 +47,27 @@ function emptyResult(summary: AnalyzeSummary): Response {
 
 function describeSkip(skipped: SkippedChannel[]): string {
   return skipped.map((s) => `${s.channel_title ?? s.channel_id} (${s.message})`).join(" ");
+}
+
+/**
+ * The "nothing resolved" sentence, split by reason.
+ *
+ * A not-found id and a competitor whose fetch failed are different problems
+ * with different remedies, and telling a user to check an id that is fine is
+ * exactly the confidently-wrong emptiness the guardrail forbids.
+ */
+function describeUnresolved(unresolved: UnresolvedCompetitor[], requested: number): string {
+  const notFound = unresolved.filter((u) => u.reason === "not_found").map((u) => u.channel_id);
+  const failed = unresolved.filter((u) => u.reason !== "not_found").map((u) => u.channel_id);
+
+  const sentences = [`None of your ${requested} competitor channels could be analysed.`];
+  if (notFound.length > 0) {
+    sentences.push(`Not found on YouTube: ${notFound.join(", ")}. Check these IDs in your profile.`);
+  }
+  if (failed.length > 0) {
+    sentences.push(`Their data could not be loaded this run: ${failed.join(", ")}. Try again shortly.`);
+  }
+  return sentences.join(" ");
 }
 
 export const POST: APIRoute = async (context) => {
@@ -122,7 +149,10 @@ export const POST: APIRoute = async (context) => {
   if (fetched.channels.length === 0) {
     return emptyResult({
       ...summary,
-      empty_reason: `None of your ${competitorIds.length} competitor channels could be found on YouTube: ${fetched.unresolved.join(", ")}. Check the IDs in your profile.`,
+      // The two halves get different sentences on purpose: "check the IDs" is
+      // actionable advice for an id YouTube does not know, and actively
+      // misleading for a channel whose data merely failed to load this run.
+      empty_reason: describeUnresolved(fetched.unresolved, competitorIds.length),
     });
   }
 

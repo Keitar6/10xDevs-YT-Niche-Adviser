@@ -28,6 +28,16 @@ archived_at: null
   predicted. The other 11 cases passed unchanged, so the rest of the SDK
   behaviour model in the plan held.
 
+- **Deviation (Phase 2): the `AnalyzePanel` notice split was pulled forward
+  from Phase 4.** The plan's Migration Notes predicted the DTO and UI must land
+  together, and `@typescript-eslint/no-base-to-string` enforced it — with
+  `unresolved` now an object array, `AnalyzePanel.tsx:145`'s `join()` would have
+  rendered `[object Object]`, failing Phase 2's own lint gate. Doing the minimal
+  `.map(u => u.channel_id)` instead would have shipped a commit where the UI
+  still called a transport failure "Not found on YouTube" — the exact defect G2
+  exists to remove. No scope or design change; only the phase boundary moved.
+  Phase 4 keeps the G3 try/catch and the test-plan §6.2 / §6.6 entries.
+
 - **The worktree needed `npx astro sync`** after `npm ci`: without the generated
   `.astro/types.d.ts`, `npm run lint` reports 23 pre-existing
   `no-unsafe-*` errors across `middleware.ts`, `supabase.ts`, `analyze.ts` and

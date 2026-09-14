@@ -669,24 +669,24 @@ as one unit satisfies this.
 
 #### Automated
 
-- [x] 1.1 Dependencies installed in this worktree: `npm ci`
-- [x] 1.2 New suite passes: `npm test`
-- [x] 1.3 All five pre-existing suites still pass: `npm test`
-- [x] 1.4 Linting passes: `npm run lint`
+- [x] 1.1 Dependencies installed in this worktree: `npm ci` — 1ab7da7
+- [x] 1.2 New suite passes: `npm test` — 1ab7da7
+- [x] 1.3 All five pre-existing suites still pass: `npm test` — 1ab7da7
+- [x] 1.4 Linting passes: `npm run lint` — 1ab7da7
 
 #### Manual
 
-- [x] 1.5 Confirm the truncated-JSON and wrong-key-JSON tests fail with the old message before the G5 branch is added
+- [x] 1.5 Confirm the truncated-JSON and wrong-key-JSON tests fail with the old message before the G5 branch is added — 1ab7da7
 
 ### Phase 2: The YouTube boundary and reason-coded failures
 
 #### Automated
 
-- [ ] 2.1 New suite passes: `npm test`
-- [ ] 2.2 Full suite passes, including Phase 1's: `npm test`
-- [ ] 2.3 Type checking passes: `npx astro check`
-- [ ] 2.4 Linting passes: `npm run lint`
-- [ ] 2.5 Production build succeeds: `npm run build`
+- [x] 2.1 New suite passes: `npm test`
+- [x] 2.2 Full suite passes, including Phase 1's: `npm test`
+- [x] 2.3 Type checking passes: `npx astro check`
+- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.5 Production build succeeds: `npm run build`
 
 #### Manual
 
