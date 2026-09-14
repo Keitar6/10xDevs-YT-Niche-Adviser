@@ -9,9 +9,11 @@
     "astro": "astro",
     "test": "vitest run",
     "test:db": "supabase test db",
+    "typecheck": "astro check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts"
   },
   "dependencies": {

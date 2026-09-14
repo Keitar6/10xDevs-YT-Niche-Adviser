@@ -189,7 +189,11 @@ describe("every data-touching route refuses a caller with no session", () => {
     // The body must be the `jsonError` envelope and nothing else. A handler that
     // leaked a row, a user id, or a stack trace alongside its 401 would still
     // have the right status — the shape is what makes it a refusal.
-    const body = await response.json();
+    // `Record<string, unknown>` and no narrower: the two assertions below are
+    // what prove the envelope has exactly one key and that it is a string. A
+    // `{ error: string }` annotation would assert that at the type level and
+    // leave both checks tautological.
+    const body: Record<string, unknown> = await response.json();
     expect(Object.keys(body)).toEqual(["error"]);
     expect(typeof body.error).toBe("string");
   });
@@ -319,7 +323,10 @@ describe("a stranger's row is indistinguishable from a row that never existed", 
     // "fix" to 403 turns this route into an existence oracle.
     expect(response.status).toBe(404);
 
-    const body = await response.json();
+    // `Record<string, unknown>` and no narrower, for the reason given at the
+    // 401 site above: the key-set assertion is what proves the envelope, so a
+    // `{ error: string }` annotation would make it tautological.
+    const body: Record<string, unknown> = await response.json();
     expect(Object.keys(body)).toEqual(["error"]);
     // The message must not distinguish "someone else's row" from "already gone".
     expect(body.error).not.toMatch(/permission|forbidden|not yours|another user/i);

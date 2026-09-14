@@ -31,7 +31,7 @@ milestone_status: open
   - MS-03: Unauthenticated and cross-caller access to every data-touching route is closed by exhaustive, inventory-driven tests (`test-plan.md` §3 Phase 2, risk #4).
   - MS-04: The analyze run degrades into a ranking plus an explanation when an external provider misbehaves, never into an error page or a blank screen (`test-plan.md` §3 Phase 1, risks #1 and #2).
   - MS-05: The score provably matches the definition the PRD states, and the existing suite is able to fail for the right reason (`test-plan.md` §3 Phase 3, risk #5).
-  - MS-06: The gates the earlier phases established are enforced on every change rather than merely documented (`test-plan.md` §3 Phase 4).
+  - MS-06 — **satisfied 2026-09-14 by F-06.** The gates the earlier phases established are enforced on every change rather than merely documented (`test-plan.md` §3 Phase 4). A ruleset on `master` requires a pull request and requires the `ci` and `db` checks, with no bypass actors; `format` and `typecheck` joined `lint`, `unit + integration` and `build` as wired CI gates, and each was proven red on a real run before being required.
 
 ## Vision recap
 
@@ -47,14 +47,14 @@ Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience)
 
 ## At a glance
 
-| ID   | Change ID                             | Outcome (user can …)                                                                                                                                                   | Prerequisites    | PRD refs              | Status      |
-| ---- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------- | ----------- |
-| F-03 | `provable-user-isolation`             | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | —                | FR-002, MS-01, MS-03  | done        |
-| F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                                  | —                | FR-006, FR-009, MS-04 | done        |
-| F-05 | `testing-scoring-oracle`              | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason                                                 | —                | FR-007, FR-008, MS-05 | done        |
-| F-06 | `testing-quality-gates`               | (foundation) the floor the earlier phases established is enforced on every change                                                                                      | F-03, F-04, F-05 | MS-06                 | planning    |
-| S-06 | `opportunity-status-transitions`      | user moves a saved opportunity through new → in production → done, and the change persists                                                                             | F-03             | FR-012, MS-02         | proposed    |
-| S-07 | `user-selectable-analysis-window`     | user chooses the time window an analysis draws its videos from                                                                                                         | F-05             | FR-007, FR-008        | backlog     |
+| ID   | Change ID                             | Outcome (user can …)                                                                                                                                                   | Prerequisites    | PRD refs              | Status   |
+| ---- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------- | -------- |
+| F-03 | `provable-user-isolation`             | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | —                | FR-002, MS-01, MS-03  | done     |
+| F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                                  | —                | FR-006, FR-009, MS-04 | done     |
+| F-05 | `testing-scoring-oracle`              | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason                                                 | —                | FR-007, FR-008, MS-05 | done     |
+| F-06 | `testing-quality-gates`               | (foundation) the floor the earlier phases established is enforced on every change                                                                                      | F-03, F-04, F-05 | MS-06                 | done     |
+| S-06 | `opportunity-status-transitions`      | user moves a saved opportunity through new → in production → done, and the change persists                                                                             | F-03             | FR-012, MS-02         | proposed |
+| S-07 | `user-selectable-analysis-window`     | user chooses the time window an analysis draws its videos from                                                                                                         | F-05             | FR-007, FR-008        | backlog  |
 
 ## Streams
 
@@ -132,9 +132,9 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - Whether the policy-test gate runs in CI (needs a container runtime in the pipeline) or stays a local gate. Owner: user. Block: no — this element is where the decision is made, not something it waits on.
+  - ~~Whether the policy-test gate runs in CI (needs a container runtime in the pipeline) or stays a local gate.~~ **Decided, not open.** Both: it stays a local gate (the fast path before pushing) _and_ runs in CI as a `db` job conditioned on the change touching `supabase/**`. Measured on a cold runner at 111s — ~83s `supabase start`, ~4s for the 77 assertions — against four migrations in the repo's whole history, so almost no change pays it. The scoping is a job-level `if:` rather than a workflow-level `paths:` filter, because the latter leaves a required check Pending and would deadlock every merge. One prediction did not survive measurement: `supabase start -x` bounds which containers start, not which images are pulled — five images still came down, not one. Written up in `test-plan.md` §6.7. Owner: user. Block: no.
 - **Risk:** Deliberately thin and deliberately last: a gate can only lock a floor the earlier elements have actually built, so wiring it early would enforce a floor that does not exist yet. Sequenced after all three preceding elements for that reason, and the only element in M-2 whose Prerequisites are non-empty.
-- **Status:** planning
+- **Status:** done
 
 ## Slices
 
@@ -185,7 +185,7 @@ One known drift is recorded rather than fixed: Linear still shows milestone M-1 
 ## Open Roadmap Questions
 
 1. **The e2e criterion from shaping contradicts the test plan's negative space.** `shape-notes.md` parked an explicit acceptance criterion — at least one end-to-end test covering login → profile → analyze → result — but `test-plan.md` §7 rules end-to-end testing out entirely, and §5 records that exclusion as a standing trade on cost × signal grounds. Neither document cites the other, so this is an unresolved decision rather than an oversight. — Owner: user. Block: roadmap-wide (it determines whether M-2 needs a fifth element).
-2. **Where do policy tests that need a container runtime run?** In CI, which means provisioning a container runtime in the pipeline, or as a local-only gate. — Owner: user. Block: F-06 (`test-plan.md` §5 defers the decision to that element).
+2. ~~**Where do policy tests that need a container runtime run?**~~ **Resolved 2026-09-14 by F-06.** Both, with the expensive half scoped: `npm run test:db` stays the local gate before pushing, and the same suite runs in CI as a `db` job gated on the change touching `supabase/**`. GitHub Actions runners provide the container runtime, so nothing needed provisioning. 111s cold, paid only by changes that touch migrations or tests. See `test-plan.md` §5 and §6.7.
 3. **Shape-notes quality cross-check nie został ukończony** (`quality_check_status: pending` w checkpoincie wejściowym PRD, faza 7 — cross-check w toku, nie faza 8 finalna). — Owner: user. Block: no (informacyjne; zalecane potwierdzenie, że dokończenie cross-checku w `/10x-shape` nie ujawni dodatkowych luk). GitHub: [#6](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/6).
 
 ## Parked

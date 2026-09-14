@@ -10,12 +10,12 @@ _enforced_ rather than documented.
 
 Four gates change state:
 
-| Gate                  | Today                                              | After                                                        |
-| --------------------- | -------------------------------------------------- | ------------------------------------------------------------ |
-| typecheck             | no script, never run, **currently 4 errors**       | `npm run typecheck` in CI                                    |
+| Gate                  | Today                                                | After                                                        |
+| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| typecheck             | no script, never run, **currently 4 errors**         | `npm run typecheck` in CI                                    |
 | formatting            | pre-commit on `*.{json,css,md}`, **already drifted** | `npm run format:check` in CI                                 |
-| database policy tests | local only (`npm run test:db`)                     | CI job, scoped to changes under `supabase/**`                |
-| enforcement           | red X + skipped deploy; `master` unprotected       | ruleset on `master`: PR required, checks required, no bypass |
+| database policy tests | local only (`npm run test:db`)                       | CI job, scoped to changes under `supabase/**`                |
+| enforcement           | red X + skipped deploy; `master` unprotected         | ruleset on `master`: PR required, checks required, no bypass |
 
 ## Current State Analysis
 
@@ -122,7 +122,7 @@ documents. Inverting any pair locks the repository against its own author.
 
 **State sequencing.** The ruleset in Phase 4 is created **last** and only after
 a real CI run has been observed, because GitHub matches required status checks
-by the *check name string*. For an Actions job with no `name:`, that string is
+by the _check name string_. For an Actions job with no `name:`, that string is
 the job id — `ci`, `db`. A ruleset naming a check that never reports blocks
 every merge, and with no bypass actors the recovery is to edit the ruleset in
 the GitHub UI. Read the names off an actual run (`gh api …/commits/<sha>/check-runs`)
@@ -558,59 +558,59 @@ re-enabling it afterwards is a single `gh api` call rather than a re-derivation.
 
 #### Automated
 
-- [ ] 1.1 Typecheck passes: `npm run typecheck` exits 0 with `0 errors`
-- [ ] 1.2 Format check passes: `npm run format:check` exits 0
-- [ ] 1.3 Tests still pass: `npm test` reports 12 files / 166 tests
-- [ ] 1.4 Lint passes: `npm run lint` exits 0
+- [x] 1.1 Typecheck passes: `npm run typecheck` exits 0 with `0 errors` — 0749c6d
+- [x] 1.2 Format check passes: `npm run format:check` exits 0 — 0749c6d
+- [x] 1.3 Tests still pass: `npm test` reports 12 files / 166 tests — 0749c6d
+- [x] 1.4 Lint passes: `npm run lint` exits 0 — 0749c6d
 
 #### Manual
 
-- [ ] 1.5 Envelope assertions still load-bearing after the narrowing (mutation check)
-- [ ] 1.6 `git diff` on `roadmap.md` shows no semantic change
+- [x] 1.5 Envelope assertions still load-bearing after the narrowing (mutation check) — 0749c6d
+- [x] 1.6 `git diff` on `roadmap.md` shows no semantic change — 0749c6d
 
 ### Phase 2: Wire the Always-On Gates into CI
 
 #### Automated
 
-- [ ] 2.1 The pushed branch's CI run is green
-- [ ] 2.2 Both new steps appear in the run log
-- [ ] 2.3 The run's total wall time stays under two minutes
+- [x] 2.1 The pushed branch's CI run is green — a404db7
+- [x] 2.2 Both new steps appear in the run log — a404db7
+- [x] 2.3 The run's total wall time stays under two minutes — a404db7
 
 #### Manual
 
-- [ ] 2.4 Deliberate formatting error turns CI red on `format:check`; reverted
-- [ ] 2.5 Deliberate type error turns CI red on `typecheck`; reverted
-- [ ] 2.6 `CLAUDE.md`'s `## CI` section matches `ci.yml` step for step
+- [x] 2.4 Deliberate formatting error turns CI red on `format:check`; reverted — a404db7
+- [x] 2.5 Deliberate type error turns CI red on `typecheck`; reverted — a404db7
+- [x] 2.6 `CLAUDE.md`'s `## CI` section matches `ci.yml` step for step — a404db7
 
 ### Phase 3: Policy-Test Gate in CI, Scoped to `supabase/**`
 
 #### Automated
 
-- [ ] 3.1 On a `supabase/`-touching branch, the `db` job runs green with all five pgTAP files
-- [ ] 3.2 pgTAP assertion count under the trimmed start equals the local count
-- [ ] 3.3 On a branch touching no `supabase/` path, `db` is skipped and the run is green
-- [ ] 3.4 The `ci` job's wall time is unchanged from Phase 2
+- [x] 3.1 On a `supabase/`-touching branch, the `db` job runs green with all five pgTAP files — 3c45ea5
+- [x] 3.2 pgTAP assertion count under the trimmed start equals the local count — 3c45ea5
+- [x] 3.3 On a branch touching no `supabase/` path, `db` is skipped and the run is green — 3c45ea5
+- [x] 3.4 The `ci` job's wall time is unchanged from Phase 2 — 3c45ea5
 
 #### Manual
 
-- [ ] 3.5 Skipped `db` renders as "This check was skipped", not as failing
-- [ ] 3.6 `db` job wall time recorded for the §6.7 entry
-- [ ] 3.7 Broken policy turns the `db` job red; reverted
+- [x] 3.5 Skipped `db` renders as "This check was skipped", not as failing — 3c45ea5
+- [x] 3.6 `db` job wall time recorded for the §6.7 entry — 3c45ea5
+- [x] 3.7 Broken policy turns the `db` job red; reverted — 3c45ea5
 
 ### Phase 4: Enforce with a Ruleset, and Close the Documentation Loop
 
 #### Automated
 
-- [ ] 4.1 Ruleset exists with `"bypass_actors": []`
-- [ ] 4.2 Required check names exactly match the names emitted by a real run
-- [ ] 4.3 A direct `git push` to `master` is rejected by the remote
-- [ ] 4.4 All four gates green on the final PR
-- [ ] 4.5 `ruleset.json` exists in the change folder
+- [x] 4.1 Ruleset exists with `"bypass_actors": []` — d9c9e54
+- [x] 4.2 Required check names exactly match the names emitted by a real run — d9c9e54
+- [x] 4.3 A direct `git push` to `master` is rejected by the remote — d9c9e54
+- [x] 4.4 All four gates green on the final PR — d9c9e54
+- [x] 4.5 `ruleset.json` exists in the change folder — d9c9e54
 
 #### Manual
 
 - [ ] 4.6 PR with a deliberate type error is blocked from merging
 - [ ] 4.7 Docs-only PR is mergeable with `db` reported as skipped
-- [ ] 4.8 Direct push to `master` rejected for you personally (no bypass)
+- [x] 4.8 Direct push to `master` rejected for you personally (no bypass) — d9c9e54
 - [ ] 4.9 `test-plan.md` §5 describes only gates that exist; §3 Phase 4 reads `complete`
 - [ ] 4.10 §6.7 is sufficient for a stranger to add a fifth gate without rediscovering the Pending-check deadlock

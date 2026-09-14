@@ -7,9 +7,11 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run dev` — start dev server (Cloudflare workerd runtime)
 - `npm run build` — production build (SSR via `@astrojs/cloudflare`)
 - `npm run preview` — preview production build
+- `npm run typecheck` — `astro check` over the whole tree, tests included (~14s)
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm run format:check` — Prettier in check mode; this is the CI gate
 - `npm test` — Vitest (services, route guards, middleware, source scans); no database needed
 - `npm run test:db` — pgTAP policy suite under `supabase/tests/`; needs Docker + `npx supabase start`
 
@@ -61,10 +63,23 @@ which proves per-verb, per-role isolation across `channel_profiles`,
 local stack (`npx supabase start`); see `supabase/tests/README.md` for the
 fixture and impersonation conventions before adding a file.
 
-It is a local gate rather than a CI one **for now**: a cold CI runner pays a
-full ~13-image Supabase pull with no layer cache, so it belongs in its own job
-rather than folded into the existing one. That placement decision is owned by
-`context/foundation/test-plan.md` §3 Phase 4, not settled here.
+It also runs in CI, as its own `db` job in `.github/workflows/ci.yml`, but
+**only when the change touches `supabase/**`** — a `changes` job diffs the event
+against its base and the `db` job carries a job-level
+`if: needs.changes.outputs.supabase == 'true'`. The scoping exists because this
+is the only job that needs a container runtime; the start is trimmed with
+`supabase start -x …` to the database container alone, which is all pgTAP
+touches. It costs ~111s on a cold runner, nearly all of it image pulls. Running
+it locally stays the fast path — it is the same five files and the same 77
+assertions, without waiting on a runner.
+
+Two things about that wiring are easy to break and expensive to rediscover.
+The scoping is a **job-level `if:`**, never a workflow-level `paths:` filter: a
+workflow skipped by `paths:` leaves its checks Pending, and a Pending required
+check blocks the merge forever. And the exclusion list is load-bearing — if a
+pgTAP file ever goes red under the trimmed start, restore the container it needs
+rather than weakening the assertion. Both are written up in
+`context/foundation/test-plan.md` §6.7.
 
 ### Environment
 
@@ -76,7 +91,13 @@ rather than folded into the existing one. That placement decision is owned by
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to master. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+GitHub Actions workflow (`.github/workflows/ci.yml`), on every push and PR to master. One job, `ci`, running in order:
+
+`npm ci` → `npm run format:check` → `npx astro sync` → `npm run lint` → `npm run typecheck` → `npm test` → `npm run build` → deploy (master pushes only)
+
+Two orderings are load-bearing rather than cosmetic. `format:check` runs first because it is the cheapest gate (~2s) and should not queue behind a typecheck. `typecheck` must run **after** `astro sync`, because `astro check` reads the types `sync` generates — put it earlier and it fails on missing generated types rather than on your code.
+
+The build step needs the `SUPABASE_URL`, `SUPABASE_KEY`, `YOUTUBE_API_KEY` and `ANTHROPIC_API_KEY` repository secrets; `astro sync` and `astro build` additionally open a remote Cloudflare proxy session using `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`, which is why those two are set job-wide rather than on the deploy step.
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 

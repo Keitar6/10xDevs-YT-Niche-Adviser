@@ -16,6 +16,38 @@ Requires a container runtime and a running local stack (`npx supabase start`).
 The `pgtap` extension does **not** need a migration — each file creates it
 inside its own transaction and rolls it back again.
 
+## In CI
+
+The same suite runs as the `db` job in `.github/workflows/ci.yml`, but only on
+events that touch `supabase/**` — the `changes` job diffs against the event's
+base and `db` carries a job-level `if:` on that output. Anything under this
+directory therefore costs a runner; anything outside it does not.
+
+CI starts the stack trimmed to the database container:
+
+```bash
+npx supabase start -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+```
+
+That is safe because pgTAP never leaves the database. `auth.uid()` is a SQL
+function in the db image, and the `avatars` bucket row comes from
+`20260913134159_add_channel_profile_avatar.sql`, not from storage-api at boot —
+which is why `04-avatars-bucket.test.sql` passes with no storage container
+running. Locally the trimmed start leaves exactly one container
+(`supabase_db_…`), takes 19s against warm images, and produces the same
+`Files=5, Tests=77` the full stack does.
+
+One measured caveat, because it is the opposite of what you would expect:
+**`-x` bounds which containers _run_, not which images get _pulled_.** A cold
+runner still pulled `postgres`, `realtime`, `storage-api`, `gotrue` and
+(at test time) `pg_prove` — five images, not one and not fourteen. The pulls
+dominate the job: 111s total, of which ~83s is `supabase start` and ~4s is the
+suite itself. Trimming that further means disabling services in `config.toml`,
+which would change local dev too; it has not been done.
+
+**If a file you add goes red under the trimmed start, put its container back on
+the list — do not weaken the assertion to fit the stack.**
+
 ## Files
 
 | File                                | Proves                                                                                                                                 |
