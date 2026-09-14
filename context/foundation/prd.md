@@ -48,6 +48,7 @@ konkurentów z nazwy/ID.
 ## Success Criteria
 
 ### Primary
+
 - Użytkownik loguje się, tworzy profil kanału (nisza, sub-nisza, 3–5 ID
   konkurentów) i po kliknięciu „Analyze" otrzymuje ranking **≥ 3** ocenionych
   okazji contentowych.
@@ -55,10 +56,12 @@ konkurentów z nazwy/ID.
 - Zapisane okazje są trwałe (baza) i widoczne wyłącznie dla właściciela profilu.
 
 ### Secondary
+
 - Jednozdaniowe uzasadnienie jest na tyle trafne, że użytkownik faktycznie na
   jego podstawie wybiera temat (jakość uzasadnienia, nie tylko jego obecność).
 
 ### Guardrails
+
 - Twarda izolacja danych per-user — żaden wyciek zapisanych okazji między kontami.
 - Klik „Analyze" nigdy nie kończy się pustką bez wyjaśnienia — zawsze ranking
   albo czytelny empty/error state.
@@ -75,6 +78,7 @@ konkurentów z nazwy/ID.
   wynikiem liczbowym (outlier_score) i jednozdaniowym uzasadnieniem
 
 #### Acceptance Criteria
+
 - Ranking jest posortowany malejąco po outlier_score.
 - Każda pozycja pokazuje temat, wynik liczbowy i jedno zdanie uzasadnienia.
 - Gdy dane konkurentów są niedostępne lub API zwraca błąd/limit, użytkownik
@@ -84,13 +88,16 @@ konkurentów z nazwy/ID.
 ## Functional Requirements
 
 ### Konto i dostęp
+
 - FR-001: Użytkownik może założyć konto i zalogować się (email+hasło oraz OAuth Google). Priority: must-have
   > Socrates: Kontrargument rozważony: „OAuth to nadmiar na start". Rozstrzygnięcie: zachowane — oba tory logowania w MVP (persona i tak jest w ekosystemie Google).
 - FR-002: Użytkownik widzi i zarządza wyłącznie własnymi danymi. Priority: must-have
   > Socrates: Kontrargument rozważony: „izolacja to oczywistość, nie FR". Rozstrzygnięcie: zachowane jako jawny FR obronny; dodatkowo wzmocnione guardrailem i NFR z testem.
 
 ### Profil kanału
+
 > Założenie MVP: jeden profil kanału na użytkownika. Wiele profili poza zakresem v1 (patrz Non-Goals).
+
 - FR-003: Użytkownik może utworzyć profil kanału (nisza, sub-nisza, 3–5 ID konkurentów). Priority: must-have
   > Socrates: Kontrargument rozważony: „limit 3–5 arbitralny". Rozstrzygnięcie: zachowane — 3–5 jako rekomendowany zakres kuratelowanej listy; to rdzeń insightu produktu.
 - FR-004: Użytkownik może edytować profil kanału. Priority: must-have
@@ -99,6 +106,7 @@ konkurentów z nazwy/ID.
   > Socrates: Kontrargument przyjęty: „zbędne w MVP przy jednym profilu". Rozstrzygnięcie: zdemotowane do nice-to-have; edycja (FR-004) pokrywa większość potrzeb.
 
 ### Analiza
+
 - FR-006: Użytkownik może uruchomić analizę („Analyze") dla profilu kanału. Priority: must-have
   > Socrates: Kontrargument rozważony: „koszt/quota API przy ręcznym przycisku". Rozstrzygnięcie: on-demand zachowane (najprostsze dla MVP); ryzyko limitów adresowane guardrailem graceful-degradation i NFR.
 - FR-007: System pobiera ostatnie długie filmy konkurentów z okna czasowego podczas analizy, wykluczając Shorts. Priority: must-have
@@ -106,10 +114,12 @@ konkurentów z nazwy/ID.
 - FR-008: System liczy outlier_score = wyświetlenia filmu / **mediana** wyświetleń kanału z okna czasowego, dla każdego filmu. Priority: must-have
   > Socrates: Kontrargument przyjęty: „średnia z całej historii zawyżona przez stare virale". Rozstrzygnięcie: wartość bazowa liczona z okna czasowego, nie z całej historii kanału.
   > Poprawka 2026-09-11 (decyzja użytkownika, PRD v1 draft): **średnia → mediana**. Uzasadnienie: średnia ma punkt załamania 0 — pojedynczy stary hit trwale zawyża własną wartość bazową kanału, więc metryka systematycznie nie wykrywa tego, po co istnieje. Każdy kurateli wart konkurent ma już takie outliery. Dowody: `context/changes/analyze-and-rank-opportunities/yt-library-research.md` (Architecture Insights §2, Leys et al.; zbieżność narzędzi analitycznych YouTube) oraz decyzja D2 w `research.md` tego samego change'a. Okno czasowe pozostaje bez zmian. Docelowo (poza MVP) liczone będą obie wartości — mediana jako score, średnia jako dodatkowa statystyka prezentowana użytkownikowi.
+  > Poprawka 2026-09-14 (`context/changes/testing-scoring-oracle`): doprecyzowanie „okna czasowego". FR-008 nazywał jedno okno; produkt ma **dwa ograniczenia o różnej semantyce**, a żadne z nich nie było filtrem per-film. Wartość bazowa kanału to **najnowsze długie filmy kanału, do stałej liczby `TARGET_LONGFORM_PER_CHANNEL` (20)**, ograniczone dodatkowo limitem świeżości `MAX_WINDOW_DAYS` (180 dni) odrzucającym pojedyncze przestarzałe wpisy. Dla każdego regularnie publikującego kanału wiążący jest limit liczbowy — 20 filmów wypada na długo przed 180 dniami — więc to on jest „oknem" w rozumieniu FR-008. Zgodne z badaniem S-02, które preferowało okna liczone filmami (20–50) nad datowymi. Reguła **mediany** pozostaje bez zmian.
 - FR-009: Użytkownik otrzymuje top 5 okazji (tematów) z wynikiem liczbowym i jednozdaniowym uzasadnieniem. Priority: must-have
   > Socrates: Brak kontrargumentu — ranking top 5 z uzasadnieniem to rdzeń dostarczanej wartości; stoi jak jest.
 
 ### Okazje contentowe
+
 - FR-010: Użytkownik może zapisać wybraną okazję contentową (temat, score, status). Priority: must-have
   > Socrates: Brak kontrargumentu — trwały zapis wybranych okazji to jedno z kryteriów sukcesu; stoi jak jest.
 - FR-011: Użytkownik może przeglądać zapisane okazje. Priority: must-have
@@ -118,7 +128,9 @@ konkurentów z nazwy/ID.
   > Socrates: Kontrargument przyjęty: „workflow statusów to zalążek plannera produkcji, wykluczonego z MVP". Rozstrzygnięcie: zdemotowane do nice-to-have; status ustawiany przy zapisie (FR-010) zostaje, pełna zmiana stanów poza rdzeniem v1.
 
 ### Prezentacja i tożsamość produktu
+
 > Dodane 2026-09-13 z obserwacji UX zgłoszonych podczas implementacji S-02 (`analyze-and-rank-opportunities`). Nie przeszły przez pełne shapingowe Socrates-review — zostały wprowadzone jako jawne nice-to-have, żeby slice'y roadmapy miały źródłowy anchor. Przy następnym `/10x-shape`/`/10x-prd` warto je przepuścić przez kontrargumenty.
+
 - FR-013: Strona główna komunikuje wartość produktu (kuratela konkurentów → ranking okazji contentowych) zamiast treści szablonu startera. Priority: nice-to-have
   > Stan zastany: `src/components/Welcome.astro` i domyślny `title` w `src/layouts/Layout.astro` nadal reklamują „10x Astro Starter" (Supabase auth, ESLint, „Astro 5") — niezalogowany odwiedzający nie dowiaduje się, czym jest produkt.
 - FR-014: Użytkownik loguje się, rejestruje i wylogowuje z dialogu w obrębie bieżącej strony, spójnie z dialogiem profilu kanału. Priority: nice-to-have
@@ -142,13 +154,21 @@ konkurentów z nazwy/ID.
 
 Aplikacja wskazuje twórcy najlepsze tematy na kolejny film, rankingując ostatnie
 długie filmy jego kuratelowanych konkurentów po outlier_score (wyświetlenia
-filmu względem mediany wyświetleń danego kanału z okna czasowego) i zwracając
-top 5 z jednozdaniowym uzasadnieniem.
+filmu względem mediany wyświetleń danego kanału z jego próby bazowej) i
+zwracając top 5 z jednozdaniowym uzasadnieniem.
+
+Próba bazowa kanału to jego **najnowsze długie filmy, do 20**
+(`TARGET_LONGFORM_PER_CHANNEL`), z odrzuceniem wpisów starszych niż 180 dni
+(`MAX_WINDOW_DAYS`) — patrz Poprawka 2026-09-14 przy FR-008. Dla regularnie
+publikującego kanału wiąże limit liczbowy.
 
 Wejścia (widziane przez użytkownika): wąska, ręcznie dobrana lista 3–5
-konkurentów (ID kanałów) w profilu oraz okno czasowe, z którego brane są filmy.
-Reguła pomija Shorts, liczy dla każdego kwalifikującego się filmu iloraz jego
-wyświetleń do mediany wyświetleń danego kanału w oknie, i porządkuje wyniki
+konkurentów (ID kanałów) w profilu. Okno czasowe **nie jest** wejściem
+użytkownika — nie istnieje ani pole formularza, ani parametr API, ani kolumna,
+która by je realizowała; klauzula została skreślona 2026-09-14 i zapisana jako
+kandydat poza-MVP w `context/foundation/roadmap.md` (S-07). Reguła pomija
+Shorts, liczy dla każdego kwalifikującego się filmu iloraz jego wyświetleń do
+mediany wyświetleń danego kanału w próbie bazowej, i porządkuje wyniki
 malejąco.
 
 Wyjście: ranking top 5 okazji contentowych, każda z liczbowym outlier_score i
@@ -167,6 +187,7 @@ chronioną bez sesji → przekierowanie do logowania.
 ## Non-Goals
 
 ### Funkcjonalne (z notatki)
+
 - Monitoring newsów z zewnętrznych źródeł — inny problem, poza rdzeniem analizy konkurencji.
 - Planer produkcji / kanban — MVP kończy się na wskazaniu i zapisie okazji.
 - Konfigurator workflow (edytor, thumbnail) — nie dotyczy analizy okazji.
@@ -176,6 +197,7 @@ chronioną bez sesji → przekierowanie do logowania.
 - Zaawansowany, uczony model „trafności niszy" — MVP używa prostego, jawnego współczynnika.
 
 ### Dodatkowe (wykryte podczas shapingu)
+
 - Wiele profili kanałów naraz — jeden profil na użytkownika w v1.
 - Automatyczne / cykliczne analizy — wyłącznie on-demand (chroni quota API, upraszcza v1).
 - Analiza Shorts — MVP obejmuje tylko długie filmy.

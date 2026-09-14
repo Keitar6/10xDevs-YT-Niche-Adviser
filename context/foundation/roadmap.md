@@ -22,7 +22,7 @@ milestone_status: open
 
 **M-2: Provable quality floor — from proven isolation to enforced gates** — Status: open
 
-- **Intent:** Turn the project's written quality claims into enforced ones. M-1 delivered the must-have loop; M-2 proves the parts of it that documents already promise but nothing verifies — starting with per-user isolation, which the PRD names as a requirement to be *verified by test*. Along the way it closes the one create/read/update/delete gap on the product's headline item.
+- **Intent:** Turn the project's written quality claims into enforced ones. M-1 delivered the must-have loop; M-2 proves the parts of it that documents already promise but nothing verifies — starting with per-user isolation, which the PRD names as a requirement to be _verified by test_. Along the way it closes the one create/read/update/delete gap on the product's headline item.
 - **Source materials:** `context/foundation/test-plan.md` (risk map §2, phased rollout §3) and `context/foundation/prd.md` (v2)
 - **Done when:** every F-NN and S-NN below is `done`.
 - **Scope anchors:**
@@ -43,26 +43,27 @@ Solo-twórca YouTube ręcznie przegląda kanały 3–5 kuratelowanych konkurent�
 
 > Gwiazda przewodnia (ang. north star) to najmniejszy, kompletny end-to-end fragment, którego udane dostarczenie dowodzi, że kluczowa hipoteza produktu działa — umieszczony tak wcześnie, jak pozwalają na to zależności, bo reszta ma znaczenie tylko wtedy, gdy ten fragment się sprawdzi. Ten gloss pojawia się tylko raz, przy pierwszym użyciu.
 
-Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience) first, on the rationale that it defends the stated top worry on the highest-churn value chain. M-2 deliberately leads with §3 Phase 2 instead, because `main_goal: speed` puts the strict must-have path first — the shortest chain of work that satisfies the requirements the PRD marks as required rather than optional, with everything else deferred behind it — and Phase 2 is the only phase that discharges a written requirement *and* closes an audit gap. The two documents therefore disagree on order by design — see F-03's Risk line.
+Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience) first, on the rationale that it defends the stated top worry on the highest-churn value chain. M-2 deliberately leads with §3 Phase 2 instead, because `main_goal: speed` puts the strict must-have path first — the shortest chain of work that satisfies the requirements the PRD marks as required rather than optional, with everything else deferred behind it — and Phase 2 is the only phase that discharges a written requirement _and_ closes an audit gap. The two documents therefore disagree on order by design — see F-03's Risk line.
 
 ## At a glance
 
-| ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
-|----|-----------|----------------------|----------------|----------|--------|
-| F-03 | `provable-user-isolation` | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | — | FR-002, MS-01, MS-03 | done |
-| F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | — | FR-006, FR-009, MS-04 | done |
-| F-05 | `testing-scoring-oracle` | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason | — | FR-007, FR-008, MS-05 | in-progress |
-| F-06 | `testing-quality-gates` | (foundation) the floor the earlier phases established is enforced on every change | F-03, F-04, F-05 | MS-06 | proposed |
-| S-06 | `opportunity-status-transitions` | user moves a saved opportunity through new → in production → done, and the change persists | F-03 | FR-012, MS-02 | proposed |
+| ID   | Change ID                             | Outcome (user can …)                                                                                                                                                   | Prerequisites    | PRD refs              | Status      |
+| ---- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------- | ----------- |
+| F-03 | `provable-user-isolation`             | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | —                | FR-002, MS-01, MS-03  | done        |
+| F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen                                  | —                | FR-006, FR-009, MS-04 | done        |
+| F-05 | `testing-scoring-oracle`              | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason                                                 | —                | FR-007, FR-008, MS-05 | in-progress |
+| F-06 | `testing-quality-gates`               | (foundation) the floor the earlier phases established is enforced on every change                                                                                      | F-03, F-04, F-05 | MS-06                 | proposed    |
+| S-06 | `opportunity-status-transitions`      | user moves a saved opportunity through new → in production → done, and the change persists                                                                             | F-03             | FR-012, MS-02         | proposed    |
+| S-07 | `user-selectable-analysis-window`     | user chooses the time window an analysis draws its videos from                                                                                                         | F-05             | FR-007, FR-008        | backlog     |
 
 ## Streams
 
 Navigation aid — groups items that share a Prerequisites chain. Canonical ordering still lives in the dependency graph below; this table is the proposed reading order across parallel tracks.
 
-| Stream | Theme | Chain | Note |
-|--------|-------|-------|------|
-| A | Access-control proof and the capability it guards | `F-03` → `S-06` | Leads M-2 under `main_goal: speed` — the only chain that closes both a written requirement and an audit gap. |
-| B | Pipeline resilience, scoring correctness, then gates | `F-04` → `F-05` → `F-06` | Registered here so the roadmap reflects the full rollout, but sequencing inside this chain stays owned by `test-plan.md` §3. |
+| Stream | Theme                                                | Chain                    | Note                                                                                                                         |
+| ------ | ---------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| A      | Access-control proof and the capability it guards    | `F-03` → `S-06`          | Leads M-2 under `main_goal: speed` — the only chain that closes both a written requirement and an audit gap.                 |
+| B      | Pipeline resilience, scoring correctness, then gates | `F-04` → `F-05` → `F-06` | Registered here so the roadmap reflects the full rollout, but sequencing inside this chain stays owned by `test-plan.md` §3. |
 
 ## Baseline
 
@@ -90,7 +91,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:**
   - ~~Where policy tests that need a container runtime actually run.~~ **Evidenced, not open.** Measured during this element: local costs nothing and works today — `npm run test:db` runs 77 assertions across five files in under 0.1s CPU against an already-warm stack, and is now a wired local gate documented in `CLAUDE.md`. CI costs a full ~13-image Supabase pull per cold runner, in a job that would need its own definition and secret surface rather than folding into the existing one. What remains is a placement decision, not a question of feasibility, and it sits with `test-plan.md` §3 Phase 4. Owner: user. Block: no.
-- **Risk:** Sequenced first, ahead of `test-plan.md` §3's own Phase 1, because `main_goal: speed` favours the strict must-have path and this is the only element discharging a written requirement. That divergence is deliberate and recorded here so a later `/10x-test-plan` run does not silently re-assert §3's order. The substantive risk is proving the wrong thing: `test-plan.md` §2 warns that "row-level security is enabled" is not the same as correct, since a policy can be missing for a single verb and roles carry different grants — and that a stranger's read returning nothing is not proof unless it is paired with a check that the targeted row is unchanged. **Addressed:** `00-harness.test.sql` proves impersonation resolves to two distinct non-null identities before any isolation claim depends on it; `03-policy-shape.test.sql` asserts policy *expressions* rather than counts; every denied write is paired with a row-intactness assertion read back as the owner.
+- **Risk:** Sequenced first, ahead of `test-plan.md` §3's own Phase 1, because `main_goal: speed` favours the strict must-have path and this is the only element discharging a written requirement. That divergence is deliberate and recorded here so a later `/10x-test-plan` run does not silently re-assert §3's order. The substantive risk is proving the wrong thing: `test-plan.md` §2 warns that "row-level security is enabled" is not the same as correct, since a policy can be missing for a single verb and roles carry different grants — and that a stranger's read returning nothing is not proof unless it is paired with a check that the targeted row is unchanged. **Addressed:** `00-harness.test.sql` proves impersonation resolves to two distinct non-null identities before any isolation claim depends on it; `03-policy-shape.test.sql` asserts policy _expressions_ rather than counts; every denied write is paired with a row-intactness assertion read back as the owner.
 - **Status:** done
 
 ### F-04: Analyze-pipeline boundary resilience
@@ -150,15 +151,31 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** The stored record already carries a status with a constraint on its allowed values, and an owner-scoped update policy already exists — but nothing in the product updates that record, so the update policy has no caller at all. This element is that caller, which is why F-03 is its Prerequisite: the guarantee is proven before the path exists rather than after. FR-012 is a nice-to-have that the PRD deliberately demoted as the seed of a production planner; it is un-parked here on a different argument — create/read/update/delete completeness on the headline record, surfaced by the MVP audit — and that reason is recorded in `## Parked` so the original decision is not silently overwritten.
 - **Status:** proposed
 
+### S-07: User-selectable analysis window
+
+- **Outcome:** User chooses the time window an analysis draws its videos from, instead of taking the fixed baseline the system picks.
+- **Change ID:** `user-selectable-analysis-window`
+- **PRD refs:** FR-007, FR-008 (Poprawka 2026-09-14)
+- **Prerequisites:** F-05
+- **Parallel with:** —
+- **Blockers:** —
+- **Origin:** `prd.md` listed the time window among the user's visible inputs — _"oraz okno czasowe, z którego brane są filmy"_ — but no form field, API parameter, type or column ever implemented it. F-05 struck the clause rather than leave the PRD describing a control that does not exist, and logged the intention here so it is deferred rather than lost. See `context/changes/testing-scoring-oracle/plan.md` Phase 4.
+- **Unknowns:**
+  - Whether the control should expose the count bound (`TARGET_LONGFORM_PER_CHANNEL`), the date bound (`MAX_WINDOW_DAYS`), or a single blended notion of "recent". Owner: user. Block: yes — it decides the shape of the input.
+  - Whether a per-run window belongs on the profile or on the Analyze action. Owner: user. Block: no.
+- **Risk:** A user-chosen window makes the denominator variable, which puts pressure on two guarantees F-05 established: the repeatability NFR now holds only _per window_, and `MIN_SAMPLE_SIZE` becomes reachable by user action rather than only by a thin channel — so the skip path stops being an edge case and becomes a normal outcome the UI must explain. Post-MVP: the PRD marks neither bound as user-facing must-have scope.
+- **Status:** backlog
+
 ## Backlog Handoff
 
-| Roadmap ID | Change ID | Suggested issue title | GitHub Issue | Ready for `/10x-plan` | Notes |
-|------------|-----------|------------------------|--------------|------------------------|-------|
-| F-03 | `provable-user-isolation` | Prove per-user isolation and closed routes by test | [#22](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/22) | yes | Run `/10x-plan provable-user-isolation`. North-star enabler; maps to `test-plan.md` §3 Phase 2. |
-| S-06 | `opportunity-status-transitions` | Opportunity status transitions (FR-012) | [#18](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/18) — reopened | no | Blocked on F-03 landing. Issue #18 was reopened in place and converted from a parked item; its original parking rationale is preserved in the body. |
-| F-04 | `testing-analyze-boundary-resilience` | Analyze pipeline degrades readably on provider failure | [#23](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/23) | yes | Sequencing owned by `test-plan.md` §3 Phase 1; its change folder is named there but absent on disk. |
-| F-05 | `testing-scoring-oracle` | Audit the scoring suite against the PRD formula | [#24](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/24) | yes | Sequencing owned by `test-plan.md` §3 Phase 3. |
-| F-06 | `testing-quality-gates` | Enforce the quality gates the rollout established | [#25](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/25) | no | Blocked on F-03, F-04, F-05. Sequencing owned by `test-plan.md` §3 Phase 4. |
+| Roadmap ID | Change ID                             | Suggested issue title                                  | GitHub Issue                                                                    | Ready for `/10x-plan` | Notes                                                                                                                                               |
+| ---------- | ------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-03       | `provable-user-isolation`             | Prove per-user isolation and closed routes by test     | [#22](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/22)            | yes                   | Run `/10x-plan provable-user-isolation`. North-star enabler; maps to `test-plan.md` §3 Phase 2.                                                     |
+| S-06       | `opportunity-status-transitions`      | Opportunity status transitions (FR-012)                | [#18](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/18) — reopened | no                    | Blocked on F-03 landing. Issue #18 was reopened in place and converted from a parked item; its original parking rationale is preserved in the body. |
+| F-04       | `testing-analyze-boundary-resilience` | Analyze pipeline degrades readably on provider failure | [#23](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/23)            | yes                   | Sequencing owned by `test-plan.md` §3 Phase 1; its change folder is named there but absent on disk.                                                 |
+| F-05       | `testing-scoring-oracle`              | Audit the scoring suite against the PRD formula        | [#24](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/24)            | yes                   | Sequencing owned by `test-plan.md` §3 Phase 3.                                                                                                      |
+| S-07       | `user-selectable-analysis-window`     | User-selectable analysis window                        | —                                                                               | no                    | Post-MVP. Opened by F-05, which struck the corresponding PRD clause; no issue mirrored yet.                                                         |
+| F-06       | `testing-quality-gates`               | Enforce the quality gates the rollout established      | [#25](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/25)            | no                    | Blocked on F-03, F-04, F-05. Sequencing owned by `test-plan.md` §3 Phase 4.                                                                         |
 
 All roadmap items are mirrored as GitHub Issues in `Keitar6/10xDevs-YT-Niche-Adviser` under milestone [`M-2: Provable quality floor`](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/milestone/2), and in Linear under the matching project milestone (`MAT-25`–`MAT-28`, plus `MAT-22` for S-06). Both mirrors — `context/foundation/tasks-github.md` and `context/foundation/tasks-linear.md` — were synced on 2026-09-13 when this milestone opened.
 
@@ -222,30 +239,30 @@ Wszystkie pozycje poniżej są też zamkniętymi issues (`state_reason: not_plan
 
 **S-02: Zalogowany użytkownik z profilem uruchamia analizę i widzi ranking okazji** — dowodzi wprost głównej hipotezy produktu (kuratela + outlier scoring bije ogólny algorytm) i jest wprost Primary Success Criterion z PRD.
 
-> Gwiazda przewodnia (ang. north star) to najmniejszy, kompletny end-to-end fragment, którego udane dostarczenie dowodzi, że kluczowa hipoteza produktu działa — umieszczony tak wcześnie, jak pozwalają na to zależności, bo reszta ma znaczenie tylko wtedy, gdy ten fragment się sprawdzi. *(Kopia historyczna — żywa definicja stoi przy `## North star` M-2 powyżej.)*
+> Gwiazda przewodnia (ang. north star) to najmniejszy, kompletny end-to-end fragment, którego udane dostarczenie dowodzi, że kluczowa hipoteza produktu działa — umieszczony tak wcześnie, jak pozwalają na to zależności, bo reszta ma znaczenie tylko wtedy, gdy ten fragment się sprawdzi. _(Kopia historyczna — żywa definicja stoi przy `## North star` M-2 powyżej.)_
 
 #### At a glance
 
-| ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
-|----|-----------|----------------------|----------------|----------|--------|
-| F-01 | `google-oauth-login` | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła | — | FR-001 | done |
-| F-02 | `channel-profile-data-model` | (foundation) tabela `channel_profiles` z RLS per-owner | — | FR-002, FR-003 | done |
-| S-01 | `channel-profile-crud` | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów) | F-02 | FR-003, FR-004, US-01 | done |
-| S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem | S-01 | FR-006, FR-007, FR-008, FR-009, US-01 | done |
-| S-03 | `save-and-view-opportunities` | user zapisuje okazję z rankingu i przegląda zapisane okazje | S-02 | FR-010, FR-011 | done |
-| S-04 | `landing-and-auth-shell` | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03) | FR-013, FR-014 | done |
-| S-05 | `channel-profile-avatar` | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy | S-01 (po S-03) | FR-015 | done |
+| ID   | Change ID                        | Outcome (user can …)                                                                                                | Prerequisites  | PRD refs                              | Status |
+| ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------- | ------ |
+| F-01 | `google-oauth-login`             | (foundation) domknięcie must-have logowania — Google OAuth obok email+hasła                                         | —              | FR-001                                | done   |
+| F-02 | `channel-profile-data-model`     | (foundation) tabela `channel_profiles` z RLS per-owner                                                              | —              | FR-002, FR-003                        | done   |
+| S-01 | `channel-profile-crud`           | user tworzy i edytuje profil kanału (nisza, sub-nisza, 3–5 ID konkurentów)                                          | F-02           | FR-003, FR-004, US-01                 | done   |
+| S-02 | `analyze-and-rank-opportunities` | user klika „Analyze" i widzi ranking ≥3 okazji z outlier_score i uzasadnieniem                                      | S-01           | FR-006, FR-007, FR-008, FR-009, US-01 | done   |
+| S-03 | `save-and-view-opportunities`    | user zapisuje okazję z rankingu i przegląda zapisane okazje                                                         | S-02           | FR-010, FR-011                        | done   |
+| S-04 | `landing-and-auth-shell`         | odwiedzający rozumie ze strony głównej, czym jest produkt, a logowanie/rejestracja/wylogowanie dzieje się w dialogu | — (po S-03)    | FR-013, FR-014                        | done   |
+| S-05 | `channel-profile-avatar`         | user wgrywa awatar profilu kanału albo generuje go z niszy i sub-niszy                                              | S-01 (po S-03) | FR-015                                | done   |
 
 #### Streams
 
 Nawigacja pomocnicza — grupuje elementy dzielące ten sam łańcuch Prerequisites. Kanoniczna kolejność wciąż wynika z grafu zależności poniżej; ta tabela to proponowana kolejność czytania dla równoległych ścieżek.
 
-| Stream | Theme | Chain | Note |
-|--------|-------|-------|------|
-| A | Domknięcie must-have logowania | `F-01` | Niezależny od głównej pętli danych; można wykonać równolegle z resztą — domyka FR-001 przed końcem milestone'a. |
-| B | Główna pętla: profil → analiza → zapis | `F-02` → `S-01` → `S-02` → `S-03` | Ścieżka must-have prowadząca do gwiazdy przewodniej (S-02) i pełnej pętli zapisu (S-03); zgodna z `main_goal: speed`. |
-| C | Powłoka produktu i logowanie | `S-04` | Czysto prezentacyjny — zero zależności technicznych, ale świadomie sekwencjonowany po S-03, żeby polerka UX nie wyprzedziła ścieżki must-have. |
-| D | Tożsamość wizualna profilu | `S-05` | Jedyny rozszerzony element dotykający warstwy danych i sekretów; zależy od S-01 (profil), nie od S-04 — może iść równolegle do C. |
+| Stream | Theme                                  | Chain                             | Note                                                                                                                                           |
+| ------ | -------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| A      | Domknięcie must-have logowania         | `F-01`                            | Niezależny od głównej pętli danych; można wykonać równolegle z resztą — domyka FR-001 przed końcem milestone'a.                                |
+| B      | Główna pętla: profil → analiza → zapis | `F-02` → `S-01` → `S-02` → `S-03` | Ścieżka must-have prowadząca do gwiazdy przewodniej (S-02) i pełnej pętli zapisu (S-03); zgodna z `main_goal: speed`.                          |
+| C      | Powłoka produktu i logowanie           | `S-04`                            | Czysto prezentacyjny — zero zależności technicznych, ale świadomie sekwencjonowany po S-03, żeby polerka UX nie wyprzedziła ścieżki must-have. |
+| D      | Tożsamość wizualna profilu             | `S-05`                            | Jedyny rozszerzony element dotykający warstwy danych i sekretów; zależy od S-01 (profil), nie od S-04 — może iść równolegle do C.              |
 
 #### Baseline
 
@@ -372,15 +389,15 @@ Poniższe Foundations zakładają ten stan i NIE re-scaffoldują tego, co już j
 
 #### Backlog Handoff
 
-| Roadmap ID | Change ID | Suggested issue title | GitHub Issue | Ready for `/10x-plan` | Notes |
-|------------|-----------|------------------------|--------------|------------------------|-------|
-| F-01 | `google-oauth-login` | Add Google OAuth login alongside email+password | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1) | yes | Run `/10x-plan google-oauth-login` |
-| F-02 | `channel-profile-data-model` | Create `channel_profiles` table with per-owner RLS | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2) | — | done (tabela + RLS wdrożone) |
-| S-01 | `channel-profile-crud` | Channel profile create/edit UI | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3) | — | done (impl-review 2026-09-12, F1–F8 zamknięte) |
-| S-02 | `analyze-and-rank-opportunities` | Analyze competitors → ranked content opportunities | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4) | yes | Run `/10x-plan analyze-and-rank-opportunities`; north star — research (internal + external) gotowy |
-| S-03 | `save-and-view-opportunities` | Save and browse content opportunities | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5) | — | implemented, impl-reviewed 2026-09-13 (`context/changes/save-and-view-opportunities/reviews/impl-review.md`); pending `/10x-archive` |
-| S-04 | `landing-and-auth-shell` | Product landing page + auth in a dialog | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) | no | Scope added 2026-09-13; sequenced after S-03 — no technical prerequisites |
-| S-05 | `channel-profile-avatar` | Channel profile avatar — upload or AI-generated | [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20) | no | Scope added 2026-09-13; sequenced after S-03; image-gen provider still to be chosen |
+| Roadmap ID | Change ID                        | Suggested issue title                              | GitHub Issue                                                         | Ready for `/10x-plan` | Notes                                                                                                                                |
+| ---------- | -------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| F-01       | `google-oauth-login`             | Add Google OAuth login alongside email+password    | [#1](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/1)   | yes                   | Run `/10x-plan google-oauth-login`                                                                                                   |
+| F-02       | `channel-profile-data-model`     | Create `channel_profiles` table with per-owner RLS | [#2](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/2)   | —                     | done (tabela + RLS wdrożone)                                                                                                         |
+| S-01       | `channel-profile-crud`           | Channel profile create/edit UI                     | [#3](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/3)   | —                     | done (impl-review 2026-09-12, F1–F8 zamknięte)                                                                                       |
+| S-02       | `analyze-and-rank-opportunities` | Analyze competitors → ranked content opportunities | [#4](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/4)   | yes                   | Run `/10x-plan analyze-and-rank-opportunities`; north star — research (internal + external) gotowy                                   |
+| S-03       | `save-and-view-opportunities`    | Save and browse content opportunities              | [#5](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/5)   | —                     | implemented, impl-reviewed 2026-09-13 (`context/changes/save-and-view-opportunities/reviews/impl-review.md`); pending `/10x-archive` |
+| S-04       | `landing-and-auth-shell`         | Product landing page + auth in a dialog            | [#19](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/19) | no                    | Scope added 2026-09-13; sequenced after S-03 — no technical prerequisites                                                            |
+| S-05       | `channel-profile-avatar`         | Channel profile avatar — upload or AI-generated    | [#20](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/issues/20) | no                    | Scope added 2026-09-13; sequenced after S-03; image-gen provider still to be chosen                                                  |
 
 All roadmap items are tracked as GitHub Issues in `Keitar6/10xDevs-YT-Niche-Adviser`, milestone [`M-1: MVP core loop`](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/milestone/1). Parked items and the open roadmap question are also mirrored as issues (see `## Parked` and `## Open Roadmap Questions` above) — this table only listed active M-1 work.
 

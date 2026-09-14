@@ -4,7 +4,7 @@
 
 Test-plan §3 Phase 3 (roadmap F-05) exists to prove two things: that
 `outlier_score` means what the PRD says it means, and that the assertions
-already guarding it are *capable of failing for the right reason*.
+already guarding it are _capable of failing for the right reason_.
 
 `/10x-research` found the second claim mostly true and the first claim false.
 The suite is hand-derived with no snapshots and 25 of 32 behaviour-changing
@@ -25,7 +25,7 @@ product that exists.
 
 **The pure module is well-factored and under-asserted.** `scoring.ts` has
 exactly one commit in its history and zero diff since — nothing was silently
-tuned. Every rule the PRD names lives there *except* the two that decide the
+tuned. Every rule the PRD names lives there _except_ the two that decide the
 denominator. 51 `expect(…)` calls across 20 tests: 33 derived, 11 structural,
 3 self-referential, 1 tautological, 3 derived-but-non-discriminating.
 
@@ -90,7 +90,7 @@ Phase 1 and Phase 3 reproduces the recorded ledger.
 ### Key Discoveries:
 
 - `scoring.test.ts:48,52` — `median([1,2,3]) === 2` and `median([1,2,3,4]) ===
-  2.5` are **also the mean** of those sets. `expect(median([1,2,3,100])).toBe(2.5)`
+2.5` are **also the mean** of those sets. `expect(median([1,2,3,100])).toBe(2.5)`
   (mean 26.5) kills mutations M1, M2 and M4 in a single assertion.
 - `scoring.test.ts:269` — `expect(rankOpportunities(r,5)).toEqual(rankOpportunities(r,5))`
   cannot fail short of introducing `Math.random()`. Line 274 (`reversed` vs
@@ -116,7 +116,7 @@ Phase 1 and Phase 3 reproduces the recorded ledger.
 - **No change to `SHORTS_MAX_SECONDS`.** 300 is pinned as-is and its known
   exposure (a channel whose normal format is 3–5 minutes has its whole
   catalogue classified as Shorts) is recorded, not fixed.
-- **No change to `MIN_SAMPLE_SIZE`'s value.** Fixtures are *sized* from the
+- **No change to `MIN_SAMPLE_SIZE`'s value.** Fixtures are _sized_ from the
   constant so the number stays tunable.
 - **No mutation-testing dependency.** No Stryker, no new devDependency; the
   ledger and the by-hand recipe are the deliverable.
@@ -190,7 +190,7 @@ closed. No production file is touched in this phase.
 
 **Intent**: Remove the assertions that cannot discriminate, and replace the
 degenerate median fixtures with ones whose expected value is the median and
-*not* the mean — so the średnia→mediana correction is defended by the tests
+_not_ the mean — so the średnia→mediana correction is defended by the tests
 named for it rather than by an unrelated sort fixture.
 
 **Contract**: Line 52's even-count case becomes `expect(median([1, 2, 3,
@@ -227,7 +227,7 @@ reach but no fixture does.
 **Contract**: New cases for (a) an even-count sample through `scoreChannel`,
 not just through `median` directly — all five existing `scoreChannel` fixtures
 use exactly 5 videos, so `median`'s even branch is unreached from the real path
-(M34); (b) a video *below* its channel median, giving a score under 1 — every
+(M34); (b) a video _below_ its channel median, giving a score under 1 — every
 existing scored fixture yields 1, 3, 9 or 4/3 (M35); (c) a channel with exactly
 one rankable video among a valid sample (M38); (d) an unparseable `published_at`
 withheld from the ranking while remaining in the baseline, the behaviour
@@ -391,7 +391,7 @@ opposite.
 just-fixed defects, with expected values derived by hand.
 
 **Contract**: Cases for the staleness boundary (an item exactly at the cutoff,
-one either side); an out-of-window item *in the middle* of the list, with items
+one either side); an out-of-window item _in the middle_ of the list, with items
 behind it surviving; an absent and an unparseable timestamp, both excluded; a
 video id repeated across the page boundary appearing once; the 20-cap keeping
 the newest 20 in playlist order; Shorts and ids missing from the map skipping
@@ -604,10 +604,10 @@ constraint has always forbidden it.
 
 #### Automated
 
-- [x] 3.1 Unit tests pass: `npm test`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Build succeeds: `npm run build`
-- [x] 3.4 Wiring test observes two `playlistItems` calls across a paged chain
+- [x] 3.1 Unit tests pass: `npm test` — 9a5d8ca
+- [x] 3.2 Linting passes: `npm run lint` — 9a5d8ca
+- [x] 3.3 Build succeeds: `npm run build` — 9a5d8ca
+- [x] 3.4 Wiring test observes two `playlistItems` calls across a paged chain — 9a5d8ca
 
 #### Manual
 
@@ -618,9 +618,9 @@ constraint has always forbidden it.
 
 #### Automated
 
-- [ ] 4.1 Prettier passes: `npm run format`
-- [ ] 4.2 `test-plan.md` §6.5 no longer reads `TBD`
-- [ ] 4.3 `prd.md` no longer contains the struck window clause
+- [x] 4.1 Prettier passes: `npm run format`
+- [x] 4.2 `test-plan.md` §6.5 no longer reads `TBD`
+- [x] 4.3 `prd.md` no longer contains the struck window clause
 
 #### Manual
 
