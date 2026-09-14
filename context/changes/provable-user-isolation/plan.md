@@ -675,7 +675,7 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Manual
 
-- [x] 2.4 A `using (true)` policy makes the suite go red; restored via `db reset` — bbdad66 (performed during impl-review 2026-09-14: `alter policy channel_profiles_select_own … using (true)` → `01` fails 1/16 and `03` fails 1/12; restored via `npx supabase db reset`, suite back to 70/70)
+- [x] 2.4 A `using (true)` policy makes the suite go red; restored via `db reset` (performed at impl-review; evidence in change.md) — bbdad66
 
 ### Phase 3: Avatar bucket isolation
 
@@ -687,7 +687,7 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Manual
 
-- [x] 3.4 Suite runs clean after `npx supabase db reset` — 998f574 (performed during impl-review 2026-09-14: reset ran, database confirmed genuinely empty — 0 users / 0 profiles / 0 opportunities / 0 storage objects — and the suite passed 70/70 against it)
+- [x] 3.4 Suite runs clean after `npx supabase db reset` (performed at impl-review; evidence in change.md) — 998f574
 
 ### Phase 4: Route-layer guards and the no-bypass scan
 
@@ -713,5 +713,5 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Manual
 
-- [x] 5.4 §6.3 is followable standalone for a hypothetical new table — accepted by the user
-- [x] 5.5 F-03 reads as discharged and its Unknowns entry reads as evidenced — accepted by the user
+- [x] 5.4 §6.3 is followable standalone for a hypothetical new table (user-accepted) — 630d2b3
+- [x] 5.5 F-03 reads as discharged and its Unknowns entry reads as evidenced (user-accepted) — 630d2b3
