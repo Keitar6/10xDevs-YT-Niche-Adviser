@@ -82,7 +82,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
 | 1 | Analyze-pipeline boundary resilience | Prove a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | #1, #2 | integration | complete | `testing-analyze-boundary-resilience` |
-| 2 | Provable per-user isolation | Discharge the PRD requirement that isolation be verifiable by test, across both tables and the storage bucket, and close the unauthenticated-route surface | #3, #4 | database policy tests + route integration | not started | — |
+| 2 | Provable per-user isolation | Discharge the PRD requirement that isolation be verifiable by test, across both tables and the storage bucket, and close the unauthenticated-route surface | #3, #4 | database policy tests + route integration | complete | `provable-user-isolation` |
 | 3 | Scoring oracle and spec conformance | Prove the number means what the PRD says it means, and that the existing suite is able to fail for the right reason | #5 | unit | not started | — |
 | 4 | Quality-gates wiring | Lock the floor the first three phases established | cross-cutting | gates | not started | — |
 
@@ -100,9 +100,9 @@ date so future readers can see which lines need re-verification.
 
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
-| unit + integration | Vitest | 5.0 | Configured. `include` in `vitest.config.ts` is scoped to `src/lib/services/**/*.test.ts` only, and §3 Phase 1 deliberately left it that way — the boundary suites and the extracted merge helper were placed in that directory so no config change was needed. Eight test files now exist, all in that one directory |
+| unit + integration | Vitest | 5.0 | Configured. `include` is `src/**/*.test.{ts,tsx}` — one glob over the whole tree, deliberately not an allowlist of the directories that happen to hold tests (§3 Phase 2 widened it from `src/lib/services/**` and flattened it). Eight test files: five service tests plus the route, middleware and source-scan files from §6.4 |
 | network / boundary faking | Vitest built-in (`vi.stubGlobal`) | 5.0 | Settled by §3 Phase 1 under the cost × signal rule: no mocking library installed. The pattern — a real `Response` built fresh per call, `vi.unstubAllGlobals()` in `afterEach` — is written up in §6.2 |
-| database / policy tests | Supabase CLI (pgTAP, `supabase test db`) | 2.116 | CLI is already a devDependency; needs Docker locally. No tests written yet — see §3 Phase 2 |
+| database / policy tests | Supabase CLI (pgTAP, `supabase test db`) | 2.116 | CLI is already a devDependency; needs Docker locally. Five files under `supabase/tests/`, 77 assertions — the harness/oracle guard plus per-verb, per-role isolation across `channel_profiles`, `content_opportunities` and the `avatars` bucket, and the policy-shape file. Wired as a local gate (§5); pattern in §6.3 |
 | typecheck | `@astrojs/check` | 0.9.8 | Installed, but there is no script for it and CI never runs one — see §3 Phase 4 |
 | lint | ESLint, type-checked rules | 9.29 | Wired in three places: pre-commit via husky and lint-staged, and in CI |
 | Astro component rendering | Container API (experimental) | Astro 6.3 | Available but not planned. Astro 6 removed rendering of Astro components in client test environments — such tests must run in a `node` environment. §7 rules out UI look-and-feel testing, so this stays unused |
@@ -126,7 +126,7 @@ phase lands; before that, the gate is planned.
 | lint | local pre-commit + CI | required (wired) | syntactic and type-rule drift |
 | typecheck | CI | required after §3 Phase 4 | type drift across the SSR and island boundary |
 | unit + integration | local + CI | required (wired) | logic regressions, and from §3 Phase 1 onward boundary-failure regressions |
-| database policy tests | local; CI placement decided in §3 Phase 4 | required after §3 Phase 2 | cross-account data exposure |
+| database policy tests | **local, wired** (`npm run test:db`); CI placement still decided in §3 Phase 4 | required (wired) — run before any change under `supabase/migrations/` lands | cross-account data exposure |
 | build | CI | required (wired) | runtime build breakage before deploy |
 | e2e on critical flows | not wired | deliberately deferred — see §7 | broken critical user paths end to end |
 | pre-prod smoke | between merge and production | optional | runtime-only failures that local development on Node cannot reproduce, flagged as a real divergence in `context/foundation/infrastructure.md` |
@@ -198,14 +198,105 @@ nothing threw would pass even if the scores had been dropped on the way out.
 
 ### 6.3 Adding a per-owner isolation test for a table or bucket
 
-- TBD — see §3 Phase 2, for the pattern that proves a stranger's read
-  returns nothing *and* their denied write left the owner's row intact.
+- **Location**: `supabase/tests/`, one file per surface, numbered so the
+  harness runs first: `NN-<surface>.test.sql`.
+- **Reference test**: `supabase/tests/01-channel-profiles.test.sql`.
+  Conventions live in `supabase/tests/README.md`.
+- **Run locally**: `npm run test:db`. Needs Docker and `npx supabase start`.
+
+The shape, in order:
+
+1. **Wrap the file** in `begin;` / `rollback;` with
+   `create extension if not exists pgtap;` and `select plan(N);`. Nothing
+   persists, so no file depends on `supabase db reset` and files are
+   order-independent.
+2. **Create fixtures as `postgres`**, before the first `set local role`.
+   Two fixed users: A `aaaaaaaa-0000-0000-0000-000000000001` (the owner) and
+   B `bbbbbbbb-0000-0000-0000-000000000002` (the stranger).
+3. **Impersonate** with `set local role authenticated;` plus
+   `set local request.jwt.claim.sub = '<uuid>';`. Both are transaction-scoped,
+   so switching actor is just re-issuing the claim.
+4. **Cover four verbs × three roles** — owner, stranger, `anon`. `anon` needs
+   the claim *cleared* (`set local request.jwt.claim.sub = '';`) as well as the
+   role switched: `auth.uid()` reads the claim, not the role.
+5. **Pair every denied write with a row-intactness assertion.** A denied
+   `UPDATE`/`DELETE` reports `UPDATE 0` silently, so "zero rows affected" and
+   "quietly rewritten" are indistinguishable until you read the row back as its
+   owner. This step is the one naive suites omit and the reason this pattern
+   exists.
+6. **Route denied `INSERT`s through `throws_ok`.** They raise `42501` and
+   **abort the transaction**, taking every later assertion in the file with
+   them; `throws_ok`'s internal exception handler acts as a savepoint.
+7. **Close with a positive control: the owner CAN write.** As A, `update` and
+   then `delete` A's own rows and assert the affected count is what you seeded.
+   Put the `delete` last — it removes the rows the rest of the file reads.
+
+Four traps, each of which produces a green suite that proves nothing:
+
+- **The oracle.** If `auth.uid()` is NULL for both actors, every "the stranger
+  sees nothing" assertion passes vacuously. `00-harness.test.sql` exists solely
+  to rule that out, and it is the precondition for every other file.
+- **Assert expressions, never policy counts.** Four `using (true)` policies
+  satisfy "this table has four policies". `03-policy-shape.test.sql` asserts the
+  `qual` / `with_check` text and the granted roles instead.
+- **Storage ownership is the path.** Bucket policies key on
+  `(storage.foldername(name))[1]`, so a fixture object must be written at
+  `<user_id>/<filename>`. One at the bucket root belongs to nobody and makes
+  every assertion about it vacuous — see `04-avatars-bucket.test.sql`, which
+  asserts its own fixture paths for exactly this reason.
+- **A denial proves nothing without step 7.** "The stranger's UPDATE affected
+  zero rows" reads identically whether the policy denies *the stranger* or
+  denies *everybody* — drop the owner's UPDATE and DELETE policies outright and
+  a suite without the positive control stays fully green. This was found by
+  mutation testing during the `provable-user-isolation` impl-review, after two
+  of the three files had shipped without it.
+
+Before trusting a new file, **break the policy it covers**
+(`alter policy … using (true)`) and confirm the file goes red. Then break it the
+other way — drop the owner's own policy — and confirm it goes red for that too.
+Only the second one catches a suite that proves denial without proving access.
 
 ### 6.4 Adding a test for a new API route
 
-- TBD — see §3 Phase 2, for the pattern that proves a route rejects a
-  caller with no session and takes ownership from the session rather than
-  from the request.
+- **Location**: `src/pages/api/routes.test.ts` — one table for all routes, not
+  one file per route. Exhaustiveness is the deliverable: §2 names "testing one
+  representative route and assuming the rest follow" as the anti-pattern here,
+  and there is no shared wrapper to test once.
+- **Run locally**: `npm test`. No database, no Docker.
+
+To cover a new data-touching route, **add a row to `DATA_ROUTES`**. The 401
+case, the empty-body-shape check and the no-client-constructed check all come
+for free from the table. Forgetting the row is not silent: the file walks
+`src/pages/api/` and asserts the table matches the verbs actually exported on
+disk, so a new route fails the suite by name until it is listed. The `ownerField` column is `null` only when the handler
+reads no owner-shaped input at all, and the reason belongs in the comment above
+the table.
+
+Mechanics worth knowing before writing one:
+
+- **Virtual modules must be aliased.** `astro:env/server`, `cloudflare:workers`
+  and `astro:middleware` exist only inside an Astro or workerd build, so route
+  handlers are unimportable without the stubs in `src/test/stubs/`, wired
+  through `resolve.alias` in `vitest.config.ts`. The `astro:env/server` stub's
+  exports mirror the `env.schema` block in `astro.config.mjs` **by hand** —
+  adding a secret there and forgetting the stub is a silent import-time failure.
+  `getViteConfig()` was rejected deliberately: it would trade an instant run for
+  a full Astro build to resolve three modules the tests stub anyway.
+- **Ownership from the session.** For any handler that reads a JSON body, invoke
+  it with a session for A and a body carrying a planted `user_id` for a
+  stranger, with `@/lib/supabase` module-mocked to a recording fake, and assert
+  the row handed to `insert` / `upsert` carries A's id.
+- **Assert on the call, not only the behaviour, where the two differ.**
+  `src/middleware.test.ts` asserts that `getUser()` was called and
+  `getSession()` was not. Both produce an identical user object; only one
+  verifies the token. No behavioural assertion can tell them apart.
+- **Some invariants are absences.** `src/lib/no-privileged-client.test.ts` is a
+  source scan, not a behaviour test, because a service-role client breaks
+  nothing observable — it just silently removes the guarantee every §6.3 test
+  describes.
+
+Before trusting a new row, **delete that handler's `if (!context.locals.user)`
+guard** and confirm `npm test` goes red for that handler.
 
 ### 6.5 Changing or extending the scoring rule
 
@@ -283,6 +374,20 @@ contributors should respect these unless the underlying assumption changes.
   radius is the user's own avatar. Re-evaluate if the avatar is promoted to
   must-have or the storage bucket becomes shared between users. (Source:
   Phase 3 challenger pass.)
+- **The avatar signed-URL read path** — `createSignedUrl` is a distinct
+  authorization mechanism from the `avatars_select_own` policy: a DB-level test
+  cannot reach it, and covering it at the route layer would mean asserting on
+  the argument passed to a stubbed storage client, which pins the call rather
+  than the guarantee. Consistent with the avatar exclusion above on the same
+  blast-radius grounds. Re-evaluate if signed URLs are ever minted for an object
+  the caller does not own. (Source: `provable-user-isolation` planning, scoped
+  out explicitly rather than discovered.)
+- **`service_role` and table-owner RLS bypass** — `service_role` bypasses RLS by
+  design, so asserting it is asserting a platform truth that cannot fail for a
+  reason anyone cares about. The invariant that *does* matter — no service-role
+  client exists in this codebase — is pinned by
+  `src/lib/no-privileged-client.test.ts` instead. (Source:
+  `provable-user-isolation` planning.)
 - **Analyze latency as a test subject** — the measured p95 of roughly 11.2s
   is already tracked as a parked roadmap item with a diagnosed lever. This
   belongs to observability, not to the suite. (Source:
