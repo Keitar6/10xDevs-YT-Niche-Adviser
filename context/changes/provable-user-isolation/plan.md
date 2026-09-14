@@ -693,23 +693,23 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [x] 4.1 `npm test` exits 0 including the new route, middleware and scan files
-- [x] 4.2 The route table covers exactly seven handler entries
-- [x] 4.3 `npm run lint` passes
-- [x] 4.4 `npm run build` succeeds
+- [x] 4.1 `npm test` exits 0 including the new route, middleware and scan files — d3f9eb2
+- [x] 4.2 The route table covers exactly seven handler entries — d3f9eb2
+- [x] 4.3 `npm run lint` passes — d3f9eb2
+- [x] 4.4 `npm run build` succeeds — d3f9eb2
 
 #### Manual
 
-- [x] 4.5 Removing one handler's 401 guard makes only that handler's case red
-- [x] 4.6 A scratch service-role client makes the scan test red
+- [x] 4.5 Removing one handler's 401 guard makes only that handler's case red — d3f9eb2
+- [x] 4.6 A scratch service-role client makes the scan test red — d3f9eb2
 
 ### Phase 5: Gate wiring and cookbook
 
 #### Automated
 
-- [ ] 5.1 `npm test` and `npm run test:db` both exit 0
-- [ ] 5.2 `npm run lint` and `npm run build` pass
-- [ ] 5.3 No `TBD — see §3 Phase 2` string remains in `context/foundation/test-plan.md`
+- [x] 5.1 `npm test` and `npm run test:db` both exit 0
+- [x] 5.2 `npm run lint` and `npm run build` pass
+- [x] 5.3 No `TBD — see §3 Phase 2` string remains in `context/foundation/test-plan.md`
 
 #### Manual
 

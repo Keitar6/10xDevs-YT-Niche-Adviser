@@ -10,6 +10,8 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm test` — Vitest (services, route guards, middleware, source scans); no database needed
+- `npm run test:db` — pgTAP policy suite under `supabase/tests/`; needs Docker + `npx supabase start`
 
 Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 
@@ -21,7 +23,7 @@ Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` 
 
 Full server-side rendering (`output: "server"` in astro.config.mjs). All pages and API routes are server-rendered by default, so `export const prerender = false` is redundant and no route in this project declares it.
 
-**API route auth:** `PROTECTED_ROUTES` in `src/middleware.ts` only redirects *page* requests; it does not cover `/api/*`. Every API route that touches user data must check `context.locals.user` itself and return a 401 when absent (see `src/pages/api/profile.ts`).
+**API route auth:** `PROTECTED_ROUTES` in `src/middleware.ts` only redirects _page_ requests; it does not cover `/api/*`. Every API route that touches user data must check `context.locals.user` itself and return a 401 when absent (see `src/pages/api/profile.ts`).
 
 ### Auth flow
 
@@ -37,10 +39,32 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 - **Tailwind class merging**: use the `cn()` helper from `@/lib/utils` (clsx + tailwind-merge) for conditional/merged class names. Do not concatenate class strings manually.
 - **shadcn/ui**: components live in `src/components/ui/`, "new-york" style variant. Install new ones with `npx shadcn@latest add [name]`.
 - **API routes**: validate input with zod.
-- **Supabase migrations**: not currently used — this project relies solely on Supabase Auth's built-in `auth.users` table, no custom tables/migrations exist yet. If/when custom tables are added, use `supabase/migrations/` with naming format `YYYYMMDDHHmmss_short_description.sql` and always enable RLS with granular per-operation, per-role policies.
+- **Supabase migrations**: live in `supabase/migrations/`, named `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS with granular per-operation, per-role policies — four policies (`select` / `insert` / `update` / `delete`) scoped `to authenticated` with an `auth.uid()` ownership test, never one `for all`. Every `update` policy needs **both** `using` and `with check`; a `using`-only one lets an owner reassign their row to somebody else.
 - **React**: no Next.js directives ("use client" etc.). Extract hooks to `src/components/hooks/`.
 - **Services/helpers** go in `src/lib/` (or `src/lib/services/` for extracted business logic).
 - **Shared types** (entities, DTOs) go in `src/types.ts`.
+
+### Access control is enforced by the database, and proved by test
+
+There is **no service-role client anywhere in `src/`**, and there must not be.
+Every Supabase client comes from the single cookie-scoped anon-key factory at
+`src/lib/supabase.ts`, so RLS is not defence-in-depth here — it is the only
+thing standing between two users. The `.eq("user_id", …)` filters in the routes
+exist to make intent legible, not to enforce. A service-role client would demote
+RLS from guarantee to decoration in one line, which is why
+`src/lib/no-privileged-client.test.ts` fails the build if one appears.
+
+**`npm run test:db` is a required local gate before any change under
+`supabase/migrations/` lands.** It runs the pgTAP suite in `supabase/tests/`,
+which proves per-verb, per-role isolation across `channel_profiles`,
+`content_opportunities` and the `avatars` bucket. It needs Docker and a running
+local stack (`npx supabase start`); see `supabase/tests/README.md` for the
+fixture and impersonation conventions before adding a file.
+
+It is a local gate rather than a CI one **for now**: a cold CI runner pays a
+full ~13-image Supabase pull with no layer cache, so it belongs in its own job
+rather than folded into the existing one. That placement decision is owned by
+`context/foundation/test-plan.md` §3 Phase 4, not settled here.
 
 ### Environment
 
