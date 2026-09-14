@@ -1,9 +1,32 @@
+import { YOUTUBE_API_BASE } from "astro:env/server";
 import { z } from "zod";
 import { MAX_PAGES, type ChannelSample, type ScorableVideo, parseIsoDuration } from "./scoring";
 import { type PlaylistCandidate, selectCandidateIds, selectChannelSample } from "./video-selection";
 import { type ChannelRef, parseChannelRef } from "./youtube-ids";
 
-const API_BASE = "https://www.googleapis.com/youtube/v3";
+/**
+ * The real endpoint unless `YOUTUBE_API_BASE` overrides it.
+ *
+ * The override exists for the e2e harness, which serves this chain from a
+ * local stub so a browser-level run is deterministic and spends no quota. It is
+ * declared `optional` in `astro.config.mjs` and set only in `.dev.vars.e2e`, so
+ * every other environment — dev, CI build, production — falls through to the
+ * literal below and behaves exactly as before.
+ *
+ * A base rather than a full injected client on purpose: the whole point of the
+ * e2e test is to exercise the real `getJson` classification, the real zod
+ * schemas and the real paging, so only the host may be swapped.
+ *
+ * Emptiness is checked as well as absence, and deliberately not with `??`: an
+ * unset secret arrives as `undefined` from a real build but as `""` from the
+ * Vitest stub, and a bare `??` would hand `new URL()` an empty base and break
+ * every unit test in this module. `YOUTUBE_API_BASE=` with no value in a
+ * `.dev.vars` file lands in the same place.
+ */
+const API_BASE =
+  YOUTUBE_API_BASE !== undefined && YOUTUBE_API_BASE !== ""
+    ? YOUTUBE_API_BASE
+    : "https://www.googleapis.com/youtube/v3";
 
 // Per-call ceiling on the Data API. A whole 5-competitor run measures ~1.6s of
 // YouTube time, so this bounds a hung connection without truncating a healthy

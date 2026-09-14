@@ -9,6 +9,7 @@
     "astro": "astro",
     "test": "vitest run",
     "test:db": "supabase test db",
+    "test:e2e": "playwright test",
     "typecheck": "astro check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
