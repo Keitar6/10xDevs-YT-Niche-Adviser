@@ -3,7 +3,7 @@ project: "YT-Niche-Adviser"
 version: 3
 status: draft
 created: 2026-09-07
-updated: 2026-09-13
+updated: 2026-09-14
 prd_version: 2
 main_goal: speed
 top_blocker: decisions
@@ -50,7 +50,7 @@ Note on ordering: `test-plan.md` §3 sequences its Phase 1 (boundary resilience)
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |----|-----------|----------------------|----------------|----------|--------|
 | F-03 | `provable-user-isolation` | (foundation) access control is provable — per-user isolation across both tables and the avatar objects, and every data-touching route refuses a caller with no session | — | FR-002, MS-01, MS-03 | ready |
-| F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | — | FR-006, FR-009, MS-04 | ready |
+| F-04 | `testing-analyze-boundary-resilience` | (foundation) a hostile or broken external response degrades into a ranking plus an explanation, never an error page or a blank screen | — | FR-006, FR-009, MS-04 | planning |
 | F-05 | `testing-scoring-oracle` | (foundation) the score provably means what the PRD says it means, and the existing suite can fail for the right reason | — | FR-007, FR-008, MS-05 | ready |
 | F-06 | `testing-quality-gates` | (foundation) the floor the earlier phases established is enforced on every change | F-03, F-04, F-05 | MS-06 | proposed |
 | S-06 | `opportunity-status-transitions` | user moves a saved opportunity through new → in production → done, and the change persists | F-03 | FR-012, MS-02 | proposed |
@@ -105,7 +105,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - `test-plan.md` §3 records this phase's Status as `change opened` against a change folder that does not exist on disk, so that row is stale. Owner: user. Block: no (the orchestrator re-derives status from disk, so it should self-correct on its next run).
 - **Risk:** Sequencing ownership for this element stays with `test-plan.md` §3, which rates it the highest risk in the project and places it first; M-2 defers it only because of the `speed` bias. The trap named in §2 is faking the parsing step rather than the transport, which leaves the real parsing code unexercised, and asserting that nothing threw without asserting the scores survived into the user-visible payload.
-- **Status:** ready
+- **Status:** planning
 
 ### F-05: Scoring oracle and spec conformance
 
