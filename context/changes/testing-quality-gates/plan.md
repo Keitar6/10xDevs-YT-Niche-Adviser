@@ -10,12 +10,12 @@ _enforced_ rather than documented.
 
 Four gates change state:
 
-| Gate                  | Today                                              | After                                                        |
-| --------------------- | -------------------------------------------------- | ------------------------------------------------------------ |
-| typecheck             | no script, never run, **currently 4 errors**       | `npm run typecheck` in CI                                    |
+| Gate                  | Today                                                | After                                                        |
+| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| typecheck             | no script, never run, **currently 4 errors**         | `npm run typecheck` in CI                                    |
 | formatting            | pre-commit on `*.{json,css,md}`, **already drifted** | `npm run format:check` in CI                                 |
-| database policy tests | local only (`npm run test:db`)                     | CI job, scoped to changes under `supabase/**`                |
-| enforcement           | red X + skipped deploy; `master` unprotected       | ruleset on `master`: PR required, checks required, no bypass |
+| database policy tests | local only (`npm run test:db`)                       | CI job, scoped to changes under `supabase/**`                |
+| enforcement           | red X + skipped deploy; `master` unprotected         | ruleset on `master`: PR required, checks required, no bypass |
 
 ## Current State Analysis
 
@@ -122,7 +122,7 @@ documents. Inverting any pair locks the repository against its own author.
 
 **State sequencing.** The ruleset in Phase 4 is created **last** and only after
 a real CI run has been observed, because GitHub matches required status checks
-by the *check name string*. For an Actions job with no `name:`, that string is
+by the _check name string_. For an Actions job with no `name:`, that string is
 the job id — `ci`, `db`. A ruleset naming a check that never reports blocks
 every merge, and with no bypass actors the recovery is to edit the ruleset in
 the GitHub UI. Read the names off an actual run (`gh api …/commits/<sha>/check-runs`)
@@ -558,15 +558,15 @@ re-enabling it afterwards is a single `gh api` call rather than a re-derivation.
 
 #### Automated
 
-- [ ] 1.1 Typecheck passes: `npm run typecheck` exits 0 with `0 errors`
-- [ ] 1.2 Format check passes: `npm run format:check` exits 0
-- [ ] 1.3 Tests still pass: `npm test` reports 12 files / 166 tests
-- [ ] 1.4 Lint passes: `npm run lint` exits 0
+- [x] 1.1 Typecheck passes: `npm run typecheck` exits 0 with `0 errors`
+- [x] 1.2 Format check passes: `npm run format:check` exits 0
+- [x] 1.3 Tests still pass: `npm test` reports 12 files / 166 tests
+- [x] 1.4 Lint passes: `npm run lint` exits 0
 
 #### Manual
 
-- [ ] 1.5 Envelope assertions still load-bearing after the narrowing (mutation check)
-- [ ] 1.6 `git diff` on `roadmap.md` shows no semantic change
+- [x] 1.5 Envelope assertions still load-bearing after the narrowing (mutation check)
+- [x] 1.6 `git diff` on `roadmap.md` shows no semantic change
 
 ### Phase 2: Wire the Always-On Gates into CI
 

@@ -34,15 +34,15 @@ skipped.
 
 ## Key Decisions Made
 
-| Decision              | Choice                                                              | Why (1 sentence)                                                                                                     | Source    |
-| --------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------- |
-| Enforcement mechanism | GitHub ruleset: PR required, checks required, **no bypass actors**   | Only option where "enforced" is literally true; a gate with the author on the bypass list is documentation again      | Plan      |
-| Typecheck scope       | `astro check` over the whole tree, including tests                   | 13.9s, covers `.astro` + `.ts` + `.tsx` in one pass; excluding tests to go green would be the gate failing its first test | Plan      |
-| Policy-test placement | CI job scoped to `supabase/**` via **job-level `if:`**               | Resolves the decision `roadmap.md:93` and §5 both deferred here; pays the image pull only when migrations change      | Plan      |
-| Test-volume floor     | Not defended — recorded as a §7 exclusion                            | No §2 risk names it; a coverage percentage rewards the assert-nothing tests Phase 3 spent its time removing           | Plan      |
-| Formatting gate       | `prettier --check .` in CI                                           | The live drift in `roadmap.md` proves lint-staged leaks; `npm run lint` already covers `.ts`/`.tsx`/`.astro`          | Plan      |
-| e2e                   | Deferral re-affirmed, dated                                          | §1 cost × signal and §7 both still rule it out; nothing changed since 2026-09-13 except that someone re-checked       | Test plan |
-| Deploy structure      | Stays a step inside `ci`, not a separate job                         | The ruleset gates it transitively, and `needs: [ci, db]` would break it — a skipped dependency skips its dependent    | Plan      |
+| Decision              | Choice                                                             | Why (1 sentence)                                                                                                          | Source    |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Enforcement mechanism | GitHub ruleset: PR required, checks required, **no bypass actors** | Only option where "enforced" is literally true; a gate with the author on the bypass list is documentation again          | Plan      |
+| Typecheck scope       | `astro check` over the whole tree, including tests                 | 13.9s, covers `.astro` + `.ts` + `.tsx` in one pass; excluding tests to go green would be the gate failing its first test | Plan      |
+| Policy-test placement | CI job scoped to `supabase/**` via **job-level `if:`**             | Resolves the decision `roadmap.md:93` and §5 both deferred here; pays the image pull only when migrations change          | Plan      |
+| Test-volume floor     | Not defended — recorded as a §7 exclusion                          | No §2 risk names it; a coverage percentage rewards the assert-nothing tests Phase 3 spent its time removing               | Plan      |
+| Formatting gate       | `prettier --check .` in CI                                         | The live drift in `roadmap.md` proves lint-staged leaks; `npm run lint` already covers `.ts`/`.tsx`/`.astro`              | Plan      |
+| e2e                   | Deferral re-affirmed, dated                                        | §1 cost × signal and §7 both still rule it out; nothing changed since 2026-09-13 except that someone re-checked           | Test plan |
+| Deploy structure      | Stays a step inside `ci`, not a separate job                       | The ruleset gates it transitively, and `needs: [ci, db]` would break it — a skipped dependency skips its dependent        | Plan      |
 
 ## Scope
 
@@ -67,11 +67,11 @@ required.** Inverting any pair locks the repository against its own author.
 
 ## Phases at a Glance
 
-| Phase                              | What it delivers                                      | Key risk                                                                             |
-| ---------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 1. Green the floor, script the gates | 4 type errors fixed, drift normalized, 2 new scripts | Narrowing `response.json()` too far would make the envelope assertions tautological  |
-| 2. Wire the always-on gates          | `format:check` + `typecheck` in CI; `CLAUDE.md` fixed | `typecheck` must follow `astro sync` or it fails on missing generated types          |
-| 3. Policy-test gate in CI            | `changes` + `db` jobs, trimmed Supabase start         | The trimmed `-x` start might drop a container the suite needs — measured, not assumed |
+| Phase                                | What it delivers                                      | Key risk                                                                                |
+| ------------------------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1. Green the floor, script the gates | 4 type errors fixed, drift normalized, 2 new scripts  | Narrowing `response.json()` too far would make the envelope assertions tautological     |
+| 2. Wire the always-on gates          | `format:check` + `typecheck` in CI; `CLAUDE.md` fixed | `typecheck` must follow `astro sync` or it fails on missing generated types             |
+| 3. Policy-test gate in CI            | `changes` + `db` jobs, trimmed Supabase start         | The trimmed `-x` start might drop a container the suite needs — measured, not assumed   |
 | 4. Enforce + close the loop          | Ruleset, `ruleset.json`, all documents synced         | A wrong check name, or a workflow `paths:` filter, deadlocks every merge with no bypass |
 
 **Prerequisites:** F-03, F-04, F-05 — all `done`. Docker for Phase 3's local
