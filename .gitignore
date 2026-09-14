@@ -19,6 +19,9 @@ pnpm-debug.log*
 
 # cloudflare
 .dev.vars
+# e2e runs against `.dev.vars.e2e` (CLOUDFLARE_ENV=e2e). It is a copy of
+# .dev.vars plus the stub seams, so it carries the same real secrets.
+.dev.vars.*
 .wrangler/
 
 # macOS-specific files
@@ -28,3 +31,8 @@ pnpm-debug.log*
 .idea/
 
 OAuth.json
+# playwright
+/playwright/.auth/
+/test-results/
+/playwright-report/
+/.playwright-cli/
