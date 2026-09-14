@@ -59,3 +59,11 @@ archived_at: null
   broken extraction distinguishable from an intended behaviour change — is
   therefore unverifiable from history. Next extraction-shaped phase: commit the
   behaviour-preserving extraction separately, before the fixes.
+- 2026-09-14 — Manual row 3.5 ("real analysis produces plausible sample sizes and
+  medians") is checked on user confirmation only; no observed figures were
+  recorded, so there is no artifact in the repo behind it. Review finding F6
+  documents this. Phase 3 changed which videos reach the median — duplicates no
+  longer double-count, unreadable timestamps are dropped, and a stale item
+  mid-playlist no longer truncates the walk — so a future surprise in sample
+  sizes or medians should be treated as unscreened by this change rather than as
+  a new regression.

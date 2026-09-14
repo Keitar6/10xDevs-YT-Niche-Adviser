@@ -169,7 +169,10 @@ context/foundation/prd.md` returns **0**. That third bound binds in a real case:
   row most likely to surface a real regression, since Phase 3 changed which videos reach
   the median. 2.4 has the same shape but a firmer confirmation ("okay, complete").
 - **Fix**: Either run the analysis and record one line of what was observed in `change.md`, or downgrade the row to explicitly deferred.
-- **Decision**: PENDING — user to supply what the real analysis showed; one line to be written into `change.md`.
+- **Decision**: CLOSED — user confirmed 3.5 twice and elected not to record an
+  observation. The row stays `[x]` on user confirmation alone; no artifact exists
+  in the repo for it, and the finding stands as the record of that. Treat a future
+  sample-size or median surprise as unscreened by this change.
 
 ### F7 — `PlaylistCandidate` uses snake_case for a type that never crosses the wire
 
@@ -240,7 +243,7 @@ context/foundation/prd.md` returns **0**. That third bound binds in a real case:
 
 - **Fixed**: F1 (Fix B), F2 (Fix A), F3, F4, F7, F8, F10 — 7
 - **Noted**: F5 (`change.md`), F9 (roadmap S-07) — 2
-- **Pending**: F6 — 1
+- **Closed without artifact**: F6 — 1
 
 ### Deliberate departure from a recommendation
 
