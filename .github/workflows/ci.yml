@@ -7,6 +7,69 @@ on:
     branches: [master]
 
 jobs:
+  # Emits a boolean saying whether this event touched `supabase/**`, for the `db`
+  # job below to condition on.
+  #
+  # This exists instead of a workflow-level `paths:` filter on purpose. A
+  # workflow skipped by `paths:` leaves its checks **Pending**, and a Pending
+  # required check blocks the merge forever — with no bypass actor on the
+  # `master` ruleset, that would lock the repository against everybody including
+  # its author. A job skipped by `if:` reports **Success** instead. See
+  # `context/foundation/test-plan.md` §6.7.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      supabase: ${{ steps.filter.outputs.supabase }}
+    steps:
+      # `fetch-depth: 0` because the diff below needs the base commit, which a
+      # shallow clone does not have.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # A branch's first push reports an all-zero `before` sha, and a force
+          # push can name a commit that is no longer reachable. Neither can be
+          # diffed, so both are treated as "changed" — the gate errs towards
+          # running.
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "supabase=true" >> "$GITHUB_OUTPUT"
+            echo "No usable diff base ($BASE) — running the policy suite."
+            exit 0
+          fi
+          if git diff --name-only "$BASE" "$GITHUB_SHA" -- supabase/ | grep -q .; then
+            echo "supabase=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "supabase=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
+  # The pgTAP policy suite. Scoped to changes touching `supabase/**` because it
+  # is the only job that pays for a container runtime.
+  db:
+    needs: changes
+    if: needs.changes.outputs.supabase == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # pgTAP touches the database and nothing else: `auth.uid()` is a SQL
+      # function in the db image, and the `avatars` bucket row is inserted by
+      # `20260913134159_add_channel_profile_avatar.sql`, not by storage-api at
+      # boot. Excluding the other thirteen containers turns a fourteen-image pull
+      # into one. If a test ever goes red under this, restore the container it
+      # needs — do not weaken the assertion.
+      - run: >
+          npx supabase start
+          -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - run: npm run test:db
+
   ci:
     runs-on: ubuntu-latest
     # The `ai` binding in wrangler.jsonc has no local emulation, so the

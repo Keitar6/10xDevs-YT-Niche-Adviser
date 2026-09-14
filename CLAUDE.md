@@ -63,10 +63,22 @@ which proves per-verb, per-role isolation across `channel_profiles`,
 local stack (`npx supabase start`); see `supabase/tests/README.md` for the
 fixture and impersonation conventions before adding a file.
 
-It is a local gate rather than a CI one **for now**: a cold CI runner pays a
-full ~13-image Supabase pull with no layer cache, so it belongs in its own job
-rather than folded into the existing one. That placement decision is owned by
-`context/foundation/test-plan.md` §3 Phase 4, not settled here.
+It also runs in CI, as its own `db` job in `.github/workflows/ci.yml`, but
+**only when the change touches `supabase/**`** — a `changes` job diffs the event
+against its base and the `db` job carries a job-level
+`if: needs.changes.outputs.supabase == 'true'`. The scoping exists because this
+is the only job that needs a container runtime; the start is trimmed with
+`supabase start -x …` to the database container alone, which is all pgTAP
+touches. Running it locally stays the fast path — it is the same five files and
+the same 77 assertions, without waiting on a runner.
+
+Two things about that wiring are easy to break and expensive to rediscover.
+The scoping is a **job-level `if:`**, never a workflow-level `paths:` filter: a
+workflow skipped by `paths:` leaves its checks Pending, and a Pending required
+check blocks the merge forever. And the exclusion list is load-bearing — if a
+pgTAP file ever goes red under the trimmed start, restore the container it needs
+rather than weakening the assertion. Both are written up in
+`context/foundation/test-plan.md` §6.7.
 
 ### Environment
 
