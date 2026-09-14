@@ -1,7 +1,7 @@
 ---
 change_id: testing-scoring-oracle
 title: Testing scoring oracle
-status: implemented
+status: impl_reviewed
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
@@ -44,3 +44,18 @@ archived_at: null
   stops after page one** → red, **`selectChannelSample` bypassed** → red.
   Ordering held — extraction landed behaviour-preserving and green before any
   fix was applied.
+- 2026-09-14 — `/10x-impl-review` (full plan) → `reviews/impl-review.md`. Verdict
+  NEEDS ATTENTION: 0 critical, 4 warnings, 6 observations; all triaged. Two
+  substantive fixes landed after the review: `scoreChannel` now returns
+  `withheld: {tooYoung, unreadableDate, unusableViews}` so `/api/analyze` names
+  only the withholding reasons that actually applied (the old sentence named two
+  of three, and could be wholly false for a channel with unreadable timestamps),
+  and the PRD's FR-008 correction gained the ≤100-candidate `MAX_PAGES` bound it
+  had omitted, with FR-007/FR-008 headline sentences re-pointed at "próba
+  bazowa".
+- 2026-09-14 — Review lesson on commit granularity (F5): Phase 3's plan required
+  extract-behaviour-preserving-then-fix, and that is how it was executed, but it
+  landed as a single commit (`9a5d8ca`). The ordering's whole purpose — making a
+  broken extraction distinguishable from an intended behaviour change — is
+  therefore unverifiable from history. Next extraction-shaped phase: commit the
+  behaviour-preserving extraction separately, before the fixes.

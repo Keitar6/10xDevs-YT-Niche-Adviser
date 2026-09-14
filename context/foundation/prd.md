@@ -109,12 +109,13 @@ konkurentów z nazwy/ID.
 
 - FR-006: Użytkownik może uruchomić analizę („Analyze") dla profilu kanału. Priority: must-have
   > Socrates: Kontrargument rozważony: „koszt/quota API przy ręcznym przycisku". Rozstrzygnięcie: on-demand zachowane (najprostsze dla MVP); ryzyko limitów adresowane guardrailem graceful-degradation i NFR.
-- FR-007: System pobiera ostatnie długie filmy konkurentów z okna czasowego podczas analizy, wykluczając Shorts. Priority: must-have
-  > Socrates: Kontrargument przyjęty: „Shorts zaburzają porównania wyświetleń". Rozstrzygnięcie: doprecyzowane — Shorts wykluczone; brane pod uwagę tylko długie filmy z okna czasowego.
-- FR-008: System liczy outlier_score = wyświetlenia filmu / **mediana** wyświetleń kanału z okna czasowego, dla każdego filmu. Priority: must-have
+- FR-007: System pobiera **próbę bazową** ostatnich długich filmów konkurentów podczas analizy, wykluczając Shorts (granice próby: Poprawka 2026-09-14 przy FR-008). Priority: must-have
+  > Socrates: Kontrargument przyjęty: „Shorts zaburzają porównania wyświetleń". Rozstrzygnięcie: doprecyzowane — Shorts wykluczone; brane pod uwagę tylko długie filmy z próby bazowej.
+  > Poprawka 2026-09-14: „okno czasowe" w tym punkcie oznacza tę samą próbę bazową co w FR-008 — patrz Poprawka przy FR-008.
+- FR-008: System liczy outlier_score = wyświetlenia filmu / **mediana** wyświetleń kanału z jego **próby bazowej** (definicja niżej, Poprawka 2026-09-14), dla każdego filmu. Priority: must-have
   > Socrates: Kontrargument przyjęty: „średnia z całej historii zawyżona przez stare virale". Rozstrzygnięcie: wartość bazowa liczona z okna czasowego, nie z całej historii kanału.
   > Poprawka 2026-09-11 (decyzja użytkownika, PRD v1 draft): **średnia → mediana**. Uzasadnienie: średnia ma punkt załamania 0 — pojedynczy stary hit trwale zawyża własną wartość bazową kanału, więc metryka systematycznie nie wykrywa tego, po co istnieje. Każdy kurateli wart konkurent ma już takie outliery. Dowody: `context/changes/analyze-and-rank-opportunities/yt-library-research.md` (Architecture Insights §2, Leys et al.; zbieżność narzędzi analitycznych YouTube) oraz decyzja D2 w `research.md` tego samego change'a. Okno czasowe pozostaje bez zmian. Docelowo (poza MVP) liczone będą obie wartości — mediana jako score, średnia jako dodatkowa statystyka prezentowana użytkownikowi.
-  > Poprawka 2026-09-14 (`context/changes/testing-scoring-oracle`): doprecyzowanie „okna czasowego". FR-008 nazywał jedno okno; produkt ma **dwa ograniczenia o różnej semantyce**, a żadne z nich nie było filtrem per-film. Wartość bazowa kanału to **najnowsze długie filmy kanału, do stałej liczby `TARGET_LONGFORM_PER_CHANNEL` (20)**, ograniczone dodatkowo limitem świeżości `MAX_WINDOW_DAYS` (180 dni) odrzucającym pojedyncze przestarzałe wpisy. Dla każdego regularnie publikującego kanału wiążący jest limit liczbowy — 20 filmów wypada na długo przed 180 dniami — więc to on jest „oknem" w rozumieniu FR-008. Zgodne z badaniem S-02, które preferowało okna liczone filmami (20–50) nad datowymi. Reguła **mediany** pozostaje bez zmian.
+  > Poprawka 2026-09-14 (`context/changes/testing-scoring-oracle`): doprecyzowanie „okna czasowego". FR-008 nazywał jedno okno; produkt ma **trzy ograniczenia o różnej semantyce**, a żadne z nich nie było filtrem per-film. Wartość bazowa kanału to **najnowsze długie filmy kanału, do stałej liczby `TARGET_LONGFORM_PER_CHANNEL` (20)**, ograniczone dodatkowo limitem świeżości `MAX_WINDOW_DAYS` (180 dni) odrzucającym pojedyncze przestarzałe wpisy. Dla każdego regularnie publikującego kanału wiążący jest limit liczbowy — 20 filmów wypada na długo przed 180 dniami — więc to on jest „oknem" w rozumieniu FR-008. Trzecie ograniczenie: przeglądane są tylko **pierwsze ≤100 pozycji** playlisty uploadów (`MAX_PAGES` = 2 strony po 50), więc kanał publikujący bardzo dużo Shortów może dać mniej niż 20 długich filmów — albo spaść poniżej `MIN_SAMPLE_SIZE` i zostać pominięty — mimo że w oknie 180 dni ma ich więcej. Zgodne z badaniem S-02, które preferowało okna liczone filmami (20–50) nad datowymi. Reguła **mediany** pozostaje bez zmian.
 - FR-009: Użytkownik otrzymuje top 5 okazji (tematów) z wynikiem liczbowym i jednozdaniowym uzasadnieniem. Priority: must-have
   > Socrates: Brak kontrargumentu — ranking top 5 z uzasadnieniem to rdzeń dostarczanej wartości; stoi jak jest.
 
@@ -158,7 +159,8 @@ filmu względem mediany wyświetleń danego kanału z jego próby bazowej) i
 zwracając top 5 z jednozdaniowym uzasadnieniem.
 
 Próba bazowa kanału to jego **najnowsze długie filmy, do 20**
-(`TARGET_LONGFORM_PER_CHANNEL`), z odrzuceniem wpisów starszych niż 180 dni
+(`TARGET_LONGFORM_PER_CHANNEL`), wybrane spośród pierwszych ≤100 pozycji
+playlisty uploadów (`MAX_PAGES`), z odrzuceniem wpisów starszych niż 180 dni
 (`MAX_WINDOW_DAYS`) — patrz Poprawka 2026-09-14 przy FR-008. Dla regularnie
 publikującego kanału wiąże limit liczbowy.
 

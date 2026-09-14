@@ -41,15 +41,24 @@ function channelsPayload(ids: string[]) {
   };
 }
 
-function playlistItemsPayload(videoIds: string[]) {
+function playlistItemsPayload(videoIds: string[], daysAgo = 30) {
   return {
     items: videoIds.map((videoId) => ({
-      contentDetails: { videoId, videoPublishedAt: daysBefore(30) },
+      contentDetails: { videoId, videoPublishedAt: daysBefore(daysAgo) },
     })),
   };
 }
 
-function videosPayload(videoIds: string[], channelId: string) {
+/** One `playlistItems` entry, for chains that need per-item publish times. */
+function playlistEntry(videoId: string, daysAgo = 30) {
+  return { contentDetails: { videoId, videoPublishedAt: daysBefore(daysAgo) } };
+}
+
+function videosPayload(
+  videoIds: string[],
+  channelId: string,
+  durationFor: (videoId: string) => string = () => "PT10M",
+) {
   return {
     items: videoIds.map((videoId) => ({
       id: videoId,
@@ -61,7 +70,7 @@ function videosPayload(videoIds: string[], channelId: string) {
       },
       // A string, as the API sends it — `z.coerce.number()` is load-bearing here.
       statistics: { viewCount: "1000" },
-      contentDetails: { duration: "PT10M" },
+      contentDetails: { duration: durationFor(videoId) },
     })),
   };
 }
@@ -361,25 +370,8 @@ describe("fetchCompetitorVideos", () => {
    * executed under test at all.
    */
   describe("selection through the real chain", () => {
-    /** A `playlistItems` entry with an explicit publish time. */
-    function entry(videoId: string, days = 30) {
-      return { contentDetails: { videoId, videoPublishedAt: daysBefore(days) } };
-    }
-
-    /** A `videos.list` record with an explicit duration. */
-    function record(videoId: string) {
-      return {
-        id: videoId,
-        snippet: {
-          title: `Video ${videoId}`,
-          channelId: CHANNEL_A,
-          channelTitle: "Channel A",
-          publishedAt: daysBefore(30),
-        },
-        statistics: { viewCount: "1000" },
-        contentDetails: { duration: videoId === "short-1" ? "PT30S" : "PT10M" },
-      };
-    }
+    /** Everything is long-form except the ids this chain marks as Shorts. */
+    const durationFor = (videoId: string) => (videoId.startsWith("short-") ? "PT30S" : "PT10M");
 
     it("pages, de-duplicates across the page boundary, drops stale and short entries, and caps the sample", async () => {
       // Five more uploads than the cap allows, so the cap is what truncates.
@@ -387,17 +379,17 @@ describe("fetchCompetitorVideos", () => {
       const firstPageCount = TARGET_LONGFORM_PER_CHANNEL - 5;
       const boundary = unique[firstPageCount - 1];
 
-      const pageOne = unique.slice(0, firstPageCount).map((id) => entry(id));
+      const pageOne = unique.slice(0, firstPageCount).map((id) => playlistEntry(id));
       const pageTwo = [
         // The last id of page one, returned again: a concurrent upload shifts
         // the playlist between calls. It used to be collected twice and
         // double-counted in both the median and `sample_size`.
-        entry(boundary),
+        playlistEntry(boundary),
         // Both of these sit inside the cap's reach, which is the point — a
         // skipped entry must not consume a slot.
-        entry("short-1"),
-        entry("stale-1", MAX_WINDOW_DAYS + 1),
-        ...unique.slice(firstPageCount).map((id) => entry(id)),
+        playlistEntry("short-1"),
+        playlistEntry("stale-1", MAX_WINDOW_DAYS + 1),
+        ...unique.slice(firstPageCount).map((id) => playlistEntry(id)),
       ];
 
       const fake = stubFetch((path, params) => {
@@ -407,7 +399,7 @@ describe("fetchCompetitorVideos", () => {
             ? { body: { items: pageOne, nextPageToken: "page-2" } }
             : { body: { items: pageTwo } };
         }
-        return { body: { items: (params.get("id") ?? "").split(",").map(record) } };
+        return { body: videosPayload((params.get("id") ?? "").split(","), CHANNEL_A, durationFor) };
       });
 
       const result = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW);
@@ -428,12 +420,16 @@ describe("fetchCompetitorVideos", () => {
     it("skips a stale entry mid-playlist without truncating the rest of the page", async () => {
       // A non-monotonic playlist: one old upload sits between two fresh ones.
       // The walk used to `break` here and lose everything behind it.
-      const items = [entry("fresh-1", 10), entry("misplaced", MAX_WINDOW_DAYS + 30), entry("fresh-2", 20)];
+      const items = [
+        playlistEntry("fresh-1", 10),
+        playlistEntry("misplaced", MAX_WINDOW_DAYS + 30),
+        playlistEntry("fresh-2", 20),
+      ];
 
       stubFetch((path, params) => {
         if (path === "channels") return { body: channelsPayload([CHANNEL_A]) };
         if (path === "playlistItems") return { body: { items } };
-        return { body: { items: (params.get("id") ?? "").split(",").map(record) } };
+        return { body: videosPayload((params.get("id") ?? "").split(","), CHANNEL_A, durationFor) };
       });
 
       const result = await fetchCompetitorVideos([CHANNEL_A], KEY, NOW);

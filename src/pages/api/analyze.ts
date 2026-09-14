@@ -18,7 +18,12 @@ import { createClient } from "@/lib/supabase";
 import { parseChannelProfile } from "@/lib/services/channel-profile";
 import { justifyOpportunities } from "@/lib/services/justify";
 import { mergeJustifications } from "@/lib/services/justification-merge";
-import { MIN_RANKABLE_AGE_DAYS, rankOpportunities, scoreChannel } from "@/lib/services/scoring";
+import {
+  MIN_RANKABLE_AGE_DAYS,
+  type ChannelScoreResult,
+  rankOpportunities,
+  scoreChannel,
+} from "@/lib/services/scoring";
 import { fetchCompetitorVideos, YouTubeError } from "@/lib/services/youtube";
 import type {
   AnalyzeOpportunity,
@@ -69,6 +74,44 @@ function describeUnresolved(unresolved: UnresolvedCompetitor[], requested: numbe
     sentences.push(`Their data could not be loaded this run: ${failed.join(", ")}. Try again shortly.`);
   }
   return sentences.join(" ");
+}
+
+/**
+ * The "scored, but nothing rankable" sentence, built from what actually applied.
+ *
+ * `scoreChannel` withholds for three reasons and reports the count of each, so
+ * this names only the ones that really occurred. Listing all three
+ * unconditionally would state causes that did not apply — the confidently-wrong
+ * emptiness the guardrail forbids, and the same mistake the earlier
+ * recency-only wording made in the other direction.
+ */
+function describeWithheld(results: ChannelScoreResult[]): string {
+  const total = { tooYoung: 0, unreadableDate: 0, unusableViews: 0 };
+  for (const result of results) {
+    if (result.kind !== "scored") continue;
+    total.tooYoung += result.withheld.tooYoung;
+    total.unreadableDate += result.withheld.unreadableDate;
+    total.unusableViews += result.withheld.unusableViews;
+  }
+
+  const causes: string[] = [];
+  if (total.tooYoung > 0) {
+    causes.push(`${total.tooYoung} newer than ${MIN_RANKABLE_AGE_DAYS} days, so too recent to judge`);
+  }
+  if (total.unusableViews > 0) {
+    causes.push(`${total.unusableViews} with no views yet`);
+  }
+  if (total.unreadableDate > 0) {
+    causes.push(`${total.unreadableDate} with an unreadable publication date`);
+  }
+
+  // The counts partition the sample, so an empty ranking always has at least
+  // one cause. The fallback exists so this function is total rather than
+  // because the branch is reachable.
+  if (causes.length === 0) {
+    return "No video found could be ranked. Try again in a few days.";
+  }
+  return `Every video found was held back from the ranking: ${causes.join(", ")}. Try again in a few days.`;
 }
 
 /**
@@ -221,16 +264,10 @@ const runAnalysis = async (context: Parameters<APIRoute>[0]): Promise<Response> 
   const ranked = rankOpportunities(scored, TOP_N);
 
   if (ranked.length === 0) {
-    // Distinct from the skip cases: the baselines held, but every video in
-    // them was withheld from the ranking. `scoreChannel` withholds for two
-    // reasons — too young to have a representative view count, and no views at
-    // all — and it does not report which applied. Naming only recency here
-    // would be confidently wrong for the second case, which is precisely what
-    // the guardrail forbids, so both are stated and neither is claimed.
-    return emptyResult({
-      ...summary,
-      empty_reason: `Every video found was held back from the ranking: a video must be at least ${MIN_RANKABLE_AGE_DAYS} days old, and must have at least one view, before it can be ranked. Try again in a few days.`,
-    });
+    // Distinct from the skip cases: the baselines held, but every video in them
+    // was withheld. `scoreChannel` reports the count per reason, so the
+    // sentence names what actually happened rather than every possibility.
+    return emptyResult({ ...summary, empty_reason: describeWithheld(scored) });
   }
 
   // The scores are already final here. Whatever the justification step does

@@ -86,6 +86,27 @@ export interface ScoredOpportunity {
 
 export type SkipReason = "insufficient_sample" | "zero_median";
 
+/**
+ * Why long-form videos in the sample did not reach the ranking.
+ *
+ * They all still counted toward `sample_size` and the median — withholding is
+ * about rankability, not about the baseline. The counts partition the withheld
+ * set: a video is attributed to the *first* reason that applies, so
+ * `rankable.length` plus these three always equals `sample_size`.
+ *
+ * This exists because `/api/analyze` has to explain an empty ranking, and the
+ * PRD guardrail forbids naming a cause that may not be the real one. Without
+ * it the route could only list every possible reason and hope one applied.
+ */
+export interface WithheldCounts {
+  /** Published less than `MIN_RANKABLE_AGE_DAYS` ago. */
+  tooYoung: number;
+  /** `published_at` could not be parsed, so the age is unknowable. */
+  unreadableDate: number;
+  /** No usable view count, or none at all — the save boundary rejects a 0 score. */
+  unusableViews: number;
+}
+
 export type ChannelScoreResult =
   | {
       kind: "scored";
@@ -95,6 +116,8 @@ export type ChannelScoreResult =
       channel_median: number;
       /** Videos old enough to rank. Younger ones moved the median and stop there. */
       rankable: ScoredOpportunity[];
+      /** Why the rest of the sample did not reach the ranking. */
+      withheld: WithheldCounts;
     }
   | {
       kind: "skipped";
@@ -181,13 +204,18 @@ export function scoreChannel(sample: ChannelSample, now: Date): ChannelScoreResu
 
   const channelMedian = median(longform.map((video) => video.view_count));
 
-  // The sample floor guarantees a non-empty array but not a non-zero median:
+  // The sample floor guarantees a non-empty array but not a usable median:
   // three of five long-form videos at 0 views is enough. Without this guard
   // every video scores `Infinity` (or `NaN` for 0/0) — `Infinity` sorts
   // straight to rank 1 and renders as the literal string "Infinity", while
   // `NaN` compares inconsistently and destroys the deterministic ordering the
   // NFR requires. A divide-by-zero must never reach the ranking.
-  if (channelMedian <= 0) {
+  //
+  // `!Number.isFinite` covers the case the `<= 0` test cannot: a non-finite
+  // median is not caught by a comparison, because every comparison against NaN
+  // is false. That baseline would otherwise pass silently and make *every*
+  // score on the channel NaN.
+  if (!Number.isFinite(channelMedian) || channelMedian <= 0) {
     return {
       kind: "skipped",
       ...identity,
@@ -199,16 +227,38 @@ export function scoreChannel(sample: ChannelSample, now: Date): ChannelScoreResu
 
   const rankableBefore = now.getTime() - MIN_RANKABLE_AGE_DAYS * MS_PER_DAY;
   const rankable: ScoredOpportunity[] = [];
+  const withheld: WithheldCounts = { tooYoung: 0, unreadableDate: 0, unusableViews: 0 };
   for (const video of longform) {
-    // An unparseable timestamp yields NaN, which fails this comparison and
-    // withholds the video from the ranking while leaving it in the baseline.
-    if (!(Date.parse(video.published_at) <= rankableBefore)) continue;
-    // Same withhold-but-still-count treatment for a video with no views. The
-    // rule originates outside this module: `outlier_score` of 0 is rejected by
-    // both `z.number().gt(0)` (`content-opportunity.ts:30`) and the
+    // Each withheld video is attributed to exactly one reason — the first that
+    // applies — so the counts partition the sample and the route can name a
+    // cause it knows to be real rather than listing every possibility.
+    const publishedMs = Date.parse(video.published_at);
+    if (Number.isNaN(publishedMs)) {
+      // Age is unknowable, so rankability cannot be established. The video
+      // still moved the median.
+      withheld.unreadableDate += 1;
+      continue;
+    }
+    if (!(publishedMs <= rankableBefore)) {
+      withheld.tooYoung += 1;
+      continue;
+    }
+    // Withhold-but-still-count for a video with no usable view count. The rule
+    // originates outside this module: `outlier_score` of 0 is rejected by both
+    // `z.number().gt(0)` (`content-opportunity.ts:30`) and the
     // `check (outlier_score > 0)` on `content_opportunities`, so ranking one
-    // renders an item that then 400s on Save. It still moved the median.
-    if (video.view_count <= 0) continue;
+    // renders an item that then 400s on Save.
+    //
+    // `Number.isFinite` is belt-and-braces rather than a reachable case today:
+    // `z.coerce.number()` in `./youtube.ts` rejects NaN and ±Infinity at parse
+    // time. It matters because a NaN reaching the median would make the
+    // `(a, b) => a - b` comparator return NaN, leaving the sort order
+    // implementation-defined and the deterministic-ordering NFR unmet — and
+    // `NaN <= 0` is false, so the zero-median guard above would not catch it.
+    if (!Number.isFinite(video.view_count) || video.view_count <= 0) {
+      withheld.unusableViews += 1;
+      continue;
+    }
     rankable.push({
       video_id: video.video_id,
       title: video.title,
@@ -222,7 +272,14 @@ export function scoreChannel(sample: ChannelSample, now: Date): ChannelScoreResu
     });
   }
 
-  return { kind: "scored", ...identity, sample_size: longform.length, channel_median: channelMedian, rankable };
+  return {
+    kind: "scored",
+    ...identity,
+    sample_size: longform.length,
+    channel_median: channelMedian,
+    rankable,
+    withheld,
+  };
 }
 
 /**

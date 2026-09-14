@@ -349,6 +349,94 @@ describe("scoreChannel", () => {
     expect(result.rankable.every((o) => o.outlier_score > 0)).toBe(true);
   });
 
+  it("reports why each withheld video was withheld, without touching the baseline", () => {
+    const result = scoreChannel(
+      sample([
+        video({ video_id: "ok1", view_count: 100, published_at: daysBefore(40) }),
+        video({ video_id: "ok2", view_count: 200, published_at: daysBefore(30) }),
+        video({ video_id: "young", view_count: 300, published_at: daysBefore(2) }),
+        video({ video_id: "unreadable", view_count: 400, published_at: "last Tuesday" }),
+        video({ video_id: "zero", view_count: 0, published_at: daysBefore(20) }),
+        video({ video_id: "ok3", view_count: 500, published_at: daysBefore(10) }),
+      ]),
+      NOW,
+    );
+
+    expect(result.kind).toBe("scored");
+    if (result.kind !== "scored") return;
+    // All six moved the median: sorted [0, 100, 200, 300, 400, 500] -> 250.
+    // Over the three rankable ones alone it would be 200.
+    expect(result.channel_median).toBe(250);
+    expect(result.sample_size).toBe(6);
+    expect(result.rankable.map((o) => o.video_id)).toEqual(["ok1", "ok2", "ok3"]);
+    expect(result.withheld).toEqual({ tooYoung: 1, unreadableDate: 1, unusableViews: 1 });
+  });
+
+  it("accounts for every long-form video exactly once, as rankable or withheld", () => {
+    // The invariant the route depends on: it may only name a withholding reason
+    // whose count is non-zero, so the counts must partition the sample.
+    const result = scoreChannel(
+      sample([
+        video({ video_id: "a", view_count: 100, published_at: daysBefore(40) }),
+        video({ video_id: "y1", view_count: 200, published_at: daysBefore(1) }),
+        video({ video_id: "y2", view_count: 300, published_at: daysBefore(3) }),
+        video({ video_id: "bad", view_count: 400, published_at: "" }),
+        video({ video_id: "z", view_count: 0, published_at: daysBefore(50) }),
+      ]),
+      NOW,
+    );
+
+    expect(result.kind).toBe("scored");
+    if (result.kind !== "scored") return;
+    const { tooYoung, unreadableDate, unusableViews } = result.withheld;
+    expect(result.rankable.length + tooYoung + unreadableDate + unusableViews).toBe(result.sample_size);
+    expect(result.withheld).toEqual({ tooYoung: 2, unreadableDate: 1, unusableViews: 1 });
+  });
+
+  it("attributes a video that is both too young and zero-view to its age, counting it once", () => {
+    // Age is checked first, so it wins. Documented because the route turns
+    // these counts into a sentence and double-counting would overstate.
+    const result = scoreChannel(
+      sample([
+        video({ video_id: "a", view_count: 100, published_at: daysBefore(40) }),
+        video({ video_id: "b", view_count: 200, published_at: daysBefore(30) }),
+        video({ video_id: "c", view_count: 300, published_at: daysBefore(20) }),
+        video({ video_id: "d", view_count: 400, published_at: daysBefore(10) }),
+        video({ video_id: "both", view_count: 0, published_at: daysBefore(1) }),
+      ]),
+      NOW,
+    );
+
+    expect(result.kind).toBe("scored");
+    if (result.kind !== "scored") return;
+    expect(result.withheld).toEqual({ tooYoung: 1, unreadableDate: 0, unusableViews: 0 });
+  });
+
+  it("skips a channel whose baseline is not a finite number", () => {
+    // Unreachable through `./youtube.ts` today — `z.coerce.number()` rejects
+    // NaN at parse time — but `ScorableVideo` is a plain interface and a second
+    // producer could hand-build one. A NaN baseline is worse than a zero one:
+    // `NaN <= 0` is false, so the zero-median guard waves it through, and every
+    // `outlier_score` becomes NaN. `rankOpportunities`' comparator then returns
+    // NaN for every pair, leaving the order implementation-defined — the exact
+    // failure the determinism NFR forbids.
+    //
+    // All five are NaN so the median is NaN wherever the sort puts them; a
+    // single NaN in a five-element sample lands past the middle in V8 and would
+    // make this test pass for a reason that is not the rule under test.
+    const result = scoreChannel(
+      sample(["a", "b", "c", "d", "e"].map((video_id) => video({ video_id, view_count: Number.NaN }))),
+      NOW,
+    );
+
+    expect(result.kind).toBe("skipped");
+    if (result.kind !== "skipped") return;
+    expect(result.reason).toBe("zero_median");
+    expect(result.sample_size).toBe(5);
+    // And nothing from it can reach the ranking.
+    expect(rankOpportunities([result])).toEqual([]);
+  });
+
   it("reports an empty sample as insufficient, with a sample size of 0", () => {
     const result = scoreChannel(sample([]), NOW);
 

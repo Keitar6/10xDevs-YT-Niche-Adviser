@@ -234,10 +234,16 @@ export async function resolveChannelRefs(inputs: string[], apiKey: string): Prom
 /* -------------------------------------------------------------------------- *
  * The analysis call chain: channels.list -> playlistItems.list -> videos.list
  *
- * Three calls per competitor, ~3 units each, ~15 units for a 5-competitor run
- * against the project's 10,000/day bucket. The search endpoint costs 100 units
- * on its own and would cap the product at ~20 runs/day, so it is never used
- * here — a grep for it over `src/` is a success criterion of this slice.
+ * One `channels.list` for the whole run, then per competitor up to `MAX_PAGES`
+ * (2) `playlistItems` calls and up to 2 `videos.list` calls — the latter
+ * because `fetchVideoDetails` batches 50 ids and the walk can now yield ~100
+ * candidates. Worst case is therefore ~4 calls per competitor, ~1 unit each,
+ * ~21 units for a 5-competitor run against the project's 10,000/day bucket.
+ * (It was ~15 while a stale upload could `break` the walk early; removing that
+ * break was a deliberate trade — see `./video-selection.ts`.) The search
+ * endpoint costs 100 units on its own and would cap the product at ~20
+ * runs/day, so it is never used here — a grep for it over `src/` is a success
+ * criterion of this slice.
  * -------------------------------------------------------------------------- */
 
 /**
@@ -379,8 +385,8 @@ async function collectCandidateIds(playlistId: string, apiKey: string, now: Date
       const videoId = item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId;
       if (videoId === undefined) continue;
       candidates.push({
-        video_id: videoId,
-        published_at: item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt,
+        videoId,
+        publishedAt: item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt,
       });
     }
 

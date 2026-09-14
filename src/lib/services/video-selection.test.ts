@@ -9,8 +9,8 @@ function daysBefore(days: number): string {
 }
 
 /** A playlist entry, in window by default. */
-function candidate(video_id: string, days = 30): PlaylistCandidate {
-  return { video_id, published_at: daysBefore(days) };
+function candidate(videoId: string, days = 30): PlaylistCandidate {
+  return { videoId, publishedAt: daysBefore(days) };
 }
 
 function scorable(overrides: Partial<ScorableVideo> & Pick<ScorableVideo, "video_id">): ScorableVideo {
@@ -59,7 +59,7 @@ describe("selectCandidateIds", () => {
   });
 
   it("skips an item whose timestamp is absent", () => {
-    const items = [candidate("a"), { video_id: "no-timestamp", published_at: undefined }, candidate("b")];
+    const items = [candidate("a"), { videoId: "no-timestamp", publishedAt: undefined }, candidate("b")];
 
     // Membership in the window cannot be established for it, and the old code
     // kept it — letting an arbitrarily old video move the channel median.
@@ -67,7 +67,7 @@ describe("selectCandidateIds", () => {
   });
 
   it("skips an item whose timestamp cannot be parsed", () => {
-    const items = [candidate("a"), { video_id: "unreadable", published_at: "last Tuesday" }, candidate("b")];
+    const items = [candidate("a"), { videoId: "unreadable", publishedAt: "last Tuesday" }, candidate("b")];
 
     expect(selectCandidateIds(items, NOW)).toEqual(["a", "b"]);
   });

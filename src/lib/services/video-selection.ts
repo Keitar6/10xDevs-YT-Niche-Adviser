@@ -10,8 +10,10 @@
  * be the layer that is testable.
  *
  * `youtube.ts` keeps the paging and the HTTP. Everything below is synchronous
- * and owns no constants of its own — the numbers stay in `scoring.ts`, next to
- * the rest of the product's tuning.
+ * and owns no *tuning* constants — every number that shapes the product's
+ * behaviour stays in `scoring.ts` and is imported. The lone local constant is
+ * `MS_PER_DAY`, a unit conversion rather than a decision; `scoring.ts` and
+ * `justify.ts` each keep their own copy for the same reason.
  */
 import { MAX_WINDOW_DAYS, TARGET_LONGFORM_PER_CHANNEL, type ScorableVideo, isShort } from "./scoring";
 
@@ -24,11 +26,11 @@ const MS_PER_DAY = 86_400_000;
  * (`contentDetails.videoId`, or `snippet.resourceId.videoId` when only
  * `snippet` came back) and when the video went public
  * (`contentDetails.videoPublishedAt`, falling back to `snippet.publishedAt`).
- * `published_at` is optional because a malformed page can omit both.
+ * `publishedAt` is optional because a malformed page can omit both.
  */
 export interface PlaylistCandidate {
-  video_id: string;
-  published_at: string | undefined;
+  videoId: string;
+  publishedAt: string | undefined;
 }
 
 /**
@@ -51,9 +53,11 @@ export interface PlaylistCandidate {
  *   playlist order (newest first) so the cap downstream still keeps the newest.
  *
  * Paging is now bounded by `MAX_PAGES` alone. The trade is at most one extra
- * `playlistItems` call per channel — ~+5 units on a 5-competitor run against a
- * 10,000/day budget — in exchange for a sample that a single bad record cannot
- * truncate.
+ * `playlistItems` call per channel *and* one extra `videos.list` call — more
+ * candidates survive the walk, and `fetchVideoDetails` batches 50 ids — so
+ * roughly +6 units on a 5-competitor run (~15 to ~21) against a 10,000/day
+ * budget, plus one serialized round trip on p95. Bought in exchange for a
+ * sample that a single bad record cannot truncate.
  */
 export function selectCandidateIds(items: PlaylistCandidate[], now: Date): string[] {
   const cutoff = now.getTime() - MAX_WINDOW_DAYS * MS_PER_DAY;
@@ -61,11 +65,11 @@ export function selectCandidateIds(items: PlaylistCandidate[], now: Date): strin
   const seen = new Set<string>();
 
   for (const item of items) {
-    const publishedMs = item.published_at === undefined ? NaN : Date.parse(item.published_at);
+    const publishedMs = item.publishedAt === undefined ? NaN : Date.parse(item.publishedAt);
     if (Number.isNaN(publishedMs) || publishedMs < cutoff) continue;
-    if (seen.has(item.video_id)) continue;
-    seen.add(item.video_id);
-    ids.push(item.video_id);
+    if (seen.has(item.videoId)) continue;
+    seen.add(item.videoId);
+    ids.push(item.videoId);
   }
 
   return ids;

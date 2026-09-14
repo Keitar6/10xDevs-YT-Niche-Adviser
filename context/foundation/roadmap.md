@@ -163,6 +163,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Whether the control should expose the count bound (`TARGET_LONGFORM_PER_CHANNEL`), the date bound (`MAX_WINDOW_DAYS`), or a single blended notion of "recent". Owner: user. Block: yes — it decides the shape of the input.
   - Whether a per-run window belongs on the profile or on the Analyze action. Owner: user. Block: no.
+- **Adjacent gap (from F-05's impl review, 2026-09-14):** withheld videos are invisible whenever the ranking is non-empty. `scoreChannel` now reports `withheld: {tooYoung, unreadableDate, unusableViews}` per channel, but `/api/analyze` only surfaces it when the _whole_ ranking is empty; a channel that scored and contributed zero rankable rows is counted in `summary.scored` and never mentioned, and `sample_size` reaches the UI only for skipped channels. A user reading "median across 20 videos" cannot learn that some of those 20 were themselves ineligible. The counts already exist, so surfacing them is cheap — fold into this slice or take it separately.
 - **Risk:** A user-chosen window makes the denominator variable, which puts pressure on two guarantees F-05 established: the repeatability NFR now holds only _per window_, and `MIN_SAMPLE_SIZE` becomes reachable by user action rather than only by a thin channel — so the skip path stops being an edge case and becomes a normal outcome the UI must explain. Post-MVP: the PRD marks neither bound as user-facing must-have scope.
 - **Status:** backlog
 
