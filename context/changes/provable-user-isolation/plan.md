@@ -669,21 +669,21 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [x] 2.1 `npm run test:db` exits 0 with all files reporting `ok`
-- [x] 2.2 Every denied-write assertion is paired with a row-intactness assertion
-- [x] 2.3 `npm run lint` passes
+- [x] 2.1 `npm run test:db` exits 0 with all files reporting `ok` — bbdad66
+- [x] 2.2 Every denied-write assertion is paired with a row-intactness assertion — bbdad66
+- [x] 2.3 `npm run lint` passes — bbdad66
 
 #### Manual
 
-- [x] 2.4 A `using (true)` policy makes the suite go red; restored via `db reset`
+- [x] 2.4 A `using (true)` policy makes the suite go red; restored via `db reset` — bbdad66
 
 ### Phase 3: Avatar bucket isolation
 
 #### Automated
 
-- [ ] 3.1 `npm run test:db` exits 0 with all five files reporting `ok`
-- [ ] 3.2 Fixture object paths asserted to carry the owner UUID as first path segment
-- [ ] 3.3 `npm run lint` passes
+- [x] 3.1 `npm run test:db` exits 0 with all five files reporting `ok`
+- [x] 3.2 Fixture object paths asserted to carry the owner UUID as first path segment
+- [x] 3.3 `npm run lint` passes
 
 #### Manual
 
