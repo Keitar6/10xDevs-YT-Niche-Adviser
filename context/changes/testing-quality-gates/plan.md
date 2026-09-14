@@ -609,8 +609,8 @@ re-enabling it afterwards is a single `gh api` call rather than a re-derivation.
 
 #### Manual
 
-- [ ] 4.6 PR with a deliberate type error is blocked from merging
-- [ ] 4.7 Docs-only PR is mergeable with `db` reported as skipped
+- [x] 4.6 PR with a deliberate type error is blocked from merging — ad40472
+- [x] 4.7 Docs-only PR is mergeable with `db` reported as skipped — ad40472
 - [x] 4.8 Direct push to `master` rejected for you personally (no bypass) — d9c9e54
-- [ ] 4.9 `test-plan.md` §5 describes only gates that exist; §3 Phase 4 reads `complete`
-- [ ] 4.10 §6.7 is sufficient for a stranger to add a fifth gate without rediscovering the Pending-check deadlock
+- [x] 4.9 `test-plan.md` §5 describes only gates that exist; §3 Phase 4 reads `complete` — ad40472
+- [x] 4.10 §6.7 is sufficient for a stranger to add a fifth gate without rediscovering the Pending-check deadlock — ad40472

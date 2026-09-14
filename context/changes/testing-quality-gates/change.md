@@ -1,7 +1,7 @@
 ---
 change_id: testing-quality-gates
 title: Testing quality gates
-status: implementing
+status: implemented
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
@@ -82,3 +82,44 @@ parallel with it.
 `01-channel-profiles.test.sql` ("user B sees no profile at all") and by
 `03-policy-shape.test.sql` ("every channel_profiles read/modify policy tests
 ownership in its USING clause"). Probe commit dropped from the branch.
+
+### Phase 4 enforcement evidence
+
+Ruleset **`master: gates required`**, id `23294037`, `enforcement: active`,
+`bypass_actors: []`. Required checks `ci` and `db` (integration 15368), read off
+run
+[34834999770](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34834999770)
+rather than inferred from job ids. Request body kept at `ruleset.json`.
+
+| Check     | Probe                                                                                                      | Result                                                                                                                |
+| --------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 4.3 / 4.8 | empty commit pushed straight at `master` (repo owner)                                                      | `GH013 … push declined` — "Changes must be made through a pull request", "2 of 2 required status checks are expected" |
+| 4.6       | [#27](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/pull/27), `const probe: number = "not a number"` | `ci` failed on `npm run typecheck`; `mergeStateStatus: BLOCKED`. Closed unmerged                                      |
+| 4.7       | [#28](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/pull/28), one HTML comment in `README.md`        | `db` reported `skipping`, `ci` passed, `mergeStateStatus: CLEAN`. Closed unmerged                                     |
+
+### The trap the plan did not predict
+
+The plan's Implementation Note said to create the ruleset only after the
+documentation commits were **pushed**. Pushed is not enough — it needed
+**merged**. A `pull_request` run executes the workflow from the _head_ branch, so
+while `ci.yml` still lived only on `testing-quality-gates`, no other PR could
+ever report a `db` check. Requiring `db` at that moment put both probe PRs into
+Pending-check deadlock — the exact failure the job-level `if:` was chosen to
+avoid, reached by a completely different route.
+
+Recovered by merging [#26](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/pull/26)
+first (it was `CLEAN`, since its own head branch defined both jobs), then
+rebasing the probes onto the new `master`. Both then behaved as designed. The
+ordering rule in `test-plan.md` §6.7 is now **green → wired → merged →
+required**, with this incident written up as the reason.
+
+### One self-inflicted incident, recorded because the gate caught it
+
+Two `git switch` calls to the probe branches aborted on a dirty `plan.md`, so the
+probe edits — a type error in `src/lib/http.ts` and a comment in `README.md` —
+were committed onto `testing-quality-gates` instead. They were caught by
+`npm run typecheck` on
+[run 34838917882](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34838917882),
+which turned PR #26 red and blocked the merge. Removed by rebasing the two
+commits out. Worth keeping: the first thing the new gate did was refuse work that
+the old pipeline would have merged.

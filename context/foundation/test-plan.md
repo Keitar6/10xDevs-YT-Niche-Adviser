@@ -550,11 +550,22 @@ npm run build
 npm run test:db        # needs Docker; 5 files / 77 assertions
 ```
 
-**Order the work: green → wired → required.** Make the gate pass locally, then
-add it to CI, then add it to the ruleset. Inverting any pair locks the
-repository against its own author, because the ruleset has no bypass actors.
-Phase 4 fixed four live `astro check` errors _before_ writing the `typecheck`
-step, for exactly this reason.
+**Order the work: green → wired → _merged_ → required.** Make the gate pass
+locally, then add it to CI, then get that workflow onto `master`, and only then
+add the check to the ruleset. Inverting any pair locks the repository against its
+own author, because the ruleset has no bypass actors. Phase 4 fixed four live
+`astro check` errors _before_ writing the `typecheck` step, for exactly this
+reason.
+
+The third beat is the one that is easy to miss, and Phase 4 missed it. A
+`pull_request` run executes the workflow from the **head** branch, so a required
+check whose job exists only on an unmerged branch never reports on any _other_
+open PR — it sits Pending and blocks the merge. Requiring `db` while the job
+defining it was still on a feature branch put two unrelated PRs into exactly the
+deadlock this section warns about, by a route that has nothing to do with
+`paths:` filters. Merge the workflow first, confirm the new check reports on a
+real run against `master`, and add it to the ruleset after that. If you are
+already stuck, the escape is the same one: edit the ruleset in the GitHub UI.
 
 Five traps, all of them load-bearing:
 
