@@ -558,29 +558,29 @@ re-enabling it afterwards is a single `gh api` call rather than a re-derivation.
 
 #### Automated
 
-- [x] 1.1 Typecheck passes: `npm run typecheck` exits 0 with `0 errors`
-- [x] 1.2 Format check passes: `npm run format:check` exits 0
-- [x] 1.3 Tests still pass: `npm test` reports 12 files / 166 tests
-- [x] 1.4 Lint passes: `npm run lint` exits 0
+- [x] 1.1 Typecheck passes: `npm run typecheck` exits 0 with `0 errors` — 0749c6d
+- [x] 1.2 Format check passes: `npm run format:check` exits 0 — 0749c6d
+- [x] 1.3 Tests still pass: `npm test` reports 12 files / 166 tests — 0749c6d
+- [x] 1.4 Lint passes: `npm run lint` exits 0 — 0749c6d
 
 #### Manual
 
-- [x] 1.5 Envelope assertions still load-bearing after the narrowing (mutation check)
-- [x] 1.6 `git diff` on `roadmap.md` shows no semantic change
+- [x] 1.5 Envelope assertions still load-bearing after the narrowing (mutation check) — 0749c6d
+- [x] 1.6 `git diff` on `roadmap.md` shows no semantic change — 0749c6d
 
 ### Phase 2: Wire the Always-On Gates into CI
 
 #### Automated
 
-- [ ] 2.1 The pushed branch's CI run is green
-- [ ] 2.2 Both new steps appear in the run log
-- [ ] 2.3 The run's total wall time stays under two minutes
+- [x] 2.1 The pushed branch's CI run is green — a404db7
+- [x] 2.2 Both new steps appear in the run log — a404db7
+- [x] 2.3 The run's total wall time stays under two minutes — a404db7
 
 #### Manual
 
-- [ ] 2.4 Deliberate formatting error turns CI red on `format:check`; reverted
-- [ ] 2.5 Deliberate type error turns CI red on `typecheck`; reverted
-- [ ] 2.6 `CLAUDE.md`'s `## CI` section matches `ci.yml` step for step
+- [x] 2.4 Deliberate formatting error turns CI red on `format:check`; reverted — a404db7
+- [x] 2.5 Deliberate type error turns CI red on `typecheck`; reverted — a404db7
+- [x] 2.6 `CLAUDE.md`'s `## CI` section matches `ci.yml` step for step — a404db7
 
 ### Phase 3: Policy-Test Gate in CI, Scoped to `supabase/**`
 

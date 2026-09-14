@@ -31,3 +31,18 @@ pass in `736de34` had already normalised that file, and the live
 `prettier --check .` failures were the change folder's own `plan.md` and
 `plan-brief.md`. Those were normalised instead. `roadmap.md`'s only diff in this
 phase is the `planning → in-progress` status flip.
+
+### Gate-mutation evidence (CI run ids)
+
+The adversarial verification in `plan.md` §Testing Strategy is proven by run,
+not by assertion. The probe commits were pushed, observed, and then dropped from
+the branch, so the runs are the only surviving record:
+
+| Gate           | Probe                                       | Run                                                                                         | Result                                             |
+| -------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| (baseline)     | none                                        | [34833503757](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34833503757) | success, 83s, all 7 gate steps green               |
+| `format:check` | unformatted line appended to `change.md`    | [34833673353](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34833673353) | failure on `npm run format:check`, rest skipped    |
+| `typecheck`    | `const deliberateTypeError: number = body;` | [34833955418](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34833955418) | failure on `npm run typecheck`, `lint` still green |
+
+The `typecheck` probe is the more informative of the two: `npm run lint` passed
+it. A type error that ESLint does not see is exactly the gap the new gate closes.
