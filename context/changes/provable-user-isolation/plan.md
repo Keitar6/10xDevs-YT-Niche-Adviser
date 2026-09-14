@@ -681,9 +681,9 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [x] 3.1 `npm run test:db` exits 0 with all five files reporting `ok`
-- [x] 3.2 Fixture object paths asserted to carry the owner UUID as first path segment
-- [x] 3.3 `npm run lint` passes
+- [x] 3.1 `npm run test:db` exits 0 with all five files reporting `ok` — 998f574
+- [x] 3.2 Fixture object paths asserted to carry the owner UUID as first path segment — 998f574
+- [x] 3.3 `npm run lint` passes — 998f574
 
 #### Manual
 
@@ -693,15 +693,15 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [ ] 4.1 `npm test` exits 0 including the new route, middleware and scan files
-- [ ] 4.2 The route table covers exactly seven handler entries
-- [ ] 4.3 `npm run lint` passes
-- [ ] 4.4 `npm run build` succeeds
+- [x] 4.1 `npm test` exits 0 including the new route, middleware and scan files
+- [x] 4.2 The route table covers exactly seven handler entries
+- [x] 4.3 `npm run lint` passes
+- [x] 4.4 `npm run build` succeeds
 
 #### Manual
 
-- [ ] 4.5 Removing one handler's 401 guard makes only that handler's case red
-- [ ] 4.6 A scratch service-role client makes the scan test red
+- [x] 4.5 Removing one handler's 401 guard makes only that handler's case red
+- [x] 4.6 A scratch service-role client makes the scan test red
 
 ### Phase 5: Gate wiring and cookbook
 
