@@ -46,3 +46,39 @@ the branch, so the runs are the only surviving record:
 
 The `typecheck` probe is the more informative of the two: `npm run lint` passed
 it. A type error that ESLint does not see is exactly the gap the new gate closes.
+
+### Phase 3 measurements
+
+The `db` job, cold runner, run
+[34834999770](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34834999770):
+
+| Quantity                    | Value                                                       |
+| --------------------------- | ----------------------------------------------------------- |
+| `db` job wall time          | 111s                                                        |
+| ├ `npx supabase start -x …` | ~83s                                                        |
+| └ `npm run test:db`         | ~4s                                                         |
+| Containers started          | 1 (`supabase_db_…`)                                         |
+| **Images pulled**           | **5** — postgres, realtime, storage-api, gotrue, pg_prove   |
+| Assertions                  | `Files=5, Tests=77` — identical to the local full-stack run |
+| Local trimmed start (warm)  | 19s, 1 container, `Files=5, Tests=77`                       |
+
+**The plan's one wrong prediction.** It claimed the trimmed start would make the
+runner "pull one image rather than fourteen". It does not: `-x` bounds which
+containers the CLI _starts_, not which images it _pulls_. Five images still came
+down. The scoping is still worth it — 111s only on `supabase/**` changes, versus
+on every change — but the saving is smaller than the plan assumed, and the
+number now in `supabase/tests/README.md` and `test-plan.md` §6.7 is the measured
+one rather than the predicted one.
+
+**`ci` wall time (3.4).** 83s in Phase 2 against 106s in Phase 3, which is runner
+variance rather than regression: the `ci` job's parsed definition is
+byte-identical across `a404db7` and `3c45ea5`, and the two new jobs run in
+parallel with it.
+
+**Policy-break probe (3.7).** `channel_profiles_select_own` rewritten to
+`using (true)`, run
+[34835304295](https://github.com/Keitar6/10xDevs-YT-Niche-Adviser/actions/runs/34835304295):
+`db` failed, `ci` stayed green. Caught twice and independently — by
+`01-channel-profiles.test.sql` ("user B sees no profile at all") and by
+`03-policy-shape.test.sql` ("every channel_profiles read/modify policy tests
+ownership in its USING clause"). Probe commit dropped from the branch.

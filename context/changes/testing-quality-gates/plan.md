@@ -586,16 +586,16 @@ re-enabling it afterwards is a single `gh api` call rather than a re-derivation.
 
 #### Automated
 
-- [ ] 3.1 On a `supabase/`-touching branch, the `db` job runs green with all five pgTAP files
-- [ ] 3.2 pgTAP assertion count under the trimmed start equals the local count
-- [ ] 3.3 On a branch touching no `supabase/` path, `db` is skipped and the run is green
-- [ ] 3.4 The `ci` job's wall time is unchanged from Phase 2
+- [x] 3.1 On a `supabase/`-touching branch, the `db` job runs green with all five pgTAP files — 3c45ea5
+- [x] 3.2 pgTAP assertion count under the trimmed start equals the local count — 3c45ea5
+- [x] 3.3 On a branch touching no `supabase/` path, `db` is skipped and the run is green — 3c45ea5
+- [x] 3.4 The `ci` job's wall time is unchanged from Phase 2 — 3c45ea5
 
 #### Manual
 
-- [ ] 3.5 Skipped `db` renders as "This check was skipped", not as failing
-- [ ] 3.6 `db` job wall time recorded for the §6.7 entry
-- [ ] 3.7 Broken policy turns the `db` job red; reverted
+- [x] 3.5 Skipped `db` renders as "This check was skipped", not as failing — 3c45ea5
+- [x] 3.6 `db` job wall time recorded for the §6.7 entry — 3c45ea5
+- [x] 3.7 Broken policy turns the `db` job red; reverted — 3c45ea5
 
 ### Phase 4: Enforce with a Ruleset, and Close the Documentation Loop
 

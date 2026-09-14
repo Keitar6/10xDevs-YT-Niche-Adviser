@@ -69,8 +69,9 @@ against its base and the `db` job carries a job-level
 `if: needs.changes.outputs.supabase == 'true'`. The scoping exists because this
 is the only job that needs a container runtime; the start is trimmed with
 `supabase start -x …` to the database container alone, which is all pgTAP
-touches. Running it locally stays the fast path — it is the same five files and
-the same 77 assertions, without waiting on a runner.
+touches. It costs ~111s on a cold runner, nearly all of it image pulls. Running
+it locally stays the fast path — it is the same five files and the same 77
+assertions, without waiting on a runner.
 
 Two things about that wiring are easy to break and expensive to rediscover.
 The scoping is a **job-level `if:`**, never a workflow-level `paths:` filter: a
