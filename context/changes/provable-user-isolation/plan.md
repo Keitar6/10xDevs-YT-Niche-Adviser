@@ -687,7 +687,7 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Manual
 
-- [x] 3.4 Suite runs clean after `npx supabase db reset` — accepted by the user
+- [x] 3.4 Suite runs clean after `npx supabase db reset` — 998f574 (verified by the user)
 
 ### Phase 4: Route-layer guards and the no-bypass scan
 
