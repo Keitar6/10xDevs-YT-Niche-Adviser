@@ -656,26 +656,26 @@ test file's transaction and rolls back with it, verified during planning.
 
 #### Automated
 
-- [x] 1.1 `npm run test:db` exits 0 and reports `Result: PASS`
-- [x] 1.2 The harness file reports its full planned assertion count, with no skipped tests
-- [x] 1.3 `git status --porcelain` shows no stray files under `supabase/`
-- [x] 1.4 `npm run lint` passes
+- [x] 1.1 `npm run test:db` exits 0 and reports `Result: PASS` — 4c91b54
+- [x] 1.2 The harness file reports its full planned assertion count, with no skipped tests — 4c91b54
+- [x] 1.3 `git status --porcelain` shows no stray files under `supabase/` — 4c91b54
+- [x] 1.4 `npm run lint` passes — 4c91b54
 
 #### Manual
 
-- [x] 1.5 Changing the impersonated UUID makes the guard go red
+- [x] 1.5 Changing the impersonated UUID makes the guard go red — 4c91b54
 
 ### Phase 2: Table isolation — `channel_profiles` and `content_opportunities`
 
 #### Automated
 
-- [ ] 2.1 `npm run test:db` exits 0 with all files reporting `ok`
-- [ ] 2.2 Every denied-write assertion is paired with a row-intactness assertion
-- [ ] 2.3 `npm run lint` passes
+- [x] 2.1 `npm run test:db` exits 0 with all files reporting `ok`
+- [x] 2.2 Every denied-write assertion is paired with a row-intactness assertion
+- [x] 2.3 `npm run lint` passes
 
 #### Manual
 
-- [ ] 2.4 A `using (true)` policy makes the suite go red; restored via `db reset`
+- [x] 2.4 A `using (true)` policy makes the suite go red; restored via `db reset`
 
 ### Phase 3: Avatar bucket isolation
 
